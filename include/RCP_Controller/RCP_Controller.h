@@ -33,7 +33,7 @@ namespace LRI::RCP {
         HOST_CLASS_SOLENOID_DATA       = 0x01,
         HOST_CLASS_STEPPER_DATA        = 0x02,
         HOST_CLASS_TRANSDUCER_DATA     = 0x43,
-        HOST_CLASS_GPD_DATA            = 0x80,
+        HOST_CLASS_GPS_DATA            = 0x80,
         HOST_CLASS_MAGNETOMETER_DATA   = 0x81,
         HOST_CLASS_AM_PRESSURE_DATA    = 0x82,
         HOST_CLASS_AM_TEMPERATURE_DATA = 0x83,
@@ -77,28 +77,33 @@ namespace LRI::RCP {
     };
 
     struct TestData {
+        int32_t timestamp;
         int dataStreaming;
         TestRunningState state;
         uint8_t selectedTest;
     };
 
     struct SolenoidData {
+        int32_t timestamp;
         uint8_t ID;
         SolenoidState state;
     };
 
     struct StepperData {
+        int32_t timestamp;
         uint8_t ID;
         int32_t position;
         int32_t speed;
     };
 
     struct TransducerData {
+        int32_t timestamp;
         uint8_t ID;
         int32_t pressure;
     };
 
     struct GPSData {
+        int32_t timestamp;
         int32_t latitude;
         int32_t longitude;
         int32_t altitude;
@@ -106,20 +111,24 @@ namespace LRI::RCP {
     };
 
     struct AxisData {
+        int32_t timestamp;
         int32_t x;
         int32_t y;
         int32_t z;
     };
 
     struct AMPressureData {
+        int32_t timestamp;
         int32_t pressure;
     };
 
     struct AMTemperatureData {
+        int32_t timestamp;
         int32_t temperature;
     };
 
     struct SerialData {
+        int32_t timestamp;
         void* data;
         uint8_t size;
     };
@@ -129,17 +138,17 @@ namespace LRI::RCP {
     size_t readData(const void* buffer, size_t bufferSize);
     int dataReady();
 
-    int processTestUpdate(struct TestData data);
-    int processSolenoidData(struct SolenoidData data);
-    int processStepperData(struct StepperData data);
-    int processTransducerData(struct TransducerData data);
-    int processGPSData(struct GPSData data);
-    int processMagnetometerData(struct AxisData data);
-    int processAMPressureData(struct AMPressureData data);
-    int processAMTemperatureData(struct AMTemperatureData data);
-    int processAccelerationData(struct AxisData data);
-    int processGyroData(struct AxisData data);
-    int processSerialData(struct SerialData data);
+    int processTestUpdate(const struct TestData data);
+    int processSolenoidData(const struct SolenoidData data);
+    int processStepperData(const struct StepperData data);
+    int processTransducerData(const struct TransducerData data);
+    int processGPSData(const struct GPSData data);
+    int processMagnetometerData(const struct AxisData data);
+    int processAMPressureData(const struct AMPressureData data);
+    int processAMTemperatureData(const struct AMTemperatureData data);
+    int processAccelerationData(const struct AxisData data);
+    int processGyroData(const struct AxisData data);
+    int processSerialData(const struct SerialData data);
 
     // Library will default to channel zero, but it can be changed here.
     void setChannel(Channel ch);
