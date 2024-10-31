@@ -83,7 +83,7 @@ The meanings of the class byte are as follows:
 ### Testing Command
 
 A testing command is a request to change the state of a test. This includes starting, stopping, pausing, and controlling
-data streaming. The testing command includes 1 additional byte (for a total length of 3). This additional byte specifies
+data streaming. The testing command includes 1 additional byte (for a total length of 2). This additional byte specifies
 which testing function to perform:
 
 - 0x0x: This indicates a request to begin a test. The first 4 bits of this testing command must all be zero, but the

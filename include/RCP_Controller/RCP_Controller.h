@@ -10,35 +10,36 @@ namespace LRI::RCP {
 
     typedef uint8_t Channel;
     enum Channel {
-        ZERO  = 0x00,
-        ONE   = 0x40,
-        TWO   = 0x80,
-        THREE = 0xC0,
+        CH_ZERO      = 0x00,
+        CH_ONE       = 0x40,
+        CH_TWO       = 0x80,
+        CH_THREE     = 0xC0,
+        CHANNEL_MASK = 0xC0,
     };
 
     typedef uint8_t ControllerClass;
     enum ControllerClass {
-        TESTING_WRITE  = 0x00,
-        TESTING_READ   = 0xF0,
-        SOLENOID_WRITE = 0x01,
-        SOLENOID_READ  = 0xF1,
-        STEPPER_WRITE  = 0x02,
-        STEPPER_READ   = 0xF2,
+        CONTROLLER_CLASS_TESTING_WRITE  = 0x00,
+        CONTROLLER_CLASS_TESTING_READ   = 0xF0,
+        CONTROLLER_CLASS_SOLENOID_WRITE = 0x01,
+        CONTROLLER_CLASS_SOLENOID_READ  = 0xF1,
+        CONTROLLER_CLASS_STEPPER_WRITE  = 0x02,
+        CONTROLLER_CLASS_STEPPER_READ   = 0xF2,
     };
 
     typedef uint8_t HostClass;
     enum HostClass {
-        TESTING_DATA        = 0x00,
-        SOLENOID_DATA       = 0x01,
-        STEPPER_DATA        = 0x02,
-        TRANSDUCER_DATA     = 0x43,
-        GPD_DATA            = 0x80,
-        MAGNETOMETER_DATA   = 0x81,
-        AM_PRESSURE_DATA    = 0x82,
-        AM_TEMPERATURE_DATA = 0x83,
-        ACCELERATION_DATA   = 0x84,
-        GYRO_DATA           = 0x85,
-        RAW_SERIAL          = 0xFF,
+        HOST_CLASS_TESTING_DATA        = 0x00,
+        HOST_CLASS_SOLENOID_DATA       = 0x01,
+        HOST_CLASS_STEPPER_DATA        = 0x02,
+        HOST_CLASS_TRANSDUCER_DATA     = 0x43,
+        HOST_CLASS_GPD_DATA            = 0x80,
+        HOST_CLASS_MAGNETOMETER_DATA   = 0x81,
+        HOST_CLASS_AM_PRESSURE_DATA    = 0x82,
+        HOST_CLASS_AM_TEMPERATURE_DATA = 0x83,
+        HOST_CLASS_ACCELERATION_DATA   = 0x84,
+        HOST_CLASS_GYRO_DATA           = 0x85,
+        HOST_CLASS_RAW_SERIAL          = 0xFF,
 
     };
 
@@ -53,17 +54,19 @@ namespace LRI::RCP {
 
     typedef uint8_t TestRunningState;
     enum TestRunningState {
-        TEST_RUNNING = 0x00,
-        TEST_STOPPED = 0x10,
-        TEST_PAUSED  = 0x20,
-        TEST_ESTOP   = 0x30,
+        TEST_RUNNING    = 0x00,
+        TEST_STOPPED    = 0x10,
+        TEST_PAUSED     = 0x20,
+        TEST_ESTOP      = 0x30,
+        TEST_STATE_MASK = 0xF0,
     };
 
     typedef uint8_t SolenoidState;
     enum SolenoidState {
-        SOLENOID_ON     = 0x40,
-        SOLENOID_OFF    = 0x80,
-        SOLENOID_TOGGLE = 0xC0,
+        SOLENOID_ON         = 0x40,
+        SOLENOID_OFF        = 0x80,
+        SOLENOID_TOGGLE     = 0xC0,
+        SOLENOID_STATE_MASK = 0xC0,
     };
 
     typedef uint8_t StepperWriteMode;
@@ -124,6 +127,7 @@ namespace LRI::RCP {
     // Stubs that the library user must implement
     size_t sendData(const void* data, size_t length);
     size_t readData(const void* buffer, size_t bufferSize);
+    int dataReady();
 
     int processTestUpdate(struct TestData data);
     int processSolenoidData(struct SolenoidData data);
@@ -137,11 +141,16 @@ namespace LRI::RCP {
     int processGyroData(struct AxisData data);
     int processSerialData(struct SerialData data);
 
+    // Library will default to channel zero, but it can be changed here.
+    void setChannel(Channel ch);
+
     // Function to call periodically to poll for data
-    void poll(void);
+    int poll();
 
     // Functions to send controller packets
-    int sendTestUpdate(TestStateControl state);
+    int sendEStop();
+
+    int sendTestUpdate(TestStateControl state, uint8_t testId = 0);
     int requestTestUpdate();
 
     int sendSolenoidWrite(uint8_t ID, SolenoidState state);
