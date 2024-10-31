@@ -18,28 +18,28 @@ namespace LRI::RCP {
     };
 
     typedef uint8_t ControllerClass;
-    enum ControllerClass {
-        CONTROLLER_CLASS_TESTING_WRITE  = 0x00,
-        CONTROLLER_CLASS_TESTING_READ   = 0xF0,
-        CONTROLLER_CLASS_SOLENOID_WRITE = 0x01,
-        CONTROLLER_CLASS_SOLENOID_READ  = 0xF1,
-        CONTROLLER_CLASS_STEPPER_WRITE  = 0x02,
-        CONTROLLER_CLASS_STEPPER_READ   = 0xF2,
+    enum HostClass {
+        HOST_CLASS_TESTING_WRITE  = 0x00,
+        HOST_CLASS_TESTING_READ   = 0xF0,
+        HOST_CLASS_SOLENOID_WRITE = 0x01,
+        HOST_CLASS_SOLENOID_READ  = 0xF1,
+        HOST_CLASS_STEPPER_WRITE  = 0x02,
+        HOST_CLASS_STEPPER_READ   = 0xF2,
     };
 
-    typedef uint8_t HostClass;
-    enum HostClass {
-        HOST_CLASS_TESTING_DATA        = 0x00,
-        HOST_CLASS_SOLENOID_DATA       = 0x01,
-        HOST_CLASS_STEPPER_DATA        = 0x02,
-        HOST_CLASS_TRANSDUCER_DATA     = 0x43,
-        HOST_CLASS_GPS_DATA            = 0x80,
-        HOST_CLASS_MAGNETOMETER_DATA   = 0x81,
-        HOST_CLASS_AM_PRESSURE_DATA    = 0x82,
-        HOST_CLASS_AM_TEMPERATURE_DATA = 0x83,
-        HOST_CLASS_ACCELERATION_DATA   = 0x84,
-        HOST_CLASS_GYRO_DATA           = 0x85,
-        HOST_CLASS_RAW_SERIAL          = 0xFF,
+    typedef uint8_t TargetClass;
+    enum TargetClass {
+        TARGET_CLASS_TESTING_DATA        = 0x00,
+        TARGET_CLASS_SOLENOID_DATA       = 0x01,
+        TARGET_CLASS_STEPPER_DATA        = 0x02,
+        TARGET_CLASS_TRANSDUCER_DATA     = 0x43,
+        TARGET_CLASS_GPS_DATA            = 0x80,
+        TARGET_CLASS_MAGNETOMETER_DATA   = 0x81,
+        TARGET_CLASS_AM_PRESSURE_DATA    = 0x82,
+        TARGET_CLASS_AM_TEMPERATURE_DATA = 0x83,
+        TARGET_CLASS_ACCELERATION_DATA   = 0x84,
+        TARGET_CLASS_GYRO_DATA           = 0x85,
+        TARGET_CLASS_RAW_SERIAL          = 0xFF,
 
     };
 

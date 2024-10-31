@@ -2,9 +2,9 @@
 
 ## Introduction
 
-This document describes the protocol used with rockets, test stands, or other hosts in which low speed status messages
+This document describes the protocol used with rockets, test stands, or other targets in which low speed status messages
 or manual control need to be communicated. This protocol is **not** designed to be used with high speed real time
-control or data logging. These functions should be features of the host itself; periodic updates or occasional manual
+control or data logging. These functions should be features of the target itself; periodic updates or occasional manual
 control may be implemented using RCP.
 
 This protocol does not perform error checking or acknowledgements. Depending on the physical media and lower layers used
@@ -12,18 +12,19 @@ to transmit this protocol, these features may already be available.
 
 ### Definitions
 
-- Host: The host is the device or apparatus which is being tested, and contains the actuators and sensors in question,
+- Target: The target is the device or apparatus which is being tested, and contains the actuators and sensors in
+  question,
   as well as the microcontroller which interfaces between this protocol and the sensors
-- Controller: This is the computer or device sending control packets. This is likely the computer running the desktop
-  software, but it can be any device that sends control packets. The host will only send data back to the controller
+- Host: This is the computer or device sending control packets. This is likely the computer running the desktop
+  software, but it can be any device that sends control packets. The target will only send data back to the host
   when requested, including streaming data.
-- Control packet: A packet sent from the controller to the host that contains information requesting an update to the
-  host state.
-- Data packet: A packet sent from the host to the controller, containing either the data requested from a control
+- Control packet: A packet sent from the host to the target that contains information requesting an update to the
+  target state.
+- Data packet: A packet sent from the target to the host, containing either the data requested from a control
   packet, or a data point from a stream of data.
-- Data streaming: A host state in which data about sensors and actuators is sent to the controller continuously to be
-  logged or visualized on the controller side. This streaming is not meant to be the primary form of data collection. It
-  is only so the controller can receive periodic updates on the host status.
+- Data streaming: A target state in which data about sensors and actuators is sent to the host continuously to be
+  logged or visualized on the host side. This streaming is not meant to be the primary form of data collection. It
+  is only so the host can receive periodic updates on the target status.
 - Header Byte: The first byte of a packet. It indicates the channel being communicated on, and the length of the rest of
   the packet.
 - Class Byte: The second byte of a packet. It indicates the packet "class," or the functionality of the rest of the
@@ -42,11 +43,11 @@ subsequent length of data being sent.
 #### Channel Bits
 
 The first two bits of the header byte indicate the channel of communication. These 4 channels (00, 01, 10, 11) allow for
-multiple host-controller setups to be in use at the same time, without interfering with each other. For a host and
-controller to communicate, each should use and respond to the same channel bits.
+multiple target-host setups to be in use at the same time, without interfering with each other. For a target and
+host to communicate, each should use and respond to the same channel bits.
 
-Hosts and controllers on other channels should not interact with packets from other channels. Each channel is intended
-to support only one host and one controller, but implementations with multiple hosts that do not send data packets are
+Targets and hosts on other channels should not interact with packets from other channels. Each channel is intended
+to support only one target and one host, but implementations with multiple targets that do not send data packets are
 possible.
 
 #### Length Bits
@@ -54,8 +55,8 @@ possible.
 The remaining 6 bits of the header byte are used to indicate the length of the packet following the header byte,
 including the class byte (specified below).
 
-A length of 0 is reserved for emergency stops. If a host receives a packet with length zero at any time, it should
-immediately enter an emergency stop state. This exact state is dependent on the host and it's physical structure, and
+A length of 0 is reserved for emergency stops. If a target receives a packet with length zero at any time, it should
+immediately enter an emergency stop state. This exact state is dependent on the target and it's physical structure, and
 when receiving this packet it should complete whatever emergency protocols it has.
 
 Any other length from 1 to 63 specifies the length of the packet excluding this header byte.
@@ -67,8 +68,8 @@ on if the packet is for control or for data. This byte is included in the length
 
 ## Control Packets
 
-Control packets are sent from the controller to the host to request an update to the host state, or to request data from
-the host. The function of the control packet is determined by the value of the class byte.
+Control packets are sent from the host to the target to request an update to the target state, or to request data from
+the target. The function of the control packet is determined by the value of the class byte.
 
 The meanings of the class byte are as follows:
 
@@ -87,9 +88,9 @@ data streaming. The testing command includes 1 additional byte (for a total leng
 which testing function to perform:
 
 - 0x0x: This indicates a request to begin a test. The first 4 bits of this testing command must all be zero, but the
-  remaining 4 bits allow for a test number to be selected. This allows for the host to have multiple test sequences
-  preprogrammed, and the controller can dynamically select which test to start without requiring new code to be uploaded
-  to the host.
+  remaining 4 bits allow for a test number to be selected. This allows for the target to have multiple test sequences
+  preprogrammed, and the host can dynamically select which test to start without requiring new code to be uploaded
+  to the target.
 - 0x10: Full stop the currently running test
 - 0x20: Pause/Unpause the currently running test
 - 0x30: Start data streaming (Full details in data packet section)
@@ -99,7 +100,7 @@ which testing function to perform:
 ### Testing Query
 
 A testing query is a request for the current state of a test. This request needs no additional bytes, so the packet
-length field should be set to 1. The host should respond with the appropriate data packet.
+length field should be set to 1. The target should respond with the appropriate data packet.
 
 ### Solenoid Write Request
 
@@ -111,14 +112,14 @@ indicate the requested state:
 - 10b: Turn solenoid off
 - 11b: Toggle solenoid state
 
-The remaining 6 bits indicate the solenoid ID to write to. The host is responsible for parsing this ID and translating
+The remaining 6 bits indicate the solenoid ID to write to. The target is responsible for parsing this ID and translating
 it to the appropriate hardware address.
 
 ### Solenoid Read Request
 
 This packet class is a request for the state of a solenoid. This command contains one additional byte, making the total
 packet length 2. The additional byte encodes only the solenoid ID to read from. The first 2 bits of this byte are
-unused, and the remaining 6 bits encode the solenoid ID. The host should respond with the appropriate data packet.
+unused, and the remaining 6 bits encode the solenoid ID. The target should respond with the appropriate data packet.
 
 ### Stepper Motor Write Request
 
@@ -131,7 +132,7 @@ stepper motor addressed. The first 2 bits indicate the function:
 - 10b: Speed based control
 - 11b: Unused
 
-The remaining 6 bits of the first byte are used to indicate the stepper motor to address. The host is responsible for
+The remaining 6 bits of the first byte are used to indicate the stepper motor to address. The target is responsible for
 parsing this ID and translating it to the appropriate hardware address.
 
 The remaining 4 bytes of information are the value for the indicated function. Depending on the hardware implementation,
@@ -141,14 +142,14 @@ these bytes may be a 32 bit integer, or a floating point number, or another repr
 
 This packet class is a request for the state of a stepper motor. This command contains one additional byte, making the
 total packet length 2. The additional byte encodes only the stepper motor ID to read from. The first 2 bits of this byte
-are unused, and the remaining 6 bits encode the solenoid ID. The host should respond with the appropriate data packet.
+are unused, and the remaining 6 bits encode the solenoid ID. The target should respond with the appropriate data packet.
 
 ---
 The remaining class codes are currently undefined, and can be used for future expansions.
 
 ## Data Packets
 
-These packets are used to communicate state information from the host to the controller. Data logging packets begin with
+These packets are used to communicate state information from the target to the host. Data logging packets begin with
 a header byte and a class byte like control packets, but class byte values indicate different functions than class bytes
 in a control packet. The class byte represents these data options:
 
@@ -164,19 +165,19 @@ in a control packet. The class byte represents these data options:
 - 0x85: Gyroscope data
 - 0xFF: Raw Serial Data
 
-Classes with a most significant bit of zero indicate the sensor reading is for the host as a whole, for example a
+Classes with a most significant bit of zero indicate the sensor reading is for the target as a whole, for example a
 general temperature reading, or acceleration reading (this is not an explicit requirement, more of a suggestion for
-organization). If a host has multiple sensors for a specific type of data, it is the host responsibility to determine
-which is the best data to send to the controller.
+organization). If a target has multiple sensors for a specific type of data, it is the target responsibility to
+determine which is the best data to send to the host.
 
 Data packets include a 4 byte time stamp immediately following the class byte. This timestamp indicates the milliseconds
 since the test was started. This value **does not indicate absolute time in any way, and is not intended to be used for
-accurate data logging**. This time value is only for the controller to be able to determine the rough time a data point
+accurate data logging**. This time value is only for the host to be able to determine the rough time a data point
 was produced for data visualization.
 
 ### Test State Packet
 
-This packet is used to return the state of a test to the controller. This includes 1 additional byte, making the packet
+This packet is used to return the state of a test to the host. This includes 1 additional byte, making the packet
 length 6. This additional byte includes several pieces of information:
 
 - The most significant bit indicates if data is currently streaming (1) or not (0)
@@ -219,13 +220,13 @@ The next 4 bytes are a signed integer representing the transducer measurement, i
 
 This packet is used to return GPS data. This is 32 additional bytes, making the packet length 37.
 
-The first 8 bytes are a signed integer representing the latitude of the host, in millionths of degrees.
+The first 8 bytes are a signed integer representing the latitude of the target, in millionths of degrees.
 
-The second 8 bytes are a signed integer representing the longitude of the host, in millionths of degrees.
+The second 8 bytes are a signed integer representing the longitude of the target, in millionths of degrees.
 
-The next 8 bytes are a signed integer representing the altitude of the host, in millimeters above the ellipsoid (HAE).
+The next 8 bytes are a signed integer representing the altitude of the target, in millimeters above the ellipsoid (HAE).
 
-The final 8 bytes are a signed integer representing the ground speed of the host, in millimeters per second.
+The final 8 bytes are a signed integer representing the ground speed of the target, in millimeters per second.
 
 ### Magnetometer Data
 
@@ -262,12 +263,18 @@ second per second or degrees per second, respectively.
 
 ### Raw Serial Data
 
-These packets are intended to allow the host to send arbitrary serial data back to the controller. This packet is at
+These packets are intended to allow the target to send arbitrary serial data back to the host. This packet is at
 least 1 additional byte, making the minimum length of the packet 6.
 
-All bytes following the timestamp bytes are the raw bytes sent by the host. The length of bytes sent can be calculated
+All bytes following the timestamp bytes are the raw bytes sent by the target. The length of bytes sent can be calculated
 using the packet length field from the header byte. Because the header byte indicates the length, the maximum length of
 the raw serial data that can be sent in one packet is 58 bytes.
 
 ---
 The remaining class codes are currently undefined, and can be used for future expansions.
+
+## Changelog:
+
+- Changed all floating point values to 32 bit signed integers, and adjusted scale of values to take advantage of integer
+  range (ie millibars -> microbars, etc)
+- Renamed "host" to "target", and "controller" to "host"

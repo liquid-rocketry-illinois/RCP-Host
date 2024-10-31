@@ -29,7 +29,7 @@ int poll() {
 
     uint32_t timestamp = (buffer[2] << 24) | (buffer[3] << 16) | (buffer[4] << 8) | buffer[5];
     switch(buffer[1]) {
-    case HOST_CLASS_TESTING_DATA:
+    case TARGET_CLASS_TESTING_DATA:
         processTestUpdate({
             .timestamp = timestamp,
             .dataStreaming = buffer[6] & 0x80,
@@ -38,7 +38,7 @@ int poll() {
         });
         break;
 
-    case HOST_CLASS_SOLENOID_DATA:
+    case TARGET_CLASS_SOLENOID_DATA:
         processSolenoidData({
             .timestamp = timestamp,
             .state = buffer[6] & SOLENOID_STATE_MASK,
@@ -46,7 +46,7 @@ int poll() {
         });
         break;
 
-    case HOST_CLASS_STEPPER_DATA:
+    case TARGET_CLASS_STEPPER_DATA:
         processStepperData({
             .timestamp = timestamp,
             .ID = buffer[6],
@@ -55,7 +55,7 @@ int poll() {
         });
         break;
 
-    case HOST_CLASS_TRANSDUCER_DATA:
+    case TARGET_CLASS_TRANSDUCER_DATA:
         processTransducerData({
             .timestamp = timestamp,
             .ID = buffer[6],
@@ -63,7 +63,7 @@ int poll() {
         });
         break;
 
-    case HOST_CLASS_GPS_DATA:
+    case TARGET_CLASS_GPS_DATA:
         processGPSData({
             .timestamp = timestamp,
             .latitude = toInt32(buffer + 6),
@@ -73,23 +73,23 @@ int poll() {
         });
         break;
 
-    case HOST_CLASS_AM_PRESSURE_DATA:
+    case TARGET_CLASS_AM_PRESSURE_DATA:
         processAMPressureData({
             .timestamp = timestamp,
             .pressure = toInt32(buffer + 6)
         });
         break;
 
-    case HOST_CLASS_AM_TEMPERATURE_DATA:
+    case TARGET_CLASS_AM_TEMPERATURE_DATA:
         processAMTemperatureData({
             .timestamp = timestamp,
             .temperature = toInt32(buffer + 6)
         });
         break;
 
-    case HOST_CLASS_ACCELERATION_DATA:
-    case HOST_CLASS_MAGNETOMETER_DATA:
-    case HOST_CLASS_GYRO_DATA:
+    case TARGET_CLASS_ACCELERATION_DATA:
+    case TARGET_CLASS_MAGNETOMETER_DATA:
+    case TARGET_CLASS_GYRO_DATA:
         struct AxisData data = {
             .timestamp = timestamp,
             .x = toInt32(buffer + 6),
@@ -97,14 +97,14 @@ int poll() {
             .z = toInt32(buffer + 14)
         };
 
-        (buffer[1] == HOST_CLASS_GYRO_DATA
+        (buffer[1] == TARGET_CLASS_GYRO_DATA
              ? processGyroData
-             : buffer[1] == HOST_CLASS_ACCELERATION_DATA
+             : buffer[1] == TARGET_CLASS_ACCELERATION_DATA
              ? processAccelerationData
              : processMagnetometerData)(data);
         break;
 
-    case HOST_CLASS_RAW_SERIAL:
+    case TARGET_CLASS_RAW_SERIAL:
         uint8_t* sdata = (uint8_t*) malloc(pktlen - 5);
         memcpy(sdata, buffer + 6, pktlen - 5);
         processSerialData({
@@ -120,14 +120,14 @@ int poll() {
 }
 
 int sendEStop() {
-    uint8_t ESTOP = channel & 0x3F;
+    uint8_t ESTOP = channel | 0x00;
     return sendData(&ESTOP, 1) == 1 ? 0 : -1;
 }
 
 int sendTestUpdate(TestStateControl state, uint8_t testId) {
     uint8_t buffer[3] = {0};
     buffer[0] = channel & 0x02;
-    buffer[1] = CONTROLLER_CLASS_TESTING_WRITE;
+    buffer[1] = HOST_CLASS_TESTING_WRITE;
     buffer[2] = state & testId;
     return sendData(buffer, 3) == 3 ? 0 : -1;
 }
@@ -135,14 +135,14 @@ int sendTestUpdate(TestStateControl state, uint8_t testId) {
 int requestTestUpdate() {
     uint8_t buffer[2] = {0};
     buffer[0] = channel & 0x01;
-    buffer[1] = CONTROLLER_CLASS_TESTING_READ;
+    buffer[1] = HOST_CLASS_TESTING_READ;
     return sendData(buffer, 2) == 2 ? 0 : -1;
 }
 
 int sendSolenoidWrite(uint8_t ID, SolenoidState state) {
     uint8_t buffer[3] = {0};
     buffer[0] = channel & 0x02;
-    buffer[1] = CONTROLLER_CLASS_SOLENOID_WRITE;
+    buffer[1] = HOST_CLASS_SOLENOID_WRITE;
     buffer[2] = state & ID;
     return sendData(buffer, 3) == 3 ? 0 : -1;
 }
@@ -150,7 +150,7 @@ int sendSolenoidWrite(uint8_t ID, SolenoidState state) {
 int requestSolenoidRead(uint8_t ID) {
     uint8_t buffer[3] = {0};
     buffer[0] = channel & 0x02;
-    buffer[1] = CONTROLLER_CLASS_SOLENOID_READ;
+    buffer[1] = HOST_CLASS_SOLENOID_READ;
     buffer[2] = ID;
     return sendData(buffer, 3) == 3 ? 0 : -1;
 }
@@ -158,7 +158,7 @@ int requestSolenoidRead(uint8_t ID) {
 int sendStepperWrite(uint8_t ID, StepperWriteMode mode, int32_t value) {
     uint8_t buffer[7] = {0};
     buffer[0] = channel & 0x06;
-    buffer[1] = CONTROLLER_CLASS_STEPPER_WRITE;
+    buffer[1] = HOST_CLASS_STEPPER_WRITE;
     buffer[2] = mode & ID;
     buffer[3] = value >> 24;
     buffer[4] = value >> 16;
@@ -170,7 +170,7 @@ int sendStepperWrite(uint8_t ID, StepperWriteMode mode, int32_t value) {
 int requestStepperRead(uint8_t ID) {
     uint8_t buffer[3] = {0};
     buffer[0] = channel & 0x02;
-    buffer[1] = CONTROLLER_CLASS_STEPPER_READ;
+    buffer[1] = HOST_CLASS_STEPPER_READ;
     buffer[2] = ID;
     return sendData(buffer, 3) == 3 ? 0 : -1;
 }
