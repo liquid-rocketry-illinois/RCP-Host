@@ -1,4 +1,4 @@
-#include "RCP_Controller/RCP_Controller.h"
+#include "RCP_Host/RCP_Host.h"
 
 #include <stdlib.h>
 #include <string.h>

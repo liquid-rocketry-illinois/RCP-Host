@@ -1,5 +1,5 @@
-#ifndef RCP_CONTROLLER_H
-#define RCP_CONTROLLER_H
+#ifndef RCP_HOST_H
+#define RCP_HOST_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -17,7 +17,7 @@ namespace LRI::RCP {
         CHANNEL_MASK = 0xC0,
     };
 
-    typedef uint8_t ControllerClass;
+    typedef uint8_t HostClass;
     enum HostClass {
         HOST_CLASS_TESTING_WRITE  = 0x00,
         HOST_CLASS_TESTING_READ   = 0xF0,
@@ -172,4 +172,4 @@ namespace LRI::RCP {
 }
 #endif
 
-#endif //RCP_CONTROLLER_H
+#endif //RCP_HOST_H
