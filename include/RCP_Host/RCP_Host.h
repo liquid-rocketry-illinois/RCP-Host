@@ -133,22 +133,26 @@ namespace LRI::RCP {
         uint8_t size;
     };
 
-    // Stubs that the library user must implement
-    size_t sendData(const void* data, size_t length);
-    size_t readData(const void* buffer, size_t bufferSize);
-    int dataReady();
+    struct LibInitData {
+        size_t (*sendData) (const void* data, size_t length);
+        size_t (*readData) (const void* data, size_t length);
+        int (*processTestUpdate) (const struct TestData data);
+        int (*processSolenoidData) (const struct SolenoidData data);
+        int (*processStepperData) (const struct StepperData data);
+        int (*processTransducerData) (const struct TransducerData data);
+        int (*processGPSData) (const struct GPSData data);
+        int (*processMagnetometerData) (const struct AxisData data);
+        int (*processAMPressureData) (const struct AMPressureData data);
+        int (*processAMTemperatureData) (const struct AMTemperatureData data);
+        int (*processAccelerationData) (const struct AxisData data);
+        int (*processGyroData) (const struct AxisData data);
+        int (*processSerialData) (const struct SerialData data);
+    };
 
-    int processTestUpdate(const struct TestData data);
-    int processSolenoidData(const struct SolenoidData data);
-    int processStepperData(const struct StepperData data);
-    int processTransducerData(const struct TransducerData data);
-    int processGPSData(const struct GPSData data);
-    int processMagnetometerData(const struct AxisData data);
-    int processAMPressureData(const struct AMPressureData data);
-    int processAMTemperatureData(const struct AMTemperatureData data);
-    int processAccelerationData(const struct AxisData data);
-    int processGyroData(const struct AxisData data);
-    int processSerialData(const struct SerialData data);
+    // Provide library with callbacks to needed functions
+    int init(const struct LibInitData callbacks);
+
+    int shutdown();
 
     // Library will default to channel zero, but it can be changed here.
     void setChannel(Channel ch);

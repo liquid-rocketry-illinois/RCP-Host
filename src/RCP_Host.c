@@ -12,17 +12,32 @@ int32_t toInt32(const uint8_t* start) {
 }
 
 Channel channel = CH_ZERO;
+struct LibInitData* callbacks = NULL;
+
+int init(const struct LibInitData _callbacks) {
+    if(callbacks != NULL) return -1;
+    callbacks = malloc(sizeof(struct LibInitData));
+    *callbacks = _callbacks;
+    return 0;
+}
+
+int shutdown() {
+    if(callbacks == NULL) return -1;
+    free(callbacks);
+    return 0;
+}
 
 void setChannel(Channel ch) {
     channel = ch;
 }
 
 int poll() {
+    if(callbacks == NULL) return -2;
     uint8_t buffer[64] = {0};
-    int bread = readData(buffer, 1);
+    int bread = callbacks->readData(buffer, 1);
     if(bread < 1) return -1;
     uint8_t pktlen = buffer[0] & ~CHANNEL_MASK;
-    bread = readData(buffer + 1, pktlen);
+    bread = callbacks->readData(buffer + 1, pktlen);
     if(bread < pktlen) return -1;
 
     if(buffer[0] & CHANNEL_MASK != channel) return 0;
@@ -30,7 +45,7 @@ int poll() {
     uint32_t timestamp = (buffer[2] << 24) | (buffer[3] << 16) | (buffer[4] << 8) | buffer[5];
     switch(buffer[1]) {
     case TARGET_CLASS_TESTING_DATA:
-        processTestUpdate({
+        callbacks->processTestUpdate({
             .timestamp = timestamp,
             .dataStreaming = buffer[6] & 0x80,
             .state = buffer[6] & TEST_STATE_MASK,
@@ -39,7 +54,7 @@ int poll() {
         break;
 
     case TARGET_CLASS_SOLENOID_DATA:
-        processSolenoidData({
+        callbacks->processSolenoidData({
             .timestamp = timestamp,
             .state = buffer[6] & SOLENOID_STATE_MASK,
             .ID = buffer[6] & ~SOLENOID_STATE_MASK
@@ -47,7 +62,7 @@ int poll() {
         break;
 
     case TARGET_CLASS_STEPPER_DATA:
-        processStepperData({
+        callbacks->processStepperData({
             .timestamp = timestamp,
             .ID = buffer[6],
             .position = toInt32(buffer + 7),
@@ -56,7 +71,7 @@ int poll() {
         break;
 
     case TARGET_CLASS_TRANSDUCER_DATA:
-        processTransducerData({
+        callbacks->processTransducerData({
             .timestamp = timestamp,
             .ID = buffer[6],
             .pressure = toInt32(buffer + 7)
@@ -64,7 +79,7 @@ int poll() {
         break;
 
     case TARGET_CLASS_GPS_DATA:
-        processGPSData({
+        callbacks->processGPSData({
             .timestamp = timestamp,
             .latitude = toInt32(buffer + 6),
             .longitude = toInt32(buffer + 10),
@@ -74,14 +89,14 @@ int poll() {
         break;
 
     case TARGET_CLASS_AM_PRESSURE_DATA:
-        processAMPressureData({
+        callbacks->processAMPressureData({
             .timestamp = timestamp,
             .pressure = toInt32(buffer + 6)
         });
         break;
 
     case TARGET_CLASS_AM_TEMPERATURE_DATA:
-        processAMTemperatureData({
+        callbacks->processAMTemperatureData({
             .timestamp = timestamp,
             .temperature = toInt32(buffer + 6)
         });
@@ -98,16 +113,16 @@ int poll() {
         };
 
         (buffer[1] == TARGET_CLASS_GYRO_DATA
-             ? processGyroData
+             ? callbacks->processGyroData
              : buffer[1] == TARGET_CLASS_ACCELERATION_DATA
-             ? processAccelerationData
-             : processMagnetometerData)(data);
+             ? callbacks->processAccelerationData
+             : callbacks->processMagnetometerData)(data);
         break;
 
     case TARGET_CLASS_RAW_SERIAL:
-        uint8_t* sdata = (uint8_t*) malloc(pktlen - 5);
+        uint8_t* sdata = (uint8_t*)malloc(pktlen - 5);
         memcpy(sdata, buffer + 6, pktlen - 5);
-        processSerialData({
+        callbacks->processSerialData({
             .timestamp = timestamp,
             .size = pktlen - 5,
             .data = sdata
@@ -120,42 +135,48 @@ int poll() {
 }
 
 int sendEStop() {
+    if(callbacks == NULL) return -2;
     uint8_t ESTOP = channel | 0x00;
-    return sendData(&ESTOP, 1) == 1 ? 0 : -1;
+    return callbacks->sendData(&ESTOP, 1) == 1 ? 0 : -1;
 }
 
 int sendTestUpdate(TestStateControl state, uint8_t testId) {
+    if(callbacks == NULL) return -2;
     uint8_t buffer[3] = {0};
     buffer[0] = channel & 0x02;
     buffer[1] = HOST_CLASS_TESTING_WRITE;
     buffer[2] = state & testId;
-    return sendData(buffer, 3) == 3 ? 0 : -1;
+    return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 
 int requestTestUpdate() {
+    if(callbacks == NULL) return -2;
     uint8_t buffer[2] = {0};
     buffer[0] = channel & 0x01;
     buffer[1] = HOST_CLASS_TESTING_READ;
-    return sendData(buffer, 2) == 2 ? 0 : -1;
+    return callbacks->sendData(buffer, 2) == 2 ? 0 : -1;
 }
 
 int sendSolenoidWrite(uint8_t ID, SolenoidState state) {
+    if(callbacks == NULL) return -2;
     uint8_t buffer[3] = {0};
     buffer[0] = channel & 0x02;
     buffer[1] = HOST_CLASS_SOLENOID_WRITE;
     buffer[2] = state & ID;
-    return sendData(buffer, 3) == 3 ? 0 : -1;
+    return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 
 int requestSolenoidRead(uint8_t ID) {
+    if(callbacks == NULL) return -2;
     uint8_t buffer[3] = {0};
     buffer[0] = channel & 0x02;
     buffer[1] = HOST_CLASS_SOLENOID_READ;
     buffer[2] = ID;
-    return sendData(buffer, 3) == 3 ? 0 : -1;
+    return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 
 int sendStepperWrite(uint8_t ID, StepperWriteMode mode, int32_t value) {
+    if(callbacks == NULL) return -2;
     uint8_t buffer[7] = {0};
     buffer[0] = channel & 0x06;
     buffer[1] = HOST_CLASS_STEPPER_WRITE;
@@ -164,15 +185,16 @@ int sendStepperWrite(uint8_t ID, StepperWriteMode mode, int32_t value) {
     buffer[4] = value >> 16;
     buffer[5] = value >> 8;
     buffer[6] = value;
-    return sendData(buffer, 7) == 7 ? 0 : -1;
+    return callbacks->sendData(buffer, 7) == 7 ? 0 : -1;
 }
 
 int requestStepperRead(uint8_t ID) {
+    if(callbacks == NULL) return -2;
     uint8_t buffer[3] = {0};
     buffer[0] = channel & 0x02;
     buffer[1] = HOST_CLASS_STEPPER_READ;
     buffer[2] = ID;
-    return sendData(buffer, 3) == 3 ? 0 : -1;
+    return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 
 #ifdef __cplusplus
