@@ -135,7 +135,7 @@ namespace LRI::RCP {
 
     struct LibInitData {
         size_t (*sendData) (const void* data, size_t length);
-        size_t (*readData) (const void* data, size_t length);
+        size_t (*readData) (void* data, size_t length);
         int (*processTestUpdate) (const struct TestData data);
         int (*processSolenoidData) (const struct SolenoidData data);
         int (*processStepperData) (const struct StepperData data);
