@@ -3,35 +3,31 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef __cplusplus
-namespace LRI::RCP {
-#endif
-
 int32_t toInt32(const uint8_t* start) {
     return (start[0] << 24) | (start[1] << 16) | (start[2] << 8) | start[3];
 }
 
-Channel_t channel = CH_ZERO;
-struct LibInitData* callbacks = NULL;
+RCP_Channel_t channel = CH_ZERO;
+struct RCP_LibInitData* callbacks = NULL;
 
-int init(const struct LibInitData _callbacks) {
+int RCP_init(const struct RCP_LibInitData _callbacks) {
     if(callbacks != NULL) return -1;
-    callbacks = malloc(sizeof(struct LibInitData));
+    callbacks = malloc(sizeof(struct RCP_LibInitData));
     *callbacks = _callbacks;
     return 0;
 }
 
-int shutdown() {
+int RCP_shutdown() {
     if(callbacks == NULL) return -1;
     free(callbacks);
     return 0;
 }
 
-void setChannel(Channel_t ch) {
+void RCP_setChannel(RCP_Channel_t ch) {
     channel = ch;
 }
 
-int poll() {
+int RCP_poll() {
     if(callbacks == NULL) return -2;
     uint8_t buffer[64] = {0};
     int bread = callbacks->readData(buffer, 1);
@@ -44,7 +40,7 @@ int poll() {
     uint32_t timestamp = (buffer[2] << 24) | (buffer[3] << 16) | (buffer[4] << 8) | buffer[5];
     switch(buffer[1]) {
     case TARGET_CLASS_TESTING_DATA: {
-        struct TestData d = {
+        struct RCP_TestData d = {
             .timestamp = timestamp,
             .dataStreaming = buffer[6] & 0x80,
             .state = buffer[6] & TEST_STATE_MASK,
@@ -56,7 +52,7 @@ int poll() {
     }
 
     case TARGET_CLASS_SOLENOID_DATA: {
-        struct SolenoidData d = {
+        struct RCP_SolenoidData d = {
             .timestamp = timestamp,
             .state = buffer[6] & SOLENOID_STATE_MASK,
             .ID = buffer[6] & ~SOLENOID_STATE_MASK
@@ -67,7 +63,7 @@ int poll() {
     }
 
     case TARGET_CLASS_STEPPER_DATA: {
-        struct StepperData d = {
+        struct RCP_StepperData d = {
             .timestamp = timestamp,
             .ID = buffer[6],
             .position = toInt32(buffer + 7),
@@ -79,7 +75,7 @@ int poll() {
     }
 
     case TARGET_CLASS_TRANSDUCER_DATA: {
-        struct TransducerData d = {
+        struct RCP_TransducerData d = {
             .timestamp = timestamp,
             .ID = buffer[6],
             .pressure = toInt32(buffer + 7)
@@ -90,7 +86,7 @@ int poll() {
     }
 
     case TARGET_CLASS_GPS_DATA: {
-        struct GPSData d = {
+        struct RCP_GPSData d = {
             .timestamp = timestamp,
             .latitude = toInt32(buffer + 6),
             .longitude = toInt32(buffer + 10),
@@ -103,7 +99,7 @@ int poll() {
     }
 
     case TARGET_CLASS_AM_PRESSURE_DATA: {
-        struct AMPressureData d = {
+        struct RCP_AMPressureData d = {
             .timestamp = timestamp,
             .pressure = toInt32(buffer + 6)
         };
@@ -113,7 +109,7 @@ int poll() {
     }
 
     case TARGET_CLASS_AM_TEMPERATURE_DATA: {
-        struct AMTemperatureData d = {
+        struct RCP_AMTemperatureData d = {
             .timestamp = timestamp,
             .temperature = toInt32(buffer + 6)
         };
@@ -125,7 +121,7 @@ int poll() {
     case TARGET_CLASS_ACCELERATION_DATA:
     case TARGET_CLASS_MAGNETOMETER_DATA:
     case TARGET_CLASS_GYRO_DATA: {
-        struct AxisData d = {
+        struct RCP_AxisData d = {
             .timestamp = timestamp,
             .x = toInt32(buffer + 6),
             .y = toInt32(buffer + 10),
@@ -143,7 +139,7 @@ int poll() {
     case TARGET_CLASS_RAW_SERIAL: {
         uint8_t* sdata = (uint8_t*)malloc(pktlen - 5);
         memcpy(sdata, buffer + 6, pktlen - 5);
-        struct SerialData d = {
+        struct RCP_SerialData d = {
             .timestamp = timestamp,
             .size = pktlen - 5,
             .data = sdata
@@ -160,13 +156,13 @@ int poll() {
     return 0;
 }
 
-int sendEStop() {
+int RCP_sendEStop() {
     if(callbacks == NULL) return -2;
     uint8_t ESTOP = channel | 0x00;
     return callbacks->sendData(&ESTOP, 1) == 1 ? 0 : -1;
 }
 
-int sendTestUpdate(TestStateControl_t state, uint8_t testId) {
+int RCP_sendTestUpdate(RCP_TestStateControl_t state, uint8_t testId) {
     if(callbacks == NULL) return -2;
     uint8_t buffer[3] = {0};
     buffer[0] = channel & 0x02;
@@ -175,7 +171,7 @@ int sendTestUpdate(TestStateControl_t state, uint8_t testId) {
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 
-int requestTestUpdate() {
+int RCP_requestTestUpdate() {
     if(callbacks == NULL) return -2;
     uint8_t buffer[2] = {0};
     buffer[0] = channel & 0x01;
@@ -183,7 +179,7 @@ int requestTestUpdate() {
     return callbacks->sendData(buffer, 2) == 2 ? 0 : -1;
 }
 
-int sendSolenoidWrite(uint8_t ID, SolenoidState_t state) {
+int RCP_sendSolenoidWrite(uint8_t ID, RCP_SolenoidState_t state) {
     if(callbacks == NULL) return -2;
     uint8_t buffer[3] = {0};
     buffer[0] = channel & 0x02;
@@ -192,7 +188,7 @@ int sendSolenoidWrite(uint8_t ID, SolenoidState_t state) {
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 
-int requestSolenoidRead(uint8_t ID) {
+int RCP_requestSolenoidRead(uint8_t ID) {
     if(callbacks == NULL) return -2;
     uint8_t buffer[3] = {0};
     buffer[0] = channel & 0x02;
@@ -201,7 +197,7 @@ int requestSolenoidRead(uint8_t ID) {
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 
-int sendStepperWrite(uint8_t ID, StepperWriteMode_t mode, int32_t value) {
+int RCP_sendStepperWrite(uint8_t ID, RCP_StepperWriteMode_t mode, int32_t value) {
     if(callbacks == NULL) return -2;
     uint8_t buffer[7] = {0};
     buffer[0] = channel & 0x06;
@@ -214,7 +210,7 @@ int sendStepperWrite(uint8_t ID, StepperWriteMode_t mode, int32_t value) {
     return callbacks->sendData(buffer, 7) == 7 ? 0 : -1;
 }
 
-int requestStepperRead(uint8_t ID) {
+int RCP_requestStepperRead(uint8_t ID) {
     if(callbacks == NULL) return -2;
     uint8_t buffer[3] = {0};
     buffer[0] = channel & 0x02;
@@ -222,7 +218,3 @@ int requestStepperRead(uint8_t ID) {
     buffer[2] = ID;
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
-
-#ifdef __cplusplus
-}
-#endif
