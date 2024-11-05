@@ -17,6 +17,10 @@ int RCP_init(const struct RCP_LibInitData _callbacks) {
     return 0;
 }
 
+int RCP_isOpen() {
+    return callbacks != NULL;
+}
+
 int RCP_shutdown() {
     if(callbacks == NULL) return -1;
     free(callbacks);

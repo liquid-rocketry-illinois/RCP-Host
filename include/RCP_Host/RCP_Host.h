@@ -157,7 +157,7 @@ struct RCP_LibInitData {
 
 // Provide library with callbacks to needed functions
 int RCP_init(const struct RCP_LibInitData callbacks);
-
+int RCP_isOpen();
 int RCP_shutdown();
 
 // Library will default to channel zero, but it can be changed here.
