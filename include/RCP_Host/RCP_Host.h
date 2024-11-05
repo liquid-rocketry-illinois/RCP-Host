@@ -8,7 +8,7 @@
 namespace LRI::RCP {
 #endif
 
-    typedef uint8_t Channel;
+    typedef uint8_t Channel_t;
     enum Channel {
         CH_ZERO      = 0x00,
         CH_ONE       = 0x40,
@@ -17,7 +17,7 @@ namespace LRI::RCP {
         CHANNEL_MASK = 0xC0,
     };
 
-    typedef uint8_t HostClass;
+    typedef uint8_t HostClass_t;
     enum HostClass {
         HOST_CLASS_TESTING_WRITE  = 0x00,
         HOST_CLASS_TESTING_READ   = 0xF0,
@@ -27,7 +27,7 @@ namespace LRI::RCP {
         HOST_CLASS_STEPPER_READ   = 0xF2,
     };
 
-    typedef uint8_t TargetClass;
+    typedef uint8_t TargetClass_t;
     enum TargetClass {
         TARGET_CLASS_TESTING_DATA        = 0x00,
         TARGET_CLASS_SOLENOID_DATA       = 0x01,
@@ -43,7 +43,7 @@ namespace LRI::RCP {
 
     };
 
-    typedef uint8_t TestStateControl;
+    typedef uint8_t TestStateControl_t;
     enum TestStateControl {
         TEST_START        = 0x00,
         TEST_STOP         = 0x10,
@@ -52,7 +52,7 @@ namespace LRI::RCP {
         DATA_STREAM_STOP  = 0x40,
     };
 
-    typedef uint8_t TestRunningState;
+    typedef uint8_t TestRunningState_t;
     enum TestRunningState {
         TEST_RUNNING    = 0x00,
         TEST_STOPPED    = 0x10,
@@ -61,7 +61,7 @@ namespace LRI::RCP {
         TEST_STATE_MASK = 0xF0,
     };
 
-    typedef uint8_t SolenoidState;
+    typedef uint8_t SolenoidState_t;
     enum SolenoidState {
         SOLENOID_ON         = 0x40,
         SOLENOID_OFF        = 0x80,
@@ -69,7 +69,7 @@ namespace LRI::RCP {
         SOLENOID_STATE_MASK = 0xC0,
     };
 
-    typedef uint8_t StepperWriteMode;
+    typedef uint8_t StepperWriteMode_t;
     enum StepperWriteMode {
         ABSOLUTE_POSITION = 0x00,
         RELATIVE_POSITION = 0x40,
@@ -79,14 +79,14 @@ namespace LRI::RCP {
     struct TestData {
         int32_t timestamp;
         int dataStreaming;
-        TestRunningState state;
+        TestRunningState_t state;
         uint8_t selectedTest;
     };
 
     struct SolenoidData {
         int32_t timestamp;
         uint8_t ID;
-        SolenoidState state;
+        SolenoidState_t state;
     };
 
     struct StepperData {
@@ -155,7 +155,7 @@ namespace LRI::RCP {
     int shutdown();
 
     // Library will default to channel zero, but it can be changed here.
-    void setChannel(Channel ch);
+    void setChannel(Channel_t ch);
 
     // Function to call periodically to poll for data
     int poll();
@@ -163,13 +163,13 @@ namespace LRI::RCP {
     // Functions to send controller packets
     int sendEStop();
 
-    int sendTestUpdate(TestStateControl state, uint8_t testId);
+    int sendTestUpdate(TestStateControl_t state, uint8_t testId);
     int requestTestUpdate();
 
-    int sendSolenoidWrite(uint8_t ID, SolenoidState state);
+    int sendSolenoidWrite(uint8_t ID, SolenoidState_t state);
     int requestSolenoidRead(uint8_t ID);
 
-    int sendStepperWrite(uint8_t ID, StepperWriteMode mode, int32_t value);
+    int sendStepperWrite(uint8_t ID, StepperWriteMode_t mode, int32_t value);
     int requestStepperRead(uint8_t ID);
 
 #ifdef __cplusplus

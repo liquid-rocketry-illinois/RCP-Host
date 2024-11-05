@@ -11,7 +11,7 @@ int32_t toInt32(const uint8_t* start) {
     return (start[0] << 24) | (start[1] << 16) | (start[2] << 8) | start[3];
 }
 
-Channel channel = CH_ZERO;
+Channel_t channel = CH_ZERO;
 struct LibInitData* callbacks = NULL;
 
 int init(const struct LibInitData _callbacks) {
@@ -27,7 +27,7 @@ int shutdown() {
     return 0;
 }
 
-void setChannel(Channel ch) {
+void setChannel(Channel_t ch) {
     channel = ch;
 }
 
@@ -164,7 +164,7 @@ int sendEStop() {
     return callbacks->sendData(&ESTOP, 1) == 1 ? 0 : -1;
 }
 
-int sendTestUpdate(TestStateControl state, uint8_t testId) {
+int sendTestUpdate(TestStateControl_t state, uint8_t testId) {
     if(callbacks == NULL) return -2;
     uint8_t buffer[3] = {0};
     buffer[0] = channel & 0x02;
@@ -181,7 +181,7 @@ int requestTestUpdate() {
     return callbacks->sendData(buffer, 2) == 2 ? 0 : -1;
 }
 
-int sendSolenoidWrite(uint8_t ID, SolenoidState state) {
+int sendSolenoidWrite(uint8_t ID, SolenoidState_t state) {
     if(callbacks == NULL) return -2;
     uint8_t buffer[3] = {0};
     buffer[0] = channel & 0x02;
@@ -199,7 +199,7 @@ int requestSolenoidRead(uint8_t ID) {
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 
-int sendStepperWrite(uint8_t ID, StepperWriteMode mode, int32_t value) {
+int sendStepperWrite(uint8_t ID, StepperWriteMode_t mode, int32_t value) {
     if(callbacks == NULL) return -2;
     uint8_t buffer[7] = {0};
     buffer[0] = channel & 0x06;
