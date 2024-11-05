@@ -156,6 +156,8 @@ int poll() {
     default:
         break;
     }
+
+    return 0;
 }
 
 int sendEStop() {
