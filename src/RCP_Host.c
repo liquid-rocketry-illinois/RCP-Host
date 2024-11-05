@@ -39,73 +39,93 @@ int poll() {
     uint8_t pktlen = buffer[0] & ~CHANNEL_MASK;
     bread = callbacks->readData(buffer + 1, pktlen);
     if(bread < pktlen) return -1;
-
     if(buffer[0] & CHANNEL_MASK != channel) return 0;
 
     uint32_t timestamp = (buffer[2] << 24) | (buffer[3] << 16) | (buffer[4] << 8) | buffer[5];
     switch(buffer[1]) {
-    case TARGET_CLASS_TESTING_DATA:
-        callbacks->processTestUpdate({
+    case TARGET_CLASS_TESTING_DATA: {
+        struct TestData d = {
             .timestamp = timestamp,
             .dataStreaming = buffer[6] & 0x80,
             .state = buffer[6] & TEST_STATE_MASK,
             .selectedTest = buffer[6] & 0x0F
-        });
-        break;
+        };
 
-    case TARGET_CLASS_SOLENOID_DATA:
-        callbacks->processSolenoidData({
+        callbacks->processTestUpdate(d);
+        break;
+    }
+
+    case TARGET_CLASS_SOLENOID_DATA: {
+        struct SolenoidData d = {
             .timestamp = timestamp,
             .state = buffer[6] & SOLENOID_STATE_MASK,
             .ID = buffer[6] & ~SOLENOID_STATE_MASK
-        });
-        break;
+        };
 
-    case TARGET_CLASS_STEPPER_DATA:
-        callbacks->processStepperData({
+        callbacks->processSolenoidData(d);
+        break;
+    }
+
+    case TARGET_CLASS_STEPPER_DATA: {
+        struct StepperData d = {
             .timestamp = timestamp,
             .ID = buffer[6],
             .position = toInt32(buffer + 7),
             .speed = toInt32(buffer + 11)
-        });
-        break;
+        };
 
-    case TARGET_CLASS_TRANSDUCER_DATA:
-        callbacks->processTransducerData({
+        callbacks->processStepperData(d);
+        break;
+    }
+
+    case TARGET_CLASS_TRANSDUCER_DATA: {
+        struct TransducerData d = {
             .timestamp = timestamp,
             .ID = buffer[6],
             .pressure = toInt32(buffer + 7)
-        });
-        break;
+        };
 
-    case TARGET_CLASS_GPS_DATA:
-        callbacks->processGPSData({
+        callbacks->processTransducerData(d);
+        break;
+    }
+
+    case TARGET_CLASS_GPS_DATA: {
+        struct GPSData d = {
             .timestamp = timestamp,
             .latitude = toInt32(buffer + 6),
             .longitude = toInt32(buffer + 10),
             .altitude = toInt32(buffer + 14),
             .groundSpeed = toInt32(buffer + 18)
-        });
-        break;
+        };
 
-    case TARGET_CLASS_AM_PRESSURE_DATA:
-        callbacks->processAMPressureData({
+        callbacks->processGPSData(d);
+        break;
+    }
+
+    case TARGET_CLASS_AM_PRESSURE_DATA: {
+        struct AMPressureData d = {
             .timestamp = timestamp,
             .pressure = toInt32(buffer + 6)
-        });
-        break;
+        };
 
-    case TARGET_CLASS_AM_TEMPERATURE_DATA:
-        callbacks->processAMTemperatureData({
+        callbacks->processAMPressureData(d);
+        break;
+    }
+
+    case TARGET_CLASS_AM_TEMPERATURE_DATA: {
+        struct AMTemperatureData d = {
             .timestamp = timestamp,
             .temperature = toInt32(buffer + 6)
-        });
+        };
+
+        callbacks->processAMTemperatureData(d);
         break;
+    }
 
     case TARGET_CLASS_ACCELERATION_DATA:
     case TARGET_CLASS_MAGNETOMETER_DATA:
-    case TARGET_CLASS_GYRO_DATA:
-        struct AxisData data = {
+    case TARGET_CLASS_GYRO_DATA: {
+        struct AxisData d = {
             .timestamp = timestamp,
             .x = toInt32(buffer + 6),
             .y = toInt32(buffer + 10),
@@ -116,18 +136,22 @@ int poll() {
              ? callbacks->processGyroData
              : buffer[1] == TARGET_CLASS_ACCELERATION_DATA
              ? callbacks->processAccelerationData
-             : callbacks->processMagnetometerData)(data);
+             : callbacks->processMagnetometerData)(d);
         break;
+    }
 
-    case TARGET_CLASS_RAW_SERIAL:
+    case TARGET_CLASS_RAW_SERIAL: {
         uint8_t* sdata = (uint8_t*)malloc(pktlen - 5);
         memcpy(sdata, buffer + 6, pktlen - 5);
-        callbacks->processSerialData({
+        struct SerialData d = {
             .timestamp = timestamp,
             .size = pktlen - 5,
             .data = sdata
-        });
+        };
+
+        callbacks->processSerialData(d);
         break;
+    }
 
     default:
         break;

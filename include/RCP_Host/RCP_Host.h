@@ -163,7 +163,7 @@ namespace LRI::RCP {
     // Functions to send controller packets
     int sendEStop();
 
-    int sendTestUpdate(TestStateControl state, uint8_t testId = 0);
+    int sendTestUpdate(TestStateControl state, uint8_t testId);
     int requestTestUpdate();
 
     int sendSolenoidWrite(uint8_t ID, SolenoidState state);
