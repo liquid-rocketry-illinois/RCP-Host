@@ -63,7 +63,7 @@ enum RCP_TestRunningState {
 
 typedef uint8_t RCP_SolenoidState_t;
 
-enum SolenoidState {
+enum RCP_SolenoidState {
     RCP_TestData = 0x40,
     SOLENOID_OFF = 0x80,
     SOLENOID_TOGGLE = 0xC0,
