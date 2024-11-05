@@ -4,6 +4,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef uint8_t RCP_Channel_t;
 
 enum RCP_Channel {
@@ -173,5 +177,9 @@ int RCP_requestSolenoidRead(uint8_t ID);
 
 int RCP_sendStepperWrite(uint8_t ID, RCP_StepperWriteMode_t mode, int32_t value);
 int RCP_requestStepperRead(uint8_t ID);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //RCP_HOST_H
