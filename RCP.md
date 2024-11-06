@@ -30,6 +30,26 @@ to transmit this protocol, these features may already be available.
 - Class Byte: The second byte of a packet. It indicates the packet "class," or the functionality of the rest of the
   transmitted data.
 - Packet length: The total length of the packet, not including the header byte.
+- Device: An actuator, sensor, or other component on a target that can be controlled or otherwise interfaced with
+
+### Device Classes
+A device class is a 7 bit identifier which encodes the type of device of something. For example, a solenoid, a 
+stepper motor, a sensor, etc. Device classes, combined with a device ID number, can be used to uniquely identify an 
+individual device on a target. The most significant bit in a device class byte should indicate whether the packet is 
+a read or write operation.
+
+The so far defined device classes are as follows:
+- 0x00: Test State (not a physical device, but a device class for interfacing with the current state of a test)
+- 0x01: Solenoid
+- 0x02: Stepper Motor
+- 0x7F: Serial data (not a physical device)
+- 0x7E: GPS
+- 0x7D: Ambient Pressure
+- 0x7C: Ambient Temperature
+- 0x7B: Acceleration
+- 0x7A: Gyroscope
+- 0x79: Magnetometer
+- 0x78: Pressure Transducer
 
 ## Packet Structure
 
@@ -64,7 +84,8 @@ Any other length from 1 to 63 specifies the length of the packet excluding this 
 ### Class Byte
 
 This byte indicates the purpose of the rest of the packet. The exact function and definition of the class byte depends
-on if the packet is for control or for data. This byte is included in the length field of the header byte.
+on if the packet is for control or for data. This byte is included in the length field of the header byte. The class 
+byte typically encodes a device class and whether the operation is read or write.
 
 ## Control Packets
 
@@ -73,12 +94,12 @@ the target. The function of the control packet is determined by the value of the
 
 The meanings of the class byte are as follows:
 
-- 0x00: Testing commands
-- 0xF0: Testing query
-- 0x01: Solenoid write request
-- 0xF1: Solenoid read request
-- 0x02: Stepper motor write request
-- 0xF2: Stepper motor read request
+- 0x00: Test State write
+- 0x80: Test State read
+- 0x01: Solenoid write
+- 0x81: Solenoid read
+- 0x02: Stepper motor write
+- 0x82: Stepper motor read
 - Remaining codes are not yet defined and can be used as needed.
 
 ### Testing Command
@@ -151,23 +172,22 @@ The remaining class codes are currently undefined, and can be used for future ex
 
 These packets are used to communicate state information from the target to the host. Data logging packets begin with
 a header byte and a class byte like control packets, but class byte values indicate different functions than class bytes
-in a control packet. The class byte represents these data options:
+in a control packet. The class bytes indicate a device class, but the MSB is always set to zero, as a data packet 
+cannot be a write request. The class byte represents these data options:
 
-- 0x00: Test state information
-- 0x01: Solenoid state information
-- 0x02: Stepper motor information
-- 0x43: Pressure transducer data
-- 0x80: GPS data
-- 0x81: Magnetometer data
-- 0x82: Pressure data
-- 0x83: Temperature data
-- 0x84: Accelerometer data
-- 0x85: Gyroscope data
-- 0xFF: Raw Serial Data
+- 0x00: Test state
+- 0x01: Solenoid state
+- 0x02: Stepper motor
+- 0x7F: Serial data
+- 0x7E: GPS
+- 0x7D: Ambient Pressure
+- 0x7C: Ambient Temperature
+- 0x7B: Acceleration
+- 0x7A: Gyroscope
+- 0x79: Magnetometer
+- 0x78: Pressure Transducer
 
-Classes with a most significant bit of zero indicate the sensor reading is for the target as a whole, for example a
-general temperature reading, or acceleration reading (this is not an explicit requirement, more of a suggestion for
-organization). If a target has multiple sensors for a specific type of data, it is the target responsibility to
+If a target has multiple sensors for a specific type of data, it is the target's responsibility to
 determine which is the best data to send to the host.
 
 Data packets include a 4 byte time stamp immediately following the class byte. This timestamp indicates the milliseconds
@@ -276,5 +296,5 @@ The remaining class codes are currently undefined, and can be used for future ex
 ## Changelog:
 
 - Changed all floating point values to 32 bit signed integers, and adjusted scale of values to take advantage of integer
-  range (ie millibars -> microbars, etc)
+  range (ie millibars -> microbars, etc.)
 - Renamed "host" to "target", and "controller" to "host"
