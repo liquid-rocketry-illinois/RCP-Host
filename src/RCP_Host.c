@@ -24,6 +24,7 @@ int RCP_isOpen() {
 int RCP_shutdown() {
     if(callbacks == NULL) return -1;
     free(callbacks);
+    callbacks = NULL;
     return 0;
 }
 
