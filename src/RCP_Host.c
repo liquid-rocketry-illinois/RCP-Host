@@ -170,7 +170,7 @@ int RCP_sendEStop() {
 int RCP_sendTestUpdate(RCP_TestStateControl_t state, uint8_t testId) {
     if(callbacks == NULL) return -2;
     uint8_t buffer[3] = {0};
-    buffer[0] = channel & 0x02;
+    buffer[0] = channel | 0x02;
     buffer[1] = HOST_CLASS_TESTING_WRITE;
     buffer[2] = state & testId;
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
@@ -179,7 +179,7 @@ int RCP_sendTestUpdate(RCP_TestStateControl_t state, uint8_t testId) {
 int RCP_requestTestUpdate() {
     if(callbacks == NULL) return -2;
     uint8_t buffer[2] = {0};
-    buffer[0] = channel & 0x01;
+    buffer[0] = channel | 0x01;
     buffer[1] = HOST_CLASS_TESTING_READ;
     return callbacks->sendData(buffer, 2) == 2 ? 0 : -1;
 }
@@ -187,7 +187,7 @@ int RCP_requestTestUpdate() {
 int RCP_sendSolenoidWrite(uint8_t ID, RCP_SolenoidState_t state) {
     if(callbacks == NULL) return -2;
     uint8_t buffer[3] = {0};
-    buffer[0] = channel & 0x02;
+    buffer[0] = channel | 0x02;
     buffer[1] = HOST_CLASS_SOLENOID_WRITE;
     buffer[2] = state & ID;
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
@@ -196,7 +196,7 @@ int RCP_sendSolenoidWrite(uint8_t ID, RCP_SolenoidState_t state) {
 int RCP_requestSolenoidRead(uint8_t ID) {
     if(callbacks == NULL) return -2;
     uint8_t buffer[3] = {0};
-    buffer[0] = channel & 0x02;
+    buffer[0] = channel | 0x02;
     buffer[1] = HOST_CLASS_SOLENOID_READ;
     buffer[2] = ID;
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
@@ -205,7 +205,7 @@ int RCP_requestSolenoidRead(uint8_t ID) {
 int RCP_sendStepperWrite(uint8_t ID, RCP_StepperWriteMode_t mode, int32_t value) {
     if(callbacks == NULL) return -2;
     uint8_t buffer[7] = {0};
-    buffer[0] = channel & 0x06;
+    buffer[0] = channel | 0x06;
     buffer[1] = HOST_CLASS_STEPPER_WRITE;
     buffer[2] = mode & ID;
     buffer[3] = value >> 24;
@@ -218,7 +218,7 @@ int RCP_sendStepperWrite(uint8_t ID, RCP_StepperWriteMode_t mode, int32_t value)
 int RCP_requestStepperRead(uint8_t ID) {
     if(callbacks == NULL) return -2;
     uint8_t buffer[3] = {0};
-    buffer[0] = channel & 0x02;
+    buffer[0] = channel | 0x02;
     buffer[1] = HOST_CLASS_STEPPER_READ;
     buffer[2] = ID;
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
