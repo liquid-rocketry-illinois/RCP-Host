@@ -172,7 +172,7 @@ int RCP_sendTestUpdate(RCP_TestStateControl_t state, uint8_t testId) {
     uint8_t buffer[3] = {0};
     buffer[0] = channel | 0x02;
     buffer[1] = HOST_CLASS_TESTING_WRITE;
-    buffer[2] = state & testId;
+    buffer[2] = state | testId;
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 
@@ -189,7 +189,7 @@ int RCP_sendSolenoidWrite(uint8_t ID, RCP_SolenoidState_t state) {
     uint8_t buffer[3] = {0};
     buffer[0] = channel | 0x02;
     buffer[1] = HOST_CLASS_SOLENOID_WRITE;
-    buffer[2] = state & ID;
+    buffer[2] = state | ID;
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 
@@ -207,7 +207,7 @@ int RCP_sendStepperWrite(uint8_t ID, RCP_StepperWriteMode_t mode, int32_t value)
     uint8_t buffer[7] = {0};
     buffer[0] = channel | 0x06;
     buffer[1] = HOST_CLASS_STEPPER_WRITE;
-    buffer[2] = mode & ID;
+    buffer[2] = mode | ID;
     buffer[3] = value >> 24;
     buffer[4] = value >> 16;
     buffer[5] = value >> 8;
