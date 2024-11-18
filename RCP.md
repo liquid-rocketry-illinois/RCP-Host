@@ -31,14 +31,20 @@ to transmit this protocol, these features may already be available.
   transmitted data.
 - Packet length: The total length of the packet, not including the header byte.
 - Device: An actuator, sensor, or other component on a target that can be controlled or otherwise interfaced with
+- Interface: The method by which the host and target communicate with each other. For example, LoRa, USB, TCP/IP over
+  various methods, etc.
+- Heartbeat packet: Packets sent from the host to the target. If consecutive heartbeats are not received by the 
+  target in the time specified, the target should initiate an emergency stop.
 
 ### Device Classes
-A device class is a 7 bit identifier which encodes the type of device of something. For example, a solenoid, a 
-stepper motor, a sensor, etc. Device classes, combined with a device ID number, can be used to uniquely identify an 
-individual device on a target. The most significant bit in a device class byte should indicate whether the packet is 
+
+A device class is a 7 bit identifier which encodes the type of device of something. For example, a solenoid, a
+stepper motor, a sensor, etc. Device classes, combined with a device ID number, can be used to uniquely identify an
+individual device on a target. The most significant bit in a device class byte should indicate whether the packet is
 a read or write operation.
 
 The so far defined device classes are as follows:
+
 - 0x00: Test State (not a physical device, but a device class for interfacing with the current state of a test)
 - 0x01: Solenoid
 - 0x02: Stepper Motor
@@ -84,7 +90,7 @@ Any other length from 1 to 63 specifies the length of the packet excluding this 
 ### Class Byte
 
 This byte indicates the purpose of the rest of the packet. The exact function and definition of the class byte depends
-on if the packet is for control or for data. This byte is included in the length field of the header byte. The class 
+on if the packet is for control or for data. This byte is included in the length field of the header byte. The class
 byte typically encodes a device class and whether the operation is read or write.
 
 ## Control Packets
@@ -116,6 +122,9 @@ which testing function to perform:
 - 0x20: Pause/Unpause the currently running test
 - 0x30: Start data streaming (Full details in data packet section)
 - 0x40: Stop data streaming
+- 0xF0: Disable heartbeat packets
+- 0xFx: Enable heartbeat packets with seconds specified in the second nibble (excluding 127 seconds)
+- 0xFF: Heartbeat packet
 - Remaining codes are not yet defined and can be used as needed.
 
 ### Testing Query
@@ -172,7 +181,7 @@ The remaining class codes are currently undefined, and can be used for future ex
 
 These packets are used to communicate state information from the target to the host. Data logging packets begin with
 a header byte and a class byte like control packets, but class byte values indicate different functions than class bytes
-in a control packet. The class bytes indicate a device class, but the MSB is always set to zero, as a data packet 
+in a control packet. The class bytes indicate a device class, but the MSB is always set to zero, as a data packet
 cannot be a write request. The class byte represents these data options:
 
 - 0x00: Test state
