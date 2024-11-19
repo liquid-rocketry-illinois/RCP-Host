@@ -53,6 +53,7 @@ enum RCP_TestStateControl {
     TEST_PAUSE = 0x20,
     DATA_STREAM_START = 0x30,
     DATA_STREAM_STOP = 0x40,
+    HEARTBEATS_CONTROL = 0xF0
 };
 
 typedef uint8_t RCP_TestRunningState_t;
@@ -169,7 +170,7 @@ int RCP_poll();
 // Functions to send controller packets
 int RCP_sendEStop();
 
-int RCP_sendTestUpdate(RCP_TestStateControl_t state, uint8_t testId);
+int RCP_sendTestUpdate(RCP_TestStateControl_t state, uint8_t param);
 int RCP_requestTestUpdate();
 
 int RCP_sendSolenoidWrite(uint8_t ID, RCP_SolenoidState_t state);

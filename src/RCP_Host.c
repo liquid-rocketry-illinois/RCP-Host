@@ -167,12 +167,12 @@ int RCP_sendEStop() {
     return callbacks->sendData(&ESTOP, 1) == 1 ? 0 : -1;
 }
 
-int RCP_sendTestUpdate(RCP_TestStateControl_t state, uint8_t testId) {
+int RCP_sendTestUpdate(RCP_TestStateControl_t state, uint8_t param) {
     if(callbacks == NULL) return -2;
     uint8_t buffer[3] = {0};
     buffer[0] = channel | 0x02;
     buffer[1] = HOST_CLASS_TESTING_WRITE;
-    buffer[2] = state | testId;
+    buffer[2] = state | param;
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 
