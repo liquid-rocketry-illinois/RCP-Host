@@ -29,33 +29,34 @@ to transmit this protocol, these features may already be available.
   the packet.
 - Class Byte: The second byte of a packet. It indicates the packet "class," or the functionality of the rest of the
   transmitted data.
-- Packet length: The total length of the packet, not including the header byte.
-- Device: An actuator, sensor, or other component on a target that can be controlled or otherwise interfaced with
+- Parameter Bytes: The bytes in a packet that follow the class byte.
+- Packet length: The length of the packet, not including the header or class bytes.
+- Device: An actuator, sensor, or other component (including software components) on a target that can be controlled,
+  queried, or otherwise interacted with
 - Interface: The method by which the host and target communicate with each other. For example, LoRa, USB, TCP/IP over
   various methods, etc.
-- Heartbeat packet: Packets sent from the host to the target. If consecutive heartbeats are not received by the 
+- Heartbeat packet: Packets sent from the host to the target. If consecutive heartbeats are not received by the
   target in the time specified, the target should initiate an emergency stop.
 
 ### Device Classes
 
-A device class is a 7 bit identifier which encodes the type of device of something. For example, a solenoid, a
-stepper motor, a sensor, etc. Device classes, combined with a device ID number, can be used to uniquely identify an
-individual device on a target. The most significant bit in a device class byte should indicate whether the packet is
-a read or write operation.
+A device class is an 8 bit identifier which encodes the type of device of something. For example, a solenoid, a sensor,
+a software component, etc. Device classes, combined with a device ID number (if necessary), can be used to uniquely
+identify an individual device on a target.
 
-The so far defined device classes are as follows:
+The defined device classes are as follows:
 
-- 0x00: Test State (not a physical device, but a device class for interfacing with the current state of a test)
+- 0x00: Test State (virtual device)
 - 0x01: Solenoid
 - 0x02: Stepper Motor
-- 0x7F: Serial data (not a physical device)
-- 0x7E: GPS
-- 0x7D: Ambient Pressure
-- 0x7C: Ambient Temperature
-- 0x7B: Acceleration
-- 0x7A: Gyroscope
-- 0x79: Magnetometer
-- 0x78: Pressure Transducer
+- 0x80: Custom data (virtual device)
+- 0x81: GPS
+- 0x82: Ambient Pressure
+- 0x83: Ambient Temperature
+- 0x84: Acceleration
+- 0x85: Gyroscope
+- 0x86: Magnetometer
+- 0x87: Pressure Transducer
 
 ## Packet Structure
 
@@ -78,101 +79,80 @@ possible.
 
 #### Length Bits
 
-The remaining 6 bits of the header byte are used to indicate the length of the packet following the header byte,
-including the class byte (specified below).
+The remaining 6 bits of the header byte are used to indicate the length of the packet following the class byte.
 
 A length of 0 is reserved for emergency stops. If a target receives a packet with length zero at any time, it should
 immediately enter an emergency stop state. This exact state is dependent on the target and it's physical structure, and
-when receiving this packet it should complete whatever emergency protocols it has.
+when receiving this packet it should complete whatever emergency protocols it has. An emergency stop packet contains
+only this header byte, and no other bytes.
 
-Any other length from 1 to 63 specifies the length of the packet excluding this header byte.
+Any other length from 1 to 63 specifies the length of the packet excluding this header byte and the class byte.
 
 ### Class Byte
 
 This byte indicates the purpose of the rest of the packet. The exact function and definition of the class byte depends
-on if the packet is for control or for data. This byte is included in the length field of the header byte. The class
-byte typically encodes a device class and whether the operation is read or write.
+on if the packet is for control or for data. This byte is not included in the length field of the header byte.
 
 ## Control Packets
 
 Control packets are sent from the host to the target to request an update to the target state, or to request data from
-the target. The function of the control packet is determined by the value of the class byte.
+the target. The device to be addressed of a control packet is determined by the value of the class byte.
 
-The meanings of the class byte are as follows:
-
-- 0x00: Test State write
-- 0x80: Test State read
-- 0x01: Solenoid write
-- 0x81: Solenoid read
-- 0x02: Stepper motor write
-- 0x82: Stepper motor read
-- Remaining codes are not yet defined and can be used as needed.
+For every write to a device, the target should send the new state of the device after its state has been changed.
+For example, if the host requests a change to a solenoid's state, the target should respond with a solenoid data
+packet with the new state of the solenoid. This new state is not necessarily what the host requests, but what, in
+reality, is the outcome. This data can be used by the host to determine if the change was successful.
 
 ### Testing Command
 
-A testing command is a request to change the state of a test. This includes starting, stopping, pausing, and controlling
-data streaming. The testing command includes 1 additional byte (for a total length of 2). This additional byte specifies
-which testing function to perform:
+A testing command is a request to change the state of a test. This includes starting, stopping, and pausing tests,
+and controlling data streaming. The testing device requires 1 parameter byte (for a total length of 1). This
+additional byte specifies which testing function to perform:
 
-- 0x0x: This indicates a request to begin a test. The first 4 bits of this testing command must all be zero, but the
+- 0x0x: This indicates a request to begin a test. The first 4 bits of this parameter must all be zero, but the
   remaining 4 bits allow for a test number to be selected. This allows for the target to have multiple test sequences
   preprogrammed, and the host can dynamically select which test to start without requiring new code to be uploaded
   to the target.
 - 0x10: Full stop the currently running test
-- 0x20: Pause/Unpause the currently running test
-- 0x30: Start data streaming (Full details in data packet section)
-- 0x40: Stop data streaming
+- 0x11: Pause/Unpause the currently running test
+- 0x20: Start data streaming (Full details in data packet section)
+- 0x21: Stop data streaming
+- 0x30: Query current test progress (running, paused, stopped, e-stopped, currently streaming data). The target
+  should respond with the appropriate data packet.
 - 0xF0: Disable heartbeat packets
-- 0xFx: Enable heartbeat packets with seconds specified in the second nibble (excluding 127 seconds)
+- 0xFx: Enable heartbeat packets with seconds specified in the second nibble (excluding a value of 15)
 - 0xFF: Heartbeat packet
 - Remaining codes are not yet defined and can be used as needed.
 
-### Testing Query
+### Solenoid Command
 
-A testing query is a request for the current state of a test. This request needs no additional bytes, so the packet
-length field should be set to 1. The target should respond with the appropriate data packet.
+This packet class is a manual request to a solenoid. This command contains one parameter byte, making the total
+packet length 1. The additional byte encodes both the operation requested, and the solenoid ID to address. The first 2
+bits indicate the requested operation:
 
-### Solenoid Write Request
-
-This packet class is a manual write request to a solenoid. This command contains one additional byte, making the total
-packet length 2. The additional byte encodes both the state requested, and the solenoid ID to write to. The first 2 bits
-indicate the requested state:
-
+- 00b: Query solenoid state
 - 01b: Turn solenoid on
 - 10b: Turn solenoid off
 - 11b: Toggle solenoid state
 
-The remaining 6 bits indicate the solenoid ID to write to. The target is responsible for parsing this ID and translating
+The remaining 6 bits indicate the solenoid ID to address. The target is responsible for parsing this ID and translating
 it to the appropriate hardware address.
 
-### Solenoid Read Request
+### Stepper Motor Command
 
-This packet class is a request for the state of a solenoid. This command contains one additional byte, making the total
-packet length 2. The additional byte encodes only the solenoid ID to read from. The first 2 bits of this byte are
-unused, and the remaining 6 bits encode the solenoid ID. The target should respond with the appropriate data packet.
+This packet class is a manual request to a stepper motor. This command contains a variable number of parameter bytes
+depending on the requested operation, but it is always at least 1. The first parameter byte indicates the requested
+operation, and the stepper motor to address. The first 2 bits indicate the operation:
 
-### Stepper Motor Write Request
+- 00b: Query stepper motor state
+- 01b: Absolute positioning
+- 10b: Relative positioning
+- 11b: Speed based control
 
-This packet class is a manual write request to a solenoid. This command contains 5 additional bytes; 1 ID byte and 4
-value bytes. This makes the packet length 6. The first byte encodes both the requested function and the ID of the
-stepper motor addressed. The first 2 bits indicate the function:
-
-- 00b: Absolute positioning
-- 01b: Relative positioning
-- 10b: Speed based control
-- 11b: Unused
-
-The remaining 6 bits of the first byte are used to indicate the stepper motor to address. The target is responsible for
-parsing this ID and translating it to the appropriate hardware address.
-
-The remaining 4 bytes of information are the value for the indicated function. Depending on the hardware implementation,
-these bytes may be a 32 bit integer, or a floating point number, or another representation not mentioned.
-
-### Stepper Motor Read Request
-
-This packet class is a request for the state of a stepper motor. This command contains one additional byte, making the
-total packet length 2. The additional byte encodes only the stepper motor ID to read from. The first 2 bits of this byte
-are unused, and the remaining 6 bits encode the solenoid ID. The target should respond with the appropriate data packet.
+The next 6 bits indicate the stepper motor ID. If the requested operation is a query, there are no additional
+parameter bytes. However, if the operation is a write, the next 4 bytes of information are the value for the
+indicated function. Depending on the hardware implementation, these bytes may be interpreted as a 32 bit integer,
+a floating point number, or another representation not mentioned.
 
 ---
 The remaining class codes are currently undefined, and can be used for future expansions.
@@ -180,47 +160,35 @@ The remaining class codes are currently undefined, and can be used for future ex
 ## Data Packets
 
 These packets are used to communicate state information from the target to the host. Data logging packets begin with
-a header byte and a class byte like control packets, but class byte values indicate different functions than class bytes
-in a control packet. The class bytes indicate a device class, but the MSB is always set to zero, as a data packet
-cannot be a write request. The class byte represents these data options:
+a header byte and a class byte like control packets, and the parameter bytes indicate the data about that device.
+The exact format of the data depends on the device.
 
-- 0x00: Test state
-- 0x01: Solenoid state
-- 0x02: Stepper motor
-- 0x7F: Serial data
-- 0x7E: GPS
-- 0x7D: Ambient Pressure
-- 0x7C: Ambient Temperature
-- 0x7B: Acceleration
-- 0x7A: Gyroscope
-- 0x79: Magnetometer
-- 0x78: Pressure Transducer
-
-If a target has multiple sensors for a specific type of data, it is the target's responsibility to
-determine which is the best data to send to the host.
+If a target has multiple sensors belonging to the same device class (ex. ambient temperature, acceleraction, etc.), and
+this device class does not support IDs, it is the target's responsibility to determine which is the best data to send to
+the host.
 
 Data packets include a 4 byte time stamp immediately following the class byte. This timestamp indicates the milliseconds
-since the test was started. This value **does not indicate absolute time in any way, and is not intended to be used for
-accurate data logging**. This time value is only for the host to be able to determine the rough time a data point
-was produced for data visualization.
+since data logging was started. This value **does not indicate absolute time in any way, and is not intended to be used
+for accurate timekeeping**. This time value is only for the host to be able to determine the rough time a data point
+was produced for data visualization. The timestamp bytes are parameter bytes and thus are included in the packet length.
 
 ### Test State Packet
 
-This packet is used to return the state of a test to the host. This includes 1 additional byte, making the packet
-length 6. This additional byte includes several pieces of information:
+This packet is used to return the state of a test to the host. This includes 1 additional parameter byte, making the
+packet length 5. This additional byte includes several pieces of information:
 
 - The most significant bit indicates if data is currently streaming (1) or not (0)
-- The next bit is not used
 - The next two bits indicate test state:
     - 00b: Test running
     - 01b: Test stopped
     - 10b: Test paused
     - 11b: Emergency Stopped
-- The next 4 bits indicate the test number that is currently selected
+- The next bit is unused
+- The next 4 bits indicate the currently set time between heartbeats, or zero for no heartbeats.
 
 ### Solenoid State Packet
 
-This packet is used to return the state of a solenoid. This is only 1 additional byte, making the packet length 6. This
+This packet is used to return the state of a solenoid. This is only 1 additional byte, making the packet length 5. This
 additional byte encodes both the state of the solenoid and the solenoid ID.
 
 - The most significant bit is not used
@@ -229,7 +197,7 @@ additional byte encodes both the state of the solenoid and the solenoid ID.
 
 ### Stepper Motor State Packet
 
-This packet is used to return the state of a stepper motor. This is 9 additional bytes, making the packet length 14.
+This packet is used to return the state of a stepper motor. This is 9 additional bytes, making the packet length 13.
 
 The first byte indicates the stepper motor ID. The first 2 bits are unused, and the next 6 bits indicate the stepper
 motor ID. The next 4 bytes are a signed integer that encodes the stepper motor position, in millionths of degrees.
@@ -238,66 +206,59 @@ second.
 
 ### Pressure Transducer Data
 
-This packet is used to return the value of a pressure transducer. This is 5 additional bytes, making the packet length
-
-10. The first byte indicates the transducer ID. The first 2 bits are unused, and the next 6 bits indicate the transducer
-    ID.
+This packet is used to return the value of a pressure transducer. This is 5 additional bytes, making the packet
+length 10. The first byte indicates the transducer ID. The first 2 bits are unused, and the next 6 bits indicate the
+transducer ID.
 
 The next 4 bytes are a signed integer representing the transducer measurement, in microbars.
 
 ### GPS Data
 
-This packet is used to return GPS data. This is 32 additional bytes, making the packet length 37.
+This packet is used to return GPS data. This is 32 additional bytes, making the packet length 36.
 
-The first 8 bytes are a signed integer representing the latitude of the target, in millionths of degrees.
-
-The second 8 bytes are a signed integer representing the longitude of the target, in millionths of degrees.
-
-The next 8 bytes are a signed integer representing the altitude of the target, in millimeters above the ellipsoid (HAE).
-
-The final 8 bytes are a signed integer representing the ground speed of the target, in millimeters per second.
+- The first 8 bytes are a signed integer representing the latitude of the target, in millionths of degrees.
+- The second 8 bytes are a signed integer representing the longitude of the target, in millionths of degrees.
+- The next 8 bytes are a signed integer representing the altitude of the target, in millimeters above the ellipsoid
+  (HAE).
+- The final 8 bytes are a signed integer representing the ground speed of the target, in millimeters per second.
 
 ### Magnetometer Data
 
-This packet is used to return magnetometer data. This is 12 additional bytes, making the packet length 17.
+This packet is used to return magnetometer data. This is 12 additional bytes, making the packet length 16.
 
-The first 4 bytes are a signed integer representing the magnetic field in the X direction, in millionths of
-Gauss.
-
-The next 4 bytes are a signed integer representing the magnetic field in the Y direction, in millionths of
-Gauss.
-
-The final 4 bytes are a signed integer representing the magnetic field in the Z direction, in millionths of
-Gauss.
+- The first 4 bytes are a signed integer representing the magnetic field in the X direction, in millionths of
+  Gauss.
+- The next 4 bytes are a signed integer representing the magnetic field in the Y direction, in millionths of
+  Gauss.
+- The final 4 bytes are a signed integer representing the magnetic field in the Z direction, in millionths of
+  Gauss.
 
 ### Pressure and Temperature Data
 
 These packets are used to return ambient pressure and temperature data. Both packets are 4 additional bytes of data,
-making the packet length 9. These bytes are a signed integer, representing the value in millionths of degrees Celsius,
+making the packet length 8. These bytes are a signed integer, representing the value in millionths of degrees Celsius,
 or in microbars respectively.
 
 ### Accelerometer and Gyroscope Data
 
 These packets are used to return overall acceleration and rotation data. Both packets are 12 additional bytes of data,
-making the packet length 17.
+making the packet length 16.
 
-The first 4 bytes are a signed integer, representing acceleration/rotation in the X axis, in millimeters per
-second per second or degrees per second, respectively.
+- The first 4 bytes are a signed integer, representing acceleration/rotation in the X axis, in millimeters per
+  second per second or degrees per second, respectively.
+- The next 4 bytes are a signed integer, representing acceleration/rotation in the Y axis, in millimeters per
+  second per second or degrees per second, respectively.
+- The last 4 bytes are a signed integer, representing acceleration/rotation in the Z axis, in millimeters per
+  second per second or degrees per second, respectively.
 
-The next 4 bytes are a signed integer, representing acceleration/rotation in the Y axis, in millimeters per
-second per second or degrees per second, respectively.
+### Custom Data
 
-The last 4 bytes are a signed integer, representing acceleration/rotation in the Z axis, in millimeters per
-second per second or degrees per second, respectively.
-
-### Raw Serial Data
-
-These packets are intended to allow the target to send arbitrary serial data back to the host. This packet is at
-least 1 additional byte, making the minimum length of the packet 6.
+These packets are intended to allow the target to send arbitrary data back to the host. This packet is at
+least 1 additional byte, making the minimum length of the packet 5.
 
 All bytes following the timestamp bytes are the raw bytes sent by the target. The length of bytes sent can be calculated
 using the packet length field from the header byte. Because the header byte indicates the length, the maximum length of
-the raw serial data that can be sent in one packet is 58 bytes.
+the raw serial data that can be sent in one packet is 59 bytes.
 
 ---
 The remaining class codes are currently undefined, and can be used for future expansions.
@@ -307,3 +268,4 @@ The remaining class codes are currently undefined, and can be used for future ex
 - Changed all floating point values to 32 bit signed integers, and adjusted scale of values to take advantage of integer
   range (ie millibars -> microbars, etc.)
 - Renamed "host" to "target", and "controller" to "host"
+- Large adjustment to format of data, and how things are addressed
