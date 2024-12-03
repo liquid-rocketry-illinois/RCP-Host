@@ -154,6 +154,14 @@ parameter bytes. However, if the operation is a write, the next 4 bytes of infor
 indicated function. Depending on the hardware implementation, these bytes may be interpreted as a 32 bit integer,
 a floating point number, or another representation not mentioned.
 
+### Sensor Read Requests
+
+This packet can be used to request a value from a READ ONLY device on the target. Devices that can be read from but
+also written to have their own packet formats. This includes devices like GPS, Acceleration, Pressure Transducers, etc.
+This packet contains 1 additional byte, making the packet length 1. The device class byte indicates the device to 
+read from. The single parameter byte indicates the ID of the sensor, if applicable (i.e., transducers, other 
+similar devices). If the requested device is not identified by an ID, then this byte should be zero.
+
 ---
 The remaining class codes are currently undefined, and can be used for future expansions.
 
