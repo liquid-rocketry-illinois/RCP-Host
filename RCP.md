@@ -172,6 +172,8 @@ since data logging was started. This value **does not indicate absolute time in 
 for accurate timekeeping**. This time value is only for the host to be able to determine the rough time a data point
 was produced for data visualization. The timestamp bytes are parameter bytes and thus are included in the packet length.
 
+If a bit is unused, it should be set to zero.
+
 ### Test State Packet
 
 This packet is used to return the state of a test to the host. This includes 1 additional parameter byte, making the
