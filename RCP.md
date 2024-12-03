@@ -207,7 +207,7 @@ second.
 ### Pressure Transducer Data
 
 This packet is used to return the value of a pressure transducer. This is 5 additional bytes, making the packet
-length 10. The first byte indicates the transducer ID. The first 2 bits are unused, and the next 6 bits indicate the
+length 9. The first byte indicates the transducer ID. The first 2 bits are unused, and the next 6 bits indicate the
 transducer ID.
 
 The next 4 bytes are a signed integer representing the transducer measurement, in microbars.
