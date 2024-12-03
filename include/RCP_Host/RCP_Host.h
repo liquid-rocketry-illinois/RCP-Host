@@ -176,6 +176,9 @@ int RCP_requestSolenoidRead(uint8_t ID);
 int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode_t mode, int32_t value);
 int RCP_requestStepperRead(uint8_t ID);
 
+int RCP_requestDeviceReadNOID(RCP_DeviceClass_t device);
+int RCP_requestDeviceReadID(RCP_DeviceClass_t device, uint8_t ID);
+
 #ifdef __cplusplus
 }
 #endif

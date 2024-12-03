@@ -241,3 +241,17 @@ int RCP_requestStepperRead(uint8_t ID) {
     buffer[2] = RCP_STEPPER_QUERY_STATE | (ID & 0x3F);
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
+
+int RCP_requestDeviceReadNOID(RCP_DeviceClass_t device) {
+    return RCP_requestDeviceReadID(device, 0);
+}
+
+int RCP_requestDeviceReadID(RCP_DeviceClass_t device, uint8_t ID) {
+    if(device <= 0x80 || (ID != 0 && device != RCP_DEVCLASS_PRESSURE_TRANSDUCER)) return -3;
+    if(callbacks == NULL) return -2;
+    uint8_t buffer[3] = {0};
+    buffer[0] = channel | 0x01;
+    buffer[1] = device;
+    buffer[2] = ID;
+    return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
+}
