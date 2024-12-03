@@ -42,7 +42,7 @@ int RCP_poll() {
     if(bread != pktlen + 1) return -1;
     if(buffer[0] & RCP_CHANNEL_MASK != channel) return 0;
 
-    uint32_t timestamp = toInt32(buffer[2]);
+    uint32_t timestamp = toInt32(buffer + 2);
 
     switch(buffer[1]) {
     case RCP_DEVCLASS_TEST_STATE: {
