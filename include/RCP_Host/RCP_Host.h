@@ -18,41 +18,31 @@ enum RCP_Channel {
     RCP_CHANNEL_MASK = 0xC0,
 };
 
-typedef uint8_t RCP_HostClass_t;
+typedef uint8_t RCP_DeviceClass_t;
 
-enum RCP_HostClass {
-    RCP_HOST_CLASS_TESTING_WRITE = 0x00,
-    RCP_HOST_CLASS_TESTING_READ = 0x80,
-    RCP_HOST_CLASS_SOLENOID_WRITE = 0x01,
-    RCP_HOST_CLASS_SOLENOID_READ = 0x81,
-    RCP_HOST_CLASS_STEPPER_WRITE = 0x02,
-    RCP_HOST_CLASS_STEPPER_READ = 0x82,
+enum RCP_DeviceClass {
+    RCP_DEVCLASS_TEST_STATE = 0x00,
+    RCP_DEVCLASS_SOLENOID = 0x01,
+    RCP_DEVCLASS_STEPPER = 0x02,
+    RCP_DEVCLASS_CUSTOM = 0x80,
+    RCP_DEVCLASS_GPS = 0x81,
+    RCP_DEVCLASS_AM_PRESSURE = 0x82,
+    RCP_DEVCLASS_AM_TEMPERATURE = 0x83,
+    RCP_DEVCLASS_ACCELEROMETER = 0x84,
+    RCP_DEVCLASS_GYROSCOPE = 0x85,
+    RCP_DEVCLASS_MAGNETOMETER = 0x86,
+    RCP_DEVCLASS_PRESSURE_TRANSDUCER = 0x87,
 };
 
-typedef uint8_t RCP_TargetClass_t;
+typedef uint8_t RCP_TestStateControlMode_t;
 
-enum RCP_TargetClass {
-    RCP_TARGET_CLASS_TESTING_DATA = 0x00,
-    RCP_TARGET_CLASS_SOLENOID_DATA = 0x01,
-    RCP_TARGET_CLASS_STEPPER_DATA = 0x02,
-    RCP_TARGET_CLASS_TRANSDUCER_DATA = 0x78,
-    RCP_TARGET_CLASS_GPS_DATA = 0x7E,
-    RCP_TARGET_CLASS_MAGNETOMETER_DATA = 0x79,
-    RCP_TARGET_CLASS_AM_PRESSURE_DATA = 0x7D,
-    RCP_TARGET_CLASS_AM_TEMPERATURE_DATA = 0x7C,
-    RCP_TARGET_CLASS_ACCELERATION_DATA = 0x7B,
-    RCP_TARGET_CLASS_GYRO_DATA = 0x7A,
-    RCP_TARGET_CLASS_RAW_SERIAL = 0xFF,
-};
-
-typedef uint8_t RCP_TestStateControl_t;
-
-enum RCP_TestStateControl {
+enum RCP_TestStateControlMode {
     RCP_TEST_START = 0x00,
     RCP_TEST_STOP = 0x10,
-    RCP_TEST_PAUSE = 0x20,
-    RCP_DATA_STREAM_START = 0x30,
-    RCP_DATA_STREAM_STOP = 0x40,
+    RCP_TEST_PAUSE = 0x11,
+    RCP_DATA_STREAM_START = 0x20,
+    RCP_DATA_STREAM_STOP = 0x21,
+    RCP_TEST_QUERY = 0x30,
     RCP_HEARTBEATS_CONTROL = 0xF0
 };
 
@@ -60,40 +50,43 @@ typedef uint8_t RCP_TestRunningState_t;
 
 enum RCP_TestRunningState {
     RCP_TEST_RUNNING = 0x00,
-    RCP_TEST_STOPPED = 0x10,
-    RCP_TEST_PAUSED = 0x20,
-    RCP_TEST_ESTOP = 0x30,
-    RCP_TEST_STATE_MASK = 0xF0,
+    RCP_TEST_STOPPED = 0x20,
+    RCP_TEST_PAUSED = 0x40,
+    RCP_TEST_ESTOP = 0x60,
+    RCP_TEST_STATE_MASK = 0x60,
 };
 
 typedef uint8_t RCP_SolenoidState_t;
 
 enum RCP_SolenoidState {
+    RCP_SOLENOID_READ = 0x00,
     RCP_SOLENOID_ON = 0x40,
     RCP_SOLENOID_OFF = 0x80,
     RCP_SOLENOID_TOGGLE = 0xC0,
     RCP_SOLENOID_STATE_MASK = 0xC0,
 };
 
-typedef uint8_t RCP_StepperWriteMode_t;
+typedef uint8_t RCP_StepperControlMode_t;
 
-enum RCP_StepperWriteMode {
-    RCP_STEPPER_ABSOLUTE_POSITION = 0x00,
-    RCP_STEPPER_RELATIVE_POSITION = 0x40,
-    RCP_STEPPER_SPEED_CONTROL = 0x80,
+enum RCP_StepperControlMode {
+    RCP_STEPPER_QUERY_STATE = 0x00,
+    RCP_STEPPER_ABSOLUTE_POS_CONTROL = 0x40,
+    RCP_STEPPER_RELATIVE_POS_CONTROL = 0x80,
+    RCP_STEPPER_SPEED_CONTROL = 0xC0,
+    RCP_STEPPER_CONTROL_MODE_MASK = 0xC0
 };
 
 struct RCP_TestData {
     int32_t timestamp;
     int dataStreaming;
     RCP_TestRunningState_t state;
-    uint8_t selectedTest;
+    uint8_t heartbeatTime;
 };
 
 struct RCP_SolenoidData {
     int32_t timestamp;
-    uint8_t ID;
     RCP_SolenoidState_t state;
+    uint8_t ID;
 };
 
 struct RCP_StepperData {
@@ -134,10 +127,10 @@ struct RCP_AMTemperatureData {
     int32_t temperature;
 };
 
-struct RCP_SerialData {
+struct RCP_CustomData {
     int32_t timestamp;
     void* data;
-    uint8_t size;
+    uint8_t length;
 };
 
 struct RCP_LibInitData {
@@ -153,7 +146,7 @@ struct RCP_LibInitData {
     int (*processAMTemperatureData)(const struct RCP_AMTemperatureData data);
     int (*processAccelerationData)(const struct RCP_AxisData data);
     int (*processGyroData)(const struct RCP_AxisData data);
-    int (*processSerialData)(const struct RCP_SerialData data);
+    int (*processSerialData)(const struct RCP_CustomData data);
 };
 
 // Provide library with callbacks to needed functions
@@ -169,14 +162,18 @@ int RCP_poll();
 
 // Functions to send controller packets
 int RCP_sendEStop();
+int RCP_sendHeartbeat();
 
-int RCP_sendTestUpdate(RCP_TestStateControl_t state, uint8_t param);
-int RCP_requestTestUpdate();
+int RCP_startTest(uint8_t testnum);
+int RCP_setDataStreaming(int datastreaming);
+int RCP_changeTestProgress(RCP_TestStateControlMode_t mode);
+int RCP_setHeartbeatTime(uint8_t heartbeatTime);
+int RCP_requestTestState();
 
 int RCP_sendSolenoidWrite(uint8_t ID, RCP_SolenoidState_t state);
 int RCP_requestSolenoidRead(uint8_t ID);
 
-int RCP_sendStepperWrite(uint8_t ID, RCP_StepperWriteMode_t mode, int32_t value);
+int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode_t mode, int32_t value);
 int RCP_requestStepperRead(uint8_t ID);
 
 #ifdef __cplusplus
