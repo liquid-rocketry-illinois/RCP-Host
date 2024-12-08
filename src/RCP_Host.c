@@ -40,7 +40,7 @@ int RCP_poll() {
     uint8_t pktlen = buffer[0] & ~RCP_CHANNEL_MASK;
     bread = callbacks->readData(buffer + 1, pktlen + 1);
     if(bread != pktlen + 1) return -1;
-    if(buffer[0] & RCP_CHANNEL_MASK != channel) return 0;
+    if((buffer[0] & RCP_CHANNEL_MASK) != channel) return 0;
 
     uint32_t timestamp = toInt32(buffer + 2);
 
