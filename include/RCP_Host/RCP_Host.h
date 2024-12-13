@@ -77,58 +77,58 @@ enum RCP_StepperControlMode {
 };
 
 struct RCP_TestData {
-    int32_t timestamp;
+    uint32_t timestamp;
     int dataStreaming;
     RCP_TestRunningState_t state;
     uint8_t heartbeatTime;
 };
 
 struct RCP_SolenoidData {
-    int32_t timestamp;
+    uint32_t timestamp;
     RCP_SolenoidState_t state;
     uint8_t ID;
 };
 
 struct RCP_StepperData {
-    int32_t timestamp;
+    uint32_t timestamp;
     uint8_t ID;
     int32_t position;
     int32_t speed;
 };
 
 struct RCP_TransducerData {
-    int32_t timestamp;
+    uint32_t timestamp;
     uint8_t ID;
     int32_t pressure;
 };
 
 struct RCP_GPSData {
-    int32_t timestamp;
-    int32_t latitude;
-    int32_t longitude;
-    int32_t altitude;
-    int32_t groundSpeed;
+    uint32_t timestamp;
+    int64_t latitude;
+    int64_t longitude;
+    int64_t altitude;
+    int64_t groundSpeed;
 };
 
 struct RCP_AxisData {
-    int32_t timestamp;
+    uint32_t timestamp;
     int32_t x;
     int32_t y;
     int32_t z;
 };
 
 struct RCP_AMPressureData {
-    int32_t timestamp;
+    uint32_t timestamp;
     int32_t pressure;
 };
 
 struct RCP_AMTemperatureData {
-    int32_t timestamp;
+    uint32_t timestamp;
     int32_t temperature;
 };
 
 struct RCP_CustomData {
-    int32_t timestamp;
+    uint32_t timestamp;
     void* data;
     uint8_t length;
 };
