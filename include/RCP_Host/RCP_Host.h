@@ -104,10 +104,10 @@ struct RCP_TransducerData {
 
 struct RCP_GPSData {
     uint32_t timestamp;
-    int64_t latitude;
-    int64_t longitude;
-    int64_t altitude;
-    int64_t groundSpeed;
+    int32_t latitude;
+    int32_t longitude;
+    int32_t altitude;
+    int32_t groundSpeed;
 };
 
 struct RCP_AxisData {
