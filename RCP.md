@@ -226,11 +226,11 @@ The next 4 bytes are a signed integer representing the transducer measurement, i
 
 This packet is used to return GPS data. This is 32 additional bytes, making the packet length 36.
 
-- The first 8 bytes are a signed integer representing the latitude of the target, in millionths of degrees.
-- The second 8 bytes are a signed integer representing the longitude of the target, in millionths of degrees.
-- The next 8 bytes are a signed integer representing the altitude of the target, in millimeters above the ellipsoid
+- The first 4 bytes are a signed integer representing the latitude of the target, in millionths of degrees.
+- The second 4 bytes are a signed integer representing the longitude of the target, in millionths of degrees.
+- The next 4 bytes are a signed integer representing the altitude of the target, in millimeters above the ellipsoid
   (HAE).
-- The final 8 bytes are a signed integer representing the ground speed of the target, in millimeters per second.
+- The final 4 bytes are a signed integer representing the ground speed of the target, in millimeters per second.
 
 ### Magnetometer Data
 
