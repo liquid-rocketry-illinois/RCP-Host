@@ -255,11 +255,11 @@ These packets are used to return overall acceleration and rotation data. Both pa
 making the packet length 16.
 
 - The first 4 bytes are a signed integer, representing acceleration/rotation in the X axis, in millimeters per
-  second per second or degrees per second, respectively.
+  second per second or millionths of degrees per second, respectively.
 - The next 4 bytes are a signed integer, representing acceleration/rotation in the Y axis, in millimeters per
-  second per second or degrees per second, respectively.
+  second per second or millionths of degrees per second, respectively.
 - The last 4 bytes are a signed integer, representing acceleration/rotation in the Z axis, in millimeters per
-  second per second or degrees per second, respectively.
+  second per second or millionths of degrees per second, respectively.
 
 ### Custom Data
 
