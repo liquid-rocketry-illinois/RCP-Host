@@ -115,8 +115,8 @@ additional byte specifies which testing function to perform:
   to the target.
 - 0x10: Full stop the currently running test
 - 0x11: Pause/Unpause the currently running test
-- 0x20: Start data streaming (Full details in data packet section)
-- 0x21: Stop data streaming
+- 0x20: Stop data streaming
+- 0x21: Start data streaming (Full details in data packet section)
 - 0x30: Query current test progress (running, paused, stopped, e-stopped, currently streaming data). The target
   should respond with the appropriate data packet.
 - 0xF0: Disable heartbeat packets
