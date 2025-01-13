@@ -57,6 +57,7 @@ The defined device classes are as follows:
 - 0x85: Gyroscope
 - 0x86: Magnetometer
 - 0x87: Pressure Transducer
+- 0x88: Hygrometer (relative humidity)
 
 ## Packet Structure
 
@@ -243,11 +244,11 @@ This packet is used to return magnetometer data. This is 12 additional bytes, ma
 - The final 4 bytes are a signed integer representing the magnetic field in the Z direction, in millionths of
   Gauss.
 
-### Pressure and Temperature Data
+### Pressure, Temperature, and Relative Humidity Data
 
-These packets are used to return ambient pressure and temperature data. Both packets are 4 additional bytes of data,
-making the packet length 8. These bytes are a signed integer, representing the value in millionths of degrees Celsius,
-or in microbars respectively.
+These packets are used to return ambient pressure, temperature and relative humidity percent data. Both packets are 4 
+additional bytes of data, making the packet length 8. These bytes are a signed integer, representing the value in 
+millionths of degrees Celsius, microbars, or percent * 1,000,000 respectively.
 
 ### Accelerometer and Gyroscope Data
 

@@ -32,6 +32,7 @@ enum RCP_DeviceClass {
     RCP_DEVCLASS_GYROSCOPE = 0x85,
     RCP_DEVCLASS_MAGNETOMETER = 0x86,
     RCP_DEVCLASS_PRESSURE_TRANSDUCER = 0x87,
+    RCP_DEVCLASS_RELATIVE_HYGROMETER = 0x88,
 };
 
 typedef uint8_t RCP_TestStateControlMode_t;
@@ -117,14 +118,9 @@ struct RCP_AxisData {
     int32_t z;
 };
 
-struct RCP_AMPressureData {
+struct RCP_int32Data {
     uint32_t timestamp;
-    int32_t pressure;
-};
-
-struct RCP_AMTemperatureData {
-    uint32_t timestamp;
-    int32_t temperature;
+    int32_t data;
 };
 
 struct RCP_CustomData {
@@ -136,26 +132,27 @@ struct RCP_CustomData {
 struct RCP_LibInitData {
     size_t (*sendData)(const void* data, size_t length);
     size_t (*readData)(void* data, size_t length);
-    int (*processTestUpdate)(const struct RCP_TestData data);
-    int (*processSolenoidData)(const struct RCP_SolenoidData data);
-    int (*processStepperData)(const struct RCP_StepperData data);
-    int (*processTransducerData)(const struct RCP_TransducerData data);
-    int (*processGPSData)(const struct RCP_GPSData data);
-    int (*processMagnetometerData)(const struct RCP_AxisData data);
-    int (*processAMPressureData)(const struct RCP_AMPressureData data);
-    int (*processAMTemperatureData)(const struct RCP_AMTemperatureData data);
-    int (*processAccelerationData)(const struct RCP_AxisData data);
-    int (*processGyroData)(const struct RCP_AxisData data);
-    int (*processSerialData)(const struct RCP_CustomData data);
+    int (*processTestUpdate)(const struct RCP_TestData& data);
+    int (*processSolenoidData)(const struct RCP_SolenoidData& data);
+    int (*processStepperData)(const struct RCP_StepperData& data);
+    int (*processTransducerData)(const struct RCP_TransducerData& data);
+    int (*processGPSData)(const struct RCP_GPSData& data);
+    int (*processMagnetometerData)(const struct RCP_AxisData& data);
+    int (*processAMPressureData)(const struct RCP_int32Data& data);
+    int (*processAMTemperatureData)(const struct RCP_int32Data& data);
+    int (*processHumidityData) (const struct RCP_int32Data& data);
+    int (*processAccelerationData)(const struct RCP_AxisData& data);
+    int (*processGyroData)(const struct RCP_AxisData& data);
+    int (*processSerialData)(const struct RCP_CustomData& data);
 };
 
 // Provide library with callbacks to needed functions
-int RCP_init(const struct RCP_LibInitData callbacks);
+int RCP_init(const struct RCP_LibInitData& callbacks);
 int RCP_isOpen();
 int RCP_shutdown();
 
 // Library will default to channel zero, but it can be changed here.
-void RCP_setChannel(RCP_Channel_t ch);
+void RCP_setChannel(const RCP_Channel_t& ch);
 
 // Function to call periodically to poll for data
 int RCP_poll();

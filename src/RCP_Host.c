@@ -104,23 +104,19 @@ int RCP_poll() {
         break;
     }
 
-    case RCP_DEVCLASS_AM_PRESSURE: {
-        struct RCP_AMPressureData d = {
+    case RCP_DEVCLASS_AM_PRESSURE:
+    case RCP_DEVCLASS_AM_TEMPERATURE:
+    case RCP_DEVCLASS_RELATIVE_HYGROMETER: {
+        struct RCP_int32Data d = {
             .timestamp = timestamp,
-            .pressure = toInt32(buffer + 6)
+            .data = toInt32(buffer + 6)
         };
 
-        callbacks->processAMPressureData(d);
-        break;
-    }
-
-    case RCP_DEVCLASS_AM_TEMPERATURE: {
-        struct RCP_AMTemperatureData d = {
-            .timestamp = timestamp,
-            .temperature = toInt32(buffer + 6)
-        };
-
-        callbacks->processAMTemperatureData(d);
+        (buffer[1] == RCP_DEVCLASS_AM_PRESSURE
+             ? callbacks->processAMPressureData
+             : buffer[1] == RCP_DEVCLASS_AM_TEMPERATURE
+             ? callbacks->processAMTemperatureData
+             : callbacks->processHumidityData)(d);
         break;
     }
 
