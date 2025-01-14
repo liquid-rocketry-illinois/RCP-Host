@@ -159,8 +159,8 @@ a floating point number, or another representation not mentioned.
 
 This packet can be used to request a value from a READ ONLY device on the target. Devices that can be read from but
 also written to have their own packet formats. This includes devices like GPS, Acceleration, Pressure Transducers, etc.
-This packet contains 1 additional byte, making the packet length 1. The device class byte indicates the device to 
-read from. The single parameter byte indicates the ID of the sensor, if applicable (i.e., transducers, other 
+This packet contains 1 additional byte, making the packet length 1. The device class byte indicates the device to
+read from. The single parameter byte indicates the ID of the sensor, if applicable (i.e., transducers, other
 similar devices). If the requested device is not identified by an ID, then this byte should be zero.
 
 ---
@@ -211,9 +211,8 @@ additional byte encodes both the state of the solenoid and the solenoid ID.
 This packet is used to return the state of a stepper motor. This is 9 additional bytes, making the packet length 13.
 
 The first byte indicates the stepper motor ID. The first 2 bits are unused, and the next 6 bits indicate the stepper
-motor ID. The next 4 bytes are a signed integer that encodes the stepper motor position, in millionths of degrees.
-The final 4 bytes are a signed integer that encodes the stepper motor speed, if available, in millionths of degrees per
-second.
+motor ID. The next 4 bytes are a 32-bit float that encodes the stepper motor position, in degrees. The final 4 bytes are
+a 32-bit float that encodes the stepper motor speed, if available, in degrees per second.
 
 ### Pressure Transducer Data
 
@@ -221,50 +220,47 @@ This packet is used to return the value of a pressure transducer. This is 5 addi
 length 9. The first byte indicates the transducer ID. The first 2 bits are unused, and the next 6 bits indicate the
 transducer ID.
 
-The next 4 bytes are a signed integer representing the transducer measurement, in microbars.
+The next 4 bytes are a 32-bit float representing the transducer measurement, in bars.
 
 ### GPS Data
 
 This packet is used to return GPS data. This is 32 additional bytes, making the packet length 36.
 
-- The first 4 bytes are a signed integer representing the latitude of the target, in millionths of degrees.
-- The second 4 bytes are a signed integer representing the longitude of the target, in millionths of degrees.
-- The next 4 bytes are a signed integer representing the altitude of the target, in millimeters above the ellipsoid
+- The first 4 bytes are a 32-bit float representing the latitude of the target, in degrees.
+- The second 4 bytes are a 32-bit float representing the longitude of the target, in degrees.
+- The next 4 bytes are a 32-bit float representing the altitude of the target, in meters above the ellipsoid
   (HAE).
-- The final 4 bytes are a signed integer representing the ground speed of the target, in millimeters per second.
+- The final 4 bytes are a 32-bit float representing the ground speed of the target, in meters per second.
 
 ### Magnetometer Data
 
 This packet is used to return magnetometer data. This is 12 additional bytes, making the packet length 16.
 
-- The first 4 bytes are a signed integer representing the magnetic field in the X direction, in millionths of
-  Gauss.
-- The next 4 bytes are a signed integer representing the magnetic field in the Y direction, in millionths of
-  Gauss.
-- The final 4 bytes are a signed integer representing the magnetic field in the Z direction, in millionths of
-  Gauss.
+- The first 4 bytes are a 32-bit float representing the magnetic field in the X direction, in Gauss.
+- The next 4 bytes are a 32-bit float representing the magnetic field in the Y direction, in Gauss.
+- The final 4 bytes are a 32-bit float representing the magnetic field in the Z direction, in Gauss.
 
 ### Pressure, Temperature, and Relative Humidity Data
 
-These packets are used to return ambient pressure, temperature and relative humidity percent data. Both packets are 4 
-additional bytes of data, making the packet length 8. These bytes are a signed integer, representing the value in 
-millionths of degrees Celsius, microbars, or percent * 1,000,000 respectively.
+These packets are used to return ambient pressure, temperature and relative humidity percent data. All packets are 4
+additional bytes of data, making the packet length 8. These bytes are a 32-bit float, representing the value in 
+degrees Celsius, bars, or percent, respectively.
 
 ### Accelerometer and Gyroscope Data
 
 These packets are used to return overall acceleration and rotation data. Both packets are 12 additional bytes of data,
 making the packet length 16.
 
-- The first 4 bytes are a signed integer, representing acceleration/rotation in the X axis, in millimeters per
-  second per second or millionths of degrees per second, respectively.
-- The next 4 bytes are a signed integer, representing acceleration/rotation in the Y axis, in millimeters per
-  second per second or millionths of degrees per second, respectively.
-- The last 4 bytes are a signed integer, representing acceleration/rotation in the Z axis, in millimeters per
-  second per second or millionths of degrees per second, respectively.
+- The first 4 bytes are a 32-bit float, representing acceleration/rotation in the X axis, in meters per second per 
+  second or degrees per second, respectively.
+- The next 4 bytes are a 32-bit float, representing acceleration/rotation in the Y axis, in meters per second per 
+  second or degrees per second, respectively.
+- The last 4 bytes are a 32-bit float, representing acceleration/rotation in the Z axis, in meters per second per 
+  second or degrees per second, respectively.
 
 ### Custom Data
 
-These packets are intended to allow the target to send arbitrary data back to the host. This packet is at
+These packets are intended to allow the target and host to send arbitrary data to each other. This packet is at
 least 1 additional byte, making the minimum length of the packet 5.
 
 All bytes following the timestamp bytes are the raw bytes sent by the target. The length of bytes sent can be calculated
@@ -273,10 +269,3 @@ the raw serial data that can be sent in one packet is 59 bytes.
 
 ---
 The remaining class codes are currently undefined, and can be used for future expansions.
-
-## Changelog:
-
-- Changed all floating point values to 32 bit signed integers, and adjusted scale of values to take advantage of integer
-  range (ie millibars -> microbars, etc.)
-- Renamed "host" to "target", and "controller" to "host"
-- Large adjustment to format of data, and how things are addressed

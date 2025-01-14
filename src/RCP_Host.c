@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int32_t toInt32(const uint8_t* start) {
+float toFloat(const uint8_t* start) {
     return (start[0] << 24) | (start[1] << 16) | (start[2] << 8) | start[3];
 }
 
@@ -42,7 +42,7 @@ int RCP_poll() {
     if(bread != pktlen + 1) return -1;
     if((buffer[0] & RCP_CHANNEL_MASK) != channel) return 0;
 
-    uint32_t timestamp = toInt32(buffer + 2);
+    uint32_t timestamp = (buffer[2] << 24) | (buffer[3] << 16) | (buffer[4] << 8) | buffer[5];
 
     switch(buffer[1]) {
     case RCP_DEVCLASS_TEST_STATE: {
@@ -72,8 +72,8 @@ int RCP_poll() {
         struct RCP_StepperData d = {
             .timestamp = timestamp,
             .ID = buffer[6],
-            .position = toInt32(buffer + 7),
-            .speed = toInt32(buffer + 11)
+            .position = toFloat(buffer + 7),
+            .speed = toFloat(buffer + 11)
         };
 
         callbacks->processStepperData(d);
@@ -84,7 +84,7 @@ int RCP_poll() {
         struct RCP_TransducerData d = {
             .timestamp = timestamp,
             .ID = buffer[6],
-            .pressure = toInt32(buffer + 7)
+            .pressure = toFloat(buffer + 7)
         };
 
         callbacks->processTransducerData(d);
@@ -94,10 +94,10 @@ int RCP_poll() {
     case RCP_DEVCLASS_GPS: {
         struct RCP_GPSData d = {
             .timestamp = timestamp,
-            .latitude = toInt32(buffer + 6),
-            .longitude = toInt32(buffer + 10),
-            .altitude = toInt32(buffer + 14),
-            .groundSpeed = toInt32(buffer + 18)
+            .latitude = toFloat(buffer + 6),
+            .longitude = toFloat(buffer + 10),
+            .altitude = toFloat(buffer + 14),
+            .groundSpeed = toFloat(buffer + 18)
         };
 
         callbacks->processGPSData(d);
@@ -107,9 +107,9 @@ int RCP_poll() {
     case RCP_DEVCLASS_AM_PRESSURE:
     case RCP_DEVCLASS_AM_TEMPERATURE:
     case RCP_DEVCLASS_RELATIVE_HYGROMETER: {
-        struct RCP_int32Data d = {
+        struct RCP_floatData d = {
             .timestamp = timestamp,
-            .data = toInt32(buffer + 6)
+            .data = toFloat(buffer + 6)
         };
 
         (buffer[1] == RCP_DEVCLASS_AM_PRESSURE
@@ -125,9 +125,9 @@ int RCP_poll() {
     case RCP_DEVCLASS_GYROSCOPE: {
         struct RCP_AxisData d = {
             .timestamp = timestamp,
-            .x = toInt32(buffer + 6),
-            .y = toInt32(buffer + 10),
-            .z = toInt32(buffer + 14)
+            .x = toFloat(buffer + 6),
+            .y = toFloat(buffer + 10),
+            .z = toFloat(buffer + 14)
         };
 
         (buffer[1] == RCP_DEVCLASS_GYROSCOPE

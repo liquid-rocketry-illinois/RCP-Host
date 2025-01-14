@@ -93,34 +93,34 @@ struct RCP_SolenoidData {
 struct RCP_StepperData {
     uint32_t timestamp;
     uint8_t ID;
-    int32_t position;
-    int32_t speed;
+    float position;
+    float speed;
 };
 
 struct RCP_TransducerData {
     uint32_t timestamp;
     uint8_t ID;
-    int32_t pressure;
+    float pressure;
 };
 
 struct RCP_GPSData {
     uint32_t timestamp;
-    int32_t latitude;
-    int32_t longitude;
-    int32_t altitude;
-    int32_t groundSpeed;
+    float latitude;
+    float longitude;
+    float altitude;
+    float groundSpeed;
 };
 
 struct RCP_AxisData {
     uint32_t timestamp;
-    int32_t x;
-    int32_t y;
-    int32_t z;
+    float x;
+    float y;
+    float z;
 };
 
-struct RCP_int32Data {
+struct RCP_floatData {
     uint32_t timestamp;
-    int32_t data;
+    float data;
 };
 
 struct RCP_CustomData {
@@ -138,9 +138,9 @@ struct RCP_LibInitData {
     int (*processTransducerData)(struct RCP_TransducerData data);
     int (*processGPSData)(struct RCP_GPSData data);
     int (*processMagnetometerData)(struct RCP_AxisData data);
-    int (*processAMPressureData)(struct RCP_int32Data data);
-    int (*processAMTemperatureData)(struct RCP_int32Data data);
-    int (*processHumidityData) (struct RCP_int32Data data);
+    int (*processAMPressureData)(struct RCP_floatData data);
+    int (*processAMTemperatureData)(struct RCP_floatData data);
+    int (*processHumidityData) (struct RCP_floatData data);
     int (*processAccelerationData)(struct RCP_AxisData data);
     int (*processGyroData)(struct RCP_AxisData data);
     int (*processSerialData)(struct RCP_CustomData data);
