@@ -260,12 +260,12 @@ making the packet length 16.
 
 ### Custom Data
 
-These packets are intended to allow the target and host to send arbitrary data to each other. This packet is at
-least 1 additional byte, making the minimum length of the packet 5.
+These packets are intended to allow the target and host to send arbitrary data to each other, and does not include a 
+timestamp. This packet is at least 1 additional byte, making the minimum length of the packet 1.
 
-All bytes following the timestamp bytes are the raw bytes sent by the target. The length of bytes sent can be calculated
+All bytes following the class byte are the raw bytes sent by the target. The length of bytes sent can be calculated
 using the packet length field from the header byte. Because the header byte indicates the length, the maximum length of
-the raw serial data that can be sent in one packet is 59 bytes.
+the raw serial data that can be sent in one packet is 63 bytes.
 
 ---
 The remaining class codes are currently undefined, and can be used for future expansions.
