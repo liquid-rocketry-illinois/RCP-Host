@@ -250,3 +250,13 @@ int RCP_requestDeviceReadID(RCP_DeviceClass_t device, uint8_t ID) {
     buffer[2] = ID;
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
+
+int RCP_sendRawSerial(uint8_t* data, uint8_t size) {
+    if(callbacks == NULL) return -2;
+    if(size > 63) return -3;
+    uint8_t buffer[size + 2];
+    buffer[0] = channel | size;
+    buffer[1] = RCP_DEVCLASS_CUSTOM;
+    memcpy(buffer + 2, data, size);
+    return callbacks->sendData(buffer, size) == 3 ? 0 : -1;
+}
