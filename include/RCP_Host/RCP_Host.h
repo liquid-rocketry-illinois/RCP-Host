@@ -124,7 +124,6 @@ struct RCP_floatData {
 };
 
 struct RCP_CustomData {
-    uint32_t timestamp;
     void* data;
     uint8_t length;
 };
