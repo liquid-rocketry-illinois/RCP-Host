@@ -175,7 +175,7 @@ int RCP_requestStepperRead(uint8_t ID);
 int RCP_requestDeviceReadNOID(RCP_DeviceClass_t device);
 int RCP_requestDeviceReadID(RCP_DeviceClass_t device, uint8_t ID);
 
-int RCP_sendRawSerial(uint8_t* data, uint8_t size);
+int RCP_sendRawSerial(const uint8_t* data, uint8_t size);
 
 #ifdef __cplusplus
 }
