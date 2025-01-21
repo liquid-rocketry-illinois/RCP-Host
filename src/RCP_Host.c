@@ -139,11 +139,10 @@ int RCP_poll() {
     }
 
     case RCP_DEVCLASS_CUSTOM: {
-        uint8_t* sdata = (uint8_t*)malloc(pktlen - 4);
-        memcpy(sdata, buffer + 6, pktlen - 4);
+        uint8_t* sdata = (uint8_t*)malloc(pktlen);
+        memcpy(sdata, buffer + 2, pktlen);
         struct RCP_CustomData d = {
-            .timestamp = timestamp,
-            .length = pktlen - 4,
+            .length = pktlen,
             .data = sdata
         };
 
