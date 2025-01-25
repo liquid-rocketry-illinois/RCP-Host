@@ -4,7 +4,7 @@
 #include <string.h>
 
 float toFloat(const uint8_t* start) {
-    return (start[0] << 24) | (start[1] << 16) | (start[2] << 8) | start[3];
+    return ((float*) start)[0];
 }
 
 RCP_Channel_t channel = RCP_CH_ZERO;
