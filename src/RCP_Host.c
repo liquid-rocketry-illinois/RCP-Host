@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Utility
 float toFloat(const uint8_t* start) {
     return ((float*) start)[0];
 }
@@ -10,6 +11,7 @@ float toFloat(const uint8_t* start) {
 RCP_Channel_t channel = RCP_CH_ZERO;
 struct RCP_LibInitData* callbacks = NULL;
 
+// The only initialization that needs to happen is saving the callbacks struct
 int RCP_init(const struct RCP_LibInitData _callbacks) {
     if(callbacks != NULL) return -1;
     callbacks = malloc(sizeof(struct RCP_LibInitData));
@@ -32,126 +34,138 @@ void RCP_setChannel(RCP_Channel_t ch) {
     channel = ch;
 }
 
+// The primary function that gets called periodically by the main application. Will read data from the buffer and
+// parse any received RCP messages
 int RCP_poll() {
     if(callbacks == NULL) return -2;
     uint8_t buffer[64] = {0};
+
+    // Read in just the header byte to get the length of the packet
     int bread = callbacks->readData(buffer, 1);
     if(bread != 1) return -1;
+
+    // Extract packet length from the header
     uint8_t pktlen = buffer[0] & ~RCP_CHANNEL_MASK;
+
+    // Need to read pktlen + 1 bytes in order to read the device class byte too
     bread = callbacks->readData(buffer + 1, pktlen + 1);
     if(bread != pktlen + 1) return -1;
+
+    // Check channel after reading from buffer so packets not belonging to this channel are not clogging the buffer
     if((buffer[0] & RCP_CHANNEL_MASK) != channel) return 0;
 
+    // Extract timestamp
     uint32_t timestamp = (buffer[2] << 24) | (buffer[3] << 16) | (buffer[4] << 8) | buffer[5];
 
+    // Simply follows data format in RCP.md and invokes the appropriate callbacks
     switch(buffer[1]) {
-    case RCP_DEVCLASS_TEST_STATE: {
-        struct RCP_TestData d = {
-            .timestamp = timestamp,
-            .dataStreaming = buffer[6] & 0x80,
-            .state = buffer[6] & RCP_TEST_STATE_MASK,
-            .heartbeatTime = buffer[6] & 0x0F
-        };
+        case RCP_DEVCLASS_TEST_STATE: {
+            struct RCP_TestData d = {
+                    .timestamp = timestamp,
+                    .dataStreaming = buffer[6] & 0x80,
+                    .state = buffer[6] & RCP_TEST_STATE_MASK,
+                    .heartbeatTime = buffer[6] & 0x0F
+            };
 
-        callbacks->processTestUpdate(d);
-        break;
-    }
+            callbacks->processTestUpdate(d);
+            break;
+        }
 
-    case RCP_DEVCLASS_SOLENOID: {
-        struct RCP_SolenoidData d = {
-            .timestamp = timestamp,
-            .state = buffer[6] & RCP_SOLENOID_STATE_MASK,
-            .ID = buffer[6] & ~RCP_SOLENOID_STATE_MASK
-        };
+        case RCP_DEVCLASS_SOLENOID: {
+            struct RCP_SolenoidData d = {
+                    .timestamp = timestamp,
+                    .state = buffer[6] & RCP_SOLENOID_STATE_MASK,
+                    .ID = buffer[6] & ~RCP_SOLENOID_STATE_MASK
+            };
 
-        callbacks->processSolenoidData(d);
-        break;
-    }
+            callbacks->processSolenoidData(d);
+            break;
+        }
 
-    case RCP_DEVCLASS_STEPPER: {
-        struct RCP_StepperData d = {
-            .timestamp = timestamp,
-            .ID = buffer[6],
-            .position = toFloat(buffer + 7),
-            .speed = toFloat(buffer + 11)
-        };
+        case RCP_DEVCLASS_STEPPER: {
+            struct RCP_StepperData d = {
+                    .timestamp = timestamp,
+                    .ID = buffer[6],
+                    .position = toFloat(buffer + 7),
+                    .speed = toFloat(buffer + 11)
+            };
 
-        callbacks->processStepperData(d);
-        break;
-    }
+            callbacks->processStepperData(d);
+            break;
+        }
 
-    case RCP_DEVCLASS_PRESSURE_TRANSDUCER: {
-        struct RCP_TransducerData d = {
-            .timestamp = timestamp,
-            .ID = buffer[6],
-            .pressure = toFloat(buffer + 7)
-        };
+        case RCP_DEVCLASS_PRESSURE_TRANSDUCER: {
+            struct RCP_TransducerData d = {
+                    .timestamp = timestamp,
+                    .ID = buffer[6],
+                    .pressure = toFloat(buffer + 7)
+            };
 
-        callbacks->processTransducerData(d);
-        break;
-    }
+            callbacks->processTransducerData(d);
+            break;
+        }
 
-    case RCP_DEVCLASS_GPS: {
-        struct RCP_GPSData d = {
-            .timestamp = timestamp,
-            .latitude = toFloat(buffer + 6),
-            .longitude = toFloat(buffer + 10),
-            .altitude = toFloat(buffer + 14),
-            .groundSpeed = toFloat(buffer + 18)
-        };
+        case RCP_DEVCLASS_GPS: {
+            struct RCP_GPSData d = {
+                    .timestamp = timestamp,
+                    .latitude = toFloat(buffer + 6),
+                    .longitude = toFloat(buffer + 10),
+                    .altitude = toFloat(buffer + 14),
+                    .groundSpeed = toFloat(buffer + 18)
+            };
 
-        callbacks->processGPSData(d);
-        break;
-    }
+            callbacks->processGPSData(d);
+            break;
+        }
 
-    case RCP_DEVCLASS_AM_PRESSURE:
-    case RCP_DEVCLASS_AM_TEMPERATURE:
-    case RCP_DEVCLASS_RELATIVE_HYGROMETER: {
-        struct RCP_floatData d = {
-            .timestamp = timestamp,
-            .data = toFloat(buffer + 6)
-        };
+        case RCP_DEVCLASS_AM_PRESSURE:
+        case RCP_DEVCLASS_AM_TEMPERATURE:
+        case RCP_DEVCLASS_RELATIVE_HYGROMETER: {
+            struct RCP_floatData d = {
+                    .timestamp = timestamp,
+                    .data = toFloat(buffer + 6)
+            };
 
-        (buffer[1] == RCP_DEVCLASS_AM_PRESSURE
+            (buffer[1] == RCP_DEVCLASS_AM_PRESSURE
              ? callbacks->processAMPressureData
              : buffer[1] == RCP_DEVCLASS_AM_TEMPERATURE
-             ? callbacks->processAMTemperatureData
-             : callbacks->processHumidityData)(d);
-        break;
-    }
+               ? callbacks->processAMTemperatureData
+               : callbacks->processHumidityData)(d);
+            break;
+        }
 
-    case RCP_DEVCLASS_ACCELEROMETER:
-    case RCP_DEVCLASS_MAGNETOMETER:
-    case RCP_DEVCLASS_GYROSCOPE: {
-        struct RCP_AxisData d = {
-            .timestamp = timestamp,
-            .x = toFloat(buffer + 6),
-            .y = toFloat(buffer + 10),
-            .z = toFloat(buffer + 14)
-        };
+        case RCP_DEVCLASS_ACCELEROMETER:
+        case RCP_DEVCLASS_MAGNETOMETER:
+        case RCP_DEVCLASS_GYROSCOPE: {
+            struct RCP_AxisData d = {
+                    .timestamp = timestamp,
+                    .x = toFloat(buffer + 6),
+                    .y = toFloat(buffer + 10),
+                    .z = toFloat(buffer + 14)
+            };
 
-        (buffer[1] == RCP_DEVCLASS_GYROSCOPE
+            (buffer[1] == RCP_DEVCLASS_GYROSCOPE
              ? callbacks->processGyroData
              : buffer[1] == RCP_DEVCLASS_ACCELEROMETER
-             ? callbacks->processAccelerationData
-             : callbacks->processMagnetometerData)(d);
-        break;
-    }
+               ? callbacks->processAccelerationData
+               : callbacks->processMagnetometerData)(d);
+            break;
+        }
 
-    case RCP_DEVCLASS_CUSTOM: {
-        uint8_t* sdata = (uint8_t*)malloc(pktlen);
-        memcpy(sdata, buffer + 2, pktlen);
-        struct RCP_CustomData d = {
-            .length = pktlen,
-            .data = sdata
-        };
+        case RCP_DEVCLASS_CUSTOM: {
+            uint8_t* sdata = (uint8_t*) malloc(pktlen);
+            memcpy(sdata, buffer + 2, pktlen);
+            struct RCP_CustomData d = {
+                    .length = pktlen,
+                    .data = sdata
+            };
 
-        callbacks->processSerialData(d);
-        break;
-    }
+            callbacks->processSerialData(d);
+            break;
+        }
 
-    default:
-        break;
+        default:
+            break;
     }
 
     return 0;
@@ -163,7 +177,9 @@ int RCP_sendEStop() {
     return callbacks->sendData(&ESTOP, 1) == 1 ? 0 : -1;
 }
 
-int __RCP_sendTestUpdate(RCP_TestStateControlMode_t mode, uint8_t param) {
+
+// Most of the testing command packets follow the same format, so they have been moved to a common function
+int RCP__sendTestUpdate(RCP_TestStateControlMode_t mode, uint8_t param) {
     if(callbacks == NULL) return -2;
     uint8_t buffer[3] = {0};
     buffer[0] = channel | 0x01;
@@ -173,28 +189,28 @@ int __RCP_sendTestUpdate(RCP_TestStateControlMode_t mode, uint8_t param) {
 }
 
 int RCP_sendHeartbeat() {
-    return __RCP_sendTestUpdate(RCP_HEARTBEATS_CONTROL, 0x0F);
+    return RCP__sendTestUpdate(RCP_HEARTBEATS_CONTROL, 0x0F);
 }
 
 int RCP_startTest(uint8_t testnum) {
-    return __RCP_sendTestUpdate(RCP_TEST_START, testnum);
+    return RCP__sendTestUpdate(RCP_TEST_START, testnum);
 }
 
 int RCP_setDataStreaming(int datastreaming) {
-    return __RCP_sendTestUpdate(datastreaming ? RCP_DATA_STREAM_START : RCP_DATA_STREAM_STOP, 0);
+    return RCP__sendTestUpdate(datastreaming ? RCP_DATA_STREAM_START : RCP_DATA_STREAM_STOP, 0);
 }
 
 int RCP_changeTestProgress(RCP_TestStateControlMode_t mode) {
     if(mode != RCP_TEST_STOP && mode != RCP_TEST_PAUSE) return -3;
-    return __RCP_sendTestUpdate(mode, 0);
+    return RCP__sendTestUpdate(mode, 0);
 }
 
 int RCP_setHeartbeatTime(uint8_t heartbeatTime) {
-    return __RCP_sendTestUpdate(RCP_HEARTBEATS_CONTROL, (heartbeatTime & 0x0F));
+    return RCP__sendTestUpdate(RCP_HEARTBEATS_CONTROL, (heartbeatTime & 0x0F));
 }
 
 int RCP_requestTestState() {
-    return __RCP_sendTestUpdate(RCP_TEST_QUERY, 0);
+    return RCP__sendTestUpdate(RCP_TEST_QUERY, 0);
 }
 
 int RCP_sendSolenoidWrite(uint8_t ID, RCP_SolenoidState_t state) {
@@ -237,10 +253,12 @@ int RCP_requestStepperRead(uint8_t ID) {
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 
+// One shot read request to a device without an ID, just a device class (e.g. ambient temperature sensor)
 int RCP_requestDeviceReadNOID(RCP_DeviceClass_t device) {
     return RCP_requestDeviceReadID(device, 0);
 }
 
+// One shot read request to a device with an ID
 int RCP_requestDeviceReadID(RCP_DeviceClass_t device, uint8_t ID) {
     if(device <= 0x80 || (ID != 0 && device != RCP_DEVCLASS_PRESSURE_TRANSDUCER)) return -3;
     if(callbacks == NULL) return -2;
@@ -251,6 +269,7 @@ int RCP_requestDeviceReadID(RCP_DeviceClass_t device, uint8_t ID) {
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 
+// Sends a raw array of bytes to the custom device class
 int RCP_sendRawSerial(const uint8_t* data, uint8_t size) {
     if(callbacks == NULL) return -2;
     if(size > 63) return -3;
