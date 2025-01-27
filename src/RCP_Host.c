@@ -231,16 +231,17 @@ int RCP_requestSolenoidRead(uint8_t ID) {
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 
-int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode_t mode, int32_t value) {
+int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode_t mode, const void* _value) {
     if(callbacks == NULL) return -2;
     uint8_t buffer[7] = {0};
+    uint8_t* value = (uint8_t*) _value;
     buffer[0] = channel | 0x05;
     buffer[1] = RCP_DEVCLASS_STEPPER;
     buffer[2] = (mode & RCP_STEPPER_CONTROL_MODE_MASK) | (ID & 0x3F);
-    buffer[3] = value >> 24;
-    buffer[4] = value >> 16;
-    buffer[5] = value >> 8;
-    buffer[6] = value;
+    buffer[3] = value[0];
+    buffer[4] = value[1];
+    buffer[5] = value[2];
+    buffer[6] = value[3];
     return callbacks->sendData(buffer, 7) == 7 ? 0 : -1;
 }
 

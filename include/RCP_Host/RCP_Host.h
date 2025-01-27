@@ -169,7 +169,8 @@ int RCP_requestTestState();
 int RCP_sendSolenoidWrite(uint8_t ID, RCP_SolenoidState_t state);
 int RCP_requestSolenoidRead(uint8_t ID);
 
-int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode_t mode, int32_t value);
+// Value should be a 4 byte integral type
+int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode_t mode, const void* value);
 int RCP_requestStepperRead(uint8_t ID);
 
 int RCP_requestDeviceReadNOID(RCP_DeviceClass_t device);
