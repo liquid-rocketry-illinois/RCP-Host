@@ -58,6 +58,8 @@ The defined device classes are as follows:
 - 0x86: Magnetometer
 - 0x87: Pressure Transducer
 - 0x88: Hygrometer (relative humidity)
+- 0x89: Load Cell (weight)
+- 0x8A: Power monitor
 
 ## Packet Structure
 
@@ -240,11 +242,11 @@ This packet is used to return magnetometer data. This is 12 additional bytes, ma
 - The next 4 bytes are a 32-bit float representing the magnetic field in the Y direction, in Gauss.
 - The final 4 bytes are a 32-bit float representing the magnetic field in the Z direction, in Gauss.
 
-### Pressure, Temperature, and Relative Humidity Data
+### Pressure, Temperature, Relative Humidity, and Load Cell (weight) Data
 
-These packets are used to return ambient pressure, temperature and relative humidity percent data. All packets are 4
-additional bytes of data, making the packet length 8. These bytes are a 32-bit float, representing the value in 
-degrees Celsius, bars, or percent, respectively.
+These packets are used to return ambient pressure (bars), temperature (Celsius), relative humidity (percentage), and 
+weight (kilograms) data. All packets are 4 additional bytes of data, making the packet length 8. These bytes are a 
+32-bit float, representing the appropriate unit.
 
 ### Accelerometer and Gyroscope Data
 
@@ -257,6 +259,13 @@ making the packet length 16.
   second or degrees per second, respectively.
 - The last 4 bytes are a 32-bit float, representing acceleration/rotation in the Z axis, in meters per second per 
   second or degrees per second, respectively.
+
+### Power Monitor Data
+
+This packet is used to read voltage and power consumption data from an on-target power monitor. This sensor is not
+ID-addressable. Packets are 8 additional bytes of data, making the packet length 12. The first 4 bytes are a 32-bit
+float representing the instantaneously measured voltage, and the second 4 bytes are another 32-bit float representing
+instantaneous power in Watts. If current is desired, it can be calculated on the host from power/voltage.
 
 ### Custom Data
 

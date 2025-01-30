@@ -120,17 +120,19 @@ int RCP_poll() {
 
         case RCP_DEVCLASS_AM_PRESSURE:
         case RCP_DEVCLASS_AM_TEMPERATURE:
-        case RCP_DEVCLASS_RELATIVE_HYGROMETER: {
+        case RCP_DEVCLASS_RELATIVE_HYGROMETER:
+        case RCP_DEVCLASS_LOAD_CELL: {
             struct RCP_floatData d = {
                     .timestamp = timestamp,
                     .data = toFloat(buffer + 6)
             };
 
-            (buffer[1] == RCP_DEVCLASS_AM_PRESSURE
+            (buffer[1] == RCP_DEVCLASS_AM_PRESSURE // A truly heinous section of code, I apologize
              ? callbacks->processAMPressureData
              : buffer[1] == RCP_DEVCLASS_AM_TEMPERATURE
                ? callbacks->processAMTemperatureData
-               : callbacks->processHumidityData)(d);
+               : buffer[1] == RCP_DEVCLASS_RELATIVE_HYGROMETER ?
+                 callbacks->processHumidityData : callbacks->processLoadCellData)(d);
             break;
         }
 
@@ -149,6 +151,17 @@ int RCP_poll() {
              : buffer[1] == RCP_DEVCLASS_ACCELEROMETER
                ? callbacks->processAccelerationData
                : callbacks->processMagnetometerData)(d);
+            break;
+        }
+
+        case RCP_DEVCLASS_POWERMON: {
+            struct RCP_PowerMonData d = {
+                    .timestamp = timestamp,
+                    .volts = toFloat(buffer + 6),
+                    .watts = toFloat(buffer + 10)
+            };
+
+            callbacks->processPowerMonData(d);
             break;
         }
 

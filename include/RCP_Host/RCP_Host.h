@@ -33,6 +33,8 @@ enum RCP_DeviceClass {
     RCP_DEVCLASS_MAGNETOMETER = 0x86,
     RCP_DEVCLASS_PRESSURE_TRANSDUCER = 0x87,
     RCP_DEVCLASS_RELATIVE_HYGROMETER = 0x88,
+    RCP_DEVCLASS_LOAD_CELL = 0x89,
+    RCP_DEVCLASS_POWERMON = 0x8A,
 };
 
 typedef uint8_t RCP_TestStateControlMode_t;
@@ -123,26 +125,34 @@ struct RCP_floatData {
     float data;
 };
 
+struct RCP_PowerMonData {
+    uint32_t timestamp;
+    float volts;
+    float watts;
+};
+
 struct RCP_CustomData {
     void* data;
     uint8_t length;
 };
 
 struct RCP_LibInitData {
-    size_t (*sendData)(const void* data, size_t length);
-    size_t (*readData)(void* data, size_t length);
-    int (*processTestUpdate)(struct RCP_TestData data);
-    int (*processSolenoidData)(struct RCP_SolenoidData data);
-    int (*processStepperData)(struct RCP_StepperData data);
-    int (*processTransducerData)(struct RCP_TransducerData data);
-    int (*processGPSData)(struct RCP_GPSData data);
-    int (*processMagnetometerData)(struct RCP_AxisData data);
-    int (*processAMPressureData)(struct RCP_floatData data);
-    int (*processAMTemperatureData)(struct RCP_floatData data);
-    int (*processHumidityData) (struct RCP_floatData data);
-    int (*processAccelerationData)(struct RCP_AxisData data);
-    int (*processGyroData)(struct RCP_AxisData data);
-    int (*processSerialData)(struct RCP_CustomData data);
+    size_t (* sendData)(const void* data, size_t length);
+    size_t (* readData)(void* data, size_t length);
+    int (* processTestUpdate)(struct RCP_TestData data);
+    int (* processSolenoidData)(struct RCP_SolenoidData data);
+    int (* processStepperData)(struct RCP_StepperData data);
+    int (* processTransducerData)(struct RCP_TransducerData data);
+    int (* processGPSData)(struct RCP_GPSData data);
+    int (* processMagnetometerData)(struct RCP_AxisData data);
+    int (* processAMPressureData)(struct RCP_floatData data);
+    int (* processAMTemperatureData)(struct RCP_floatData data);
+    int (* processHumidityData)(struct RCP_floatData data);
+    int (* processAccelerationData)(struct RCP_AxisData data);
+    int (* processGyroData)(struct RCP_AxisData data);
+    int (* processSerialData)(struct RCP_CustomData data);
+    int (* processLoadCellData)(struct RCP_floatData data);
+    int (* processPowerMonData)(struct RCP_PowerMonData data);
 };
 
 // Provide library with callbacks to needed functions
