@@ -56,6 +56,7 @@ int RCP_poll() {
 
     // Extract timestamp
     uint32_t timestamp = (buffer[2] << 24) | (buffer[3] << 16) | (buffer[4] << 8) | buffer[5];
+    uint8_t ID = buffer[6];
 
     // Simply follows data format in RCP.md and invokes the appropriate callbacks
     switch(buffer[1]) {
@@ -82,89 +83,6 @@ int RCP_poll() {
             break;
         }
 
-        case RCP_DEVCLASS_STEPPER: {
-            struct RCP_TwoFloat d = {
-                    .timestamp = timestamp,
-                    .ID = buffer[6],
-                    .data[0] = toFloat(buffer + 7),
-                    .data[1] = toFloat(buffer + 11)
-            };
-
-            callbacks->processStepperData(d);
-            break;
-        }
-
-        case RCP_DEVCLASS_PRESSURE_TRANSDUCER: {
-            struct RCP_OneFloat d = {
-                    .timestamp = timestamp,
-                    .ID = buffer[6],
-                    .data = toFloat(buffer + 7)
-            };
-
-            callbacks->processTransducerData(d);
-            break;
-        }
-
-        case RCP_DEVCLASS_GPS: {
-            struct RCP_FourFloat d = {
-                    .timestamp = timestamp,
-                    .data[0] = toFloat(buffer + 6),
-                    .data[1] = toFloat(buffer + 10),
-                    .data[2] = toFloat(buffer + 14),
-                    .data[3] = toFloat(buffer + 18)
-            };
-
-            callbacks->processGPSData(d);
-            break;
-        }
-
-        case RCP_DEVCLASS_AM_PRESSURE:
-        case RCP_DEVCLASS_AM_TEMPERATURE:
-        case RCP_DEVCLASS_RELATIVE_HYGROMETER:
-        case RCP_DEVCLASS_LOAD_CELL: {
-            struct RCP_OneFloat d = {
-                    .timestamp = timestamp,
-                    .data = toFloat(buffer + 6)
-            };
-
-            (buffer[1] == RCP_DEVCLASS_AM_PRESSURE // A truly heinous section of code, I apologize
-             ? callbacks->processAMPressureData
-             : buffer[1] == RCP_DEVCLASS_AM_TEMPERATURE
-               ? callbacks->processAMTemperatureData
-               : buffer[1] == RCP_DEVCLASS_RELATIVE_HYGROMETER ?
-                 callbacks->processHumidityData : callbacks->processLoadCellData)(d);
-            break;
-        }
-
-        case RCP_DEVCLASS_ACCELEROMETER:
-        case RCP_DEVCLASS_MAGNETOMETER:
-        case RCP_DEVCLASS_GYROSCOPE: {
-            struct RCP_ThreeFloat d = {
-                    .timestamp = timestamp,
-                    .data[0] = toFloat(buffer + 6),
-                    .data[1] = toFloat(buffer + 10),
-                    .data[2] = toFloat(buffer + 14)
-            };
-
-            (buffer[1] == RCP_DEVCLASS_GYROSCOPE
-             ? callbacks->processGyroData
-             : buffer[1] == RCP_DEVCLASS_ACCELEROMETER
-               ? callbacks->processAccelerationData
-               : callbacks->processMagnetometerData)(d);
-            break;
-        }
-
-        case RCP_DEVCLASS_POWERMON: {
-            struct RCP_TwoFloat d = {
-                    .timestamp = timestamp,
-                    .data[0] = toFloat(buffer + 6),
-                    .data[1] = toFloat(buffer + 10)
-            };
-
-            callbacks->processPowerMonData(d);
-            break;
-        }
-
         case RCP_DEVCLASS_CUSTOM: {
             uint8_t* sdata = (uint8_t*) malloc(pktlen);
             memcpy(sdata, buffer + 2, pktlen);
@@ -174,6 +92,64 @@ int RCP_poll() {
             };
 
             callbacks->processSerialData(d);
+            break;
+        }
+
+        case RCP_DEVCLASS_AM_PRESSURE:
+        case RCP_DEVCLASS_AM_TEMPERATURE:
+        case RCP_DEVCLASS_PRESSURE_TRANSDUCER:
+        case RCP_DEVCLASS_RELATIVE_HYGROMETER:
+        case RCP_DEVCLASS_LOAD_CELL: {
+            struct RCP_OneFloat d = {
+                    .devclass = buffer[1],
+                    .timestamp = timestamp,
+                    .ID = ID,
+                    .data = toFloat(buffer + 7)
+            };
+
+            callbacks->processOneFloat(d);
+            break;
+        }
+
+        case RCP_DEVCLASS_STEPPER:
+        case RCP_DEVCLASS_POWERMON: {
+            struct RCP_TwoFloat d = {
+                    .devclass = buffer[1],
+                    .timestamp = timestamp,
+                    .ID = ID
+            };
+
+            memcpy(d.data, buffer + 7, 8);
+
+            callbacks->processTwoFloat(d);
+            break;
+        }
+
+        case RCP_DEVCLASS_ACCELEROMETER:
+        case RCP_DEVCLASS_GYROSCOPE:
+        case RCP_DEVCLASS_MAGNETOMETER: {
+            struct RCP_ThreeFloat d = {
+                    .devclass = buffer[1],
+                    .timestamp = timestamp,
+                    .ID = ID
+            };
+
+            memcpy(d.data, buffer + 7, 12);
+
+            callbacks->processThreeFloat(d);
+            break;
+        }
+
+        case RCP_DEVCLASS_GPS: {
+            struct RCP_FourFloat d = {
+                    .devclass = buffer[1],
+                    .timestamp = timestamp,
+                    .ID = ID
+            };
+
+            memcpy(d.data, buffer + 7, 16);
+
+            callbacks->processFourFloat(d);
             break;
         }
 

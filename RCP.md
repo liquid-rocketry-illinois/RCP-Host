@@ -50,16 +50,20 @@ The defined device classes are as follows:
 - 0x01: Solenoid
 - 0x02: Stepper Motor
 - 0x80: Custom data (virtual device)
-- 0x81: GPS
-- 0x82: Ambient Pressure
-- 0x83: Ambient Temperature
-- 0x84: Acceleration
-- 0x85: Gyroscope
-- 0x86: Magnetometer
-- 0x87: Pressure Transducer
-- 0x88: Hygrometer (relative humidity)
-- 0x89: Load Cell (weight)
-- 0x8A: Power monitor
+- 0x90: Ambient Pressure
+- 0x91: Ambient Temperature
+- 0x92: Pressure Transducer
+- 0x93: Hygrometer (relative humidity)
+- 0x94: Load Cell (weight)
+- 0xA0: Power Monitor
+- 0xB0: Accelerometer
+- 0xB1: Gyroscope
+- 0xB2: Magnetometer
+- 0xC0: GPS
+
+As an aside, devices are loosely assigned class numbers based on a few things. First, all read-only devices have the 
+MSB set. The next 3 bits for read-only's indicate how many bytes of data they send back when queried. From there the 
+order is simply numerical. This is not a strict standard, only a convention that will (hopefully) be maintained.  
 
 ## Packet Structure
 
@@ -208,73 +212,54 @@ additional byte encodes both the state of the solenoid and the solenoid ID.
 - The next bit indicates if the solenoid is on (1) or off (0)
 - The next 6 bits indicate the solenoid ID the data is from
 
-### Stepper Motor State Packet
-
-This packet is used to return the state of a stepper motor. This is 9 additional bytes, making the packet length 13.
-
-The first byte indicates the stepper motor ID. The first 2 bits are unused, and the next 6 bits indicate the stepper
-motor ID. The next 4 bytes are a 32-bit float that encodes the stepper motor position, in degrees. The final 4 bytes are
-a 32-bit float that encodes the stepper motor speed, if available, in degrees per second.
-
-### Pressure Transducer Data
-
-This packet is used to return the value of a pressure transducer. This is 5 additional bytes, making the packet
-length 9. The first byte indicates the transducer ID. The first 2 bits are unused, and the next 6 bits indicate the
-transducer ID.
-
-The next 4 bytes are a 32-bit float representing the transducer measurement, in bars.
-
-### GPS Data
-
-This packet is used to return GPS data. This is 32 additional bytes, making the packet length 36.
-
-- The first 4 bytes are a 32-bit float representing the latitude of the target, in degrees.
-- The second 4 bytes are a 32-bit float representing the longitude of the target, in degrees.
-- The next 4 bytes are a 32-bit float representing the altitude of the target, in meters above the ellipsoid
-  (HAE).
-- The final 4 bytes are a 32-bit float representing the ground speed of the target, in meters per second.
-
-### Magnetometer Data
-
-This packet is used to return magnetometer data. This is 12 additional bytes, making the packet length 16.
-
-- The first 4 bytes are a 32-bit float representing the magnetic field in the X direction, in Gauss.
-- The next 4 bytes are a 32-bit float representing the magnetic field in the Y direction, in Gauss.
-- The final 4 bytes are a 32-bit float representing the magnetic field in the Z direction, in Gauss.
-
-### Pressure, Temperature, Relative Humidity, and Load Cell (weight) Data
-
-These packets are used to return ambient pressure (bars), temperature (Celsius), relative humidity (percentage), and 
-weight (kilograms) data. All packets are 4 additional bytes of data, making the packet length 8. These bytes are a 
-32-bit float, representing the appropriate unit.
-
-### Accelerometer and Gyroscope Data
-
-These packets are used to return overall acceleration and rotation data. Both packets are 12 additional bytes of data,
-making the packet length 16.
-
-- The first 4 bytes are a 32-bit float, representing acceleration/rotation in the X axis, in meters per second per 
-  second or degrees per second, respectively.
-- The next 4 bytes are a 32-bit float, representing acceleration/rotation in the Y axis, in meters per second per 
-  second or degrees per second, respectively.
-- The last 4 bytes are a 32-bit float, representing acceleration/rotation in the Z axis, in meters per second per 
-  second or degrees per second, respectively.
-
-### Power Monitor Data
-
-This packet is used to read voltage and power consumption data from an on-target power monitor. This sensor is not
-ID-addressable. Packets are 8 additional bytes of data, making the packet length 12. The first 4 bytes are a 32-bit
-float representing the instantaneously measured voltage, and the second 4 bytes are another 32-bit float representing
-instantaneous power in Watts. If current is desired, it can be calculated on the host from power/voltage.
-
 ### Custom Data
 
-These packets are intended to allow the target and host to send arbitrary data to each other, and does not include a 
+These packets are intended to allow the target and host to send arbitrary data to each other, and does not include a
 timestamp. This packet is at least 1 additional byte, making the minimum length of the packet 1.
 
 All bytes following the class byte are the raw bytes sent by the target. The length of bytes sent can be calculated
 using the packet length field from the header byte. Because the header byte indicates the length, the maximum length of
 the raw serial data that can be sent in one packet is 63 bytes.
+
+---
+
+All other sensors currently defined can be categorized into a few standard data packets, and support IDs:
+
+### One float sensors
+
+This packet can be used for sensors that send one single-precision (IEEE 754) float as data. This includes:
+- Ambient Pressure (bars)
+- Ambient Temperature (Celsius)
+- Pressure Transducer (bars)
+- Hygrometer (relative humidity, percentage)
+- Load Cell (weight, kilograms)
+
+with units specified in the list. Following the 4 timestamp bytes, this packet has 1 ID byte, then the float.
+
+### Two float sensors
+
+This packet can be used for sensors that send 2 single precision floats as data. This includes:
+ - Stepper Motor (absolute position (degrees), speed (degrees per second))
+ - Power Monitor (voltage, power (watts))
+
+with units and order specified in the list. Following the 4 timestamp bytes, this packet has 1 ID byte, then the 2 
+floats.
+
+### Three float sensor
+
+This packet can be used for sensors that send 3 single precision floats as data. This includes:
+ - Accelerometer (x, y, z axes (meters per second per second))
+ - Gyroscope (x, y, z, axes (degrees per second))
+ - Magnetometer (x, y, z axes (Gauss))
+
+with units and order specified in the list. Following the 4 timestamp bytes, this packet has 1 ID byte, then the 3 
+floats.
+
+### Four float sensor
+
+This packet can be used for sensors that send 4 single precision floats as data. This currently only includes GPS 
+data, which is ordered as longitude, latitude (degrees), altitude (meters above eclipse (HAE)), and ground speed 
+(meters per second).
 
 ---
 The remaining class codes are currently undefined, and can be used for future expansions.
