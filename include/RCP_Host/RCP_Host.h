@@ -106,21 +106,21 @@ struct RCP_OneFloat {
 struct RCP_TwoFloat {
     RCP_DeviceClass_t devclass;
     uint32_t timestamp;
-    uint32_t ID;
+    uint8_t ID;
     float data[2];
 };
 
 struct RCP_ThreeFloat {
     RCP_DeviceClass_t devclass;
     uint32_t timestamp;
-    uint32_t ID;
+    uint8_t ID;
     float data[3];
 };
 
 struct RCP_FourFloat {
     RCP_DeviceClass_t devclass;
     uint32_t timestamp;
-    uint32_t ID;
+    uint8_t ID;
     float data[4];
 };
 
