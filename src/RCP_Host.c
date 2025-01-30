@@ -83,11 +83,11 @@ int RCP_poll() {
         }
 
         case RCP_DEVCLASS_STEPPER: {
-            struct RCP_StepperData d = {
+            struct RCP_TwoFloat d = {
                     .timestamp = timestamp,
                     .ID = buffer[6],
-                    .position = toFloat(buffer + 7),
-                    .speed = toFloat(buffer + 11)
+                    .data[0] = toFloat(buffer + 7),
+                    .data[1] = toFloat(buffer + 11)
             };
 
             callbacks->processStepperData(d);
@@ -95,10 +95,10 @@ int RCP_poll() {
         }
 
         case RCP_DEVCLASS_PRESSURE_TRANSDUCER: {
-            struct RCP_TransducerData d = {
+            struct RCP_OneFloat d = {
                     .timestamp = timestamp,
                     .ID = buffer[6],
-                    .pressure = toFloat(buffer + 7)
+                    .data = toFloat(buffer + 7)
             };
 
             callbacks->processTransducerData(d);
@@ -106,12 +106,12 @@ int RCP_poll() {
         }
 
         case RCP_DEVCLASS_GPS: {
-            struct RCP_GPSData d = {
+            struct RCP_FourFloat d = {
                     .timestamp = timestamp,
-                    .latitude = toFloat(buffer + 6),
-                    .longitude = toFloat(buffer + 10),
-                    .altitude = toFloat(buffer + 14),
-                    .groundSpeed = toFloat(buffer + 18)
+                    .data[0] = toFloat(buffer + 6),
+                    .data[1] = toFloat(buffer + 10),
+                    .data[2] = toFloat(buffer + 14),
+                    .data[3] = toFloat(buffer + 18)
             };
 
             callbacks->processGPSData(d);
@@ -122,7 +122,7 @@ int RCP_poll() {
         case RCP_DEVCLASS_AM_TEMPERATURE:
         case RCP_DEVCLASS_RELATIVE_HYGROMETER:
         case RCP_DEVCLASS_LOAD_CELL: {
-            struct RCP_floatData d = {
+            struct RCP_OneFloat d = {
                     .timestamp = timestamp,
                     .data = toFloat(buffer + 6)
             };
@@ -139,11 +139,11 @@ int RCP_poll() {
         case RCP_DEVCLASS_ACCELEROMETER:
         case RCP_DEVCLASS_MAGNETOMETER:
         case RCP_DEVCLASS_GYROSCOPE: {
-            struct RCP_AxisData d = {
+            struct RCP_ThreeFloat d = {
                     .timestamp = timestamp,
-                    .x = toFloat(buffer + 6),
-                    .y = toFloat(buffer + 10),
-                    .z = toFloat(buffer + 14)
+                    .data[0] = toFloat(buffer + 6),
+                    .data[1] = toFloat(buffer + 10),
+                    .data[2] = toFloat(buffer + 14)
             };
 
             (buffer[1] == RCP_DEVCLASS_GYROSCOPE
@@ -155,10 +155,10 @@ int RCP_poll() {
         }
 
         case RCP_DEVCLASS_POWERMON: {
-            struct RCP_PowerMonData d = {
+            struct RCP_TwoFloat d = {
                     .timestamp = timestamp,
-                    .volts = toFloat(buffer + 6),
-                    .watts = toFloat(buffer + 10)
+                    .data[0] = toFloat(buffer + 6),
+                    .data[1] = toFloat(buffer + 10)
             };
 
             callbacks->processPowerMonData(d);

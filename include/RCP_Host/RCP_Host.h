@@ -92,43 +92,28 @@ struct RCP_SolenoidData {
     uint8_t ID;
 };
 
-struct RCP_StepperData {
+struct RCP_OneFloat {
     uint32_t timestamp;
     uint8_t ID;
-    float position;
-    float speed;
-};
-
-struct RCP_TransducerData {
-    uint32_t timestamp;
-    uint8_t ID;
-    float pressure;
-};
-
-struct RCP_GPSData {
-    uint32_t timestamp;
-    float latitude;
-    float longitude;
-    float altitude;
-    float groundSpeed;
-};
-
-struct RCP_AxisData {
-    uint32_t timestamp;
-    float x;
-    float y;
-    float z;
-};
-
-struct RCP_floatData {
-    uint32_t timestamp;
     float data;
 };
 
-struct RCP_PowerMonData {
+struct RCP_TwoFloat {
     uint32_t timestamp;
-    float volts;
-    float watts;
+    uint32_t ID;
+    float data[2];
+};
+
+struct RCP_ThreeFloat {
+    uint32_t timestamp;
+    uint32_t ID;
+    float data[3];
+};
+
+struct RCP_FourFloat {
+    uint32_t timestamp;
+    uint32_t ID;
+    float data[4];
 };
 
 struct RCP_CustomData {
@@ -141,18 +126,18 @@ struct RCP_LibInitData {
     size_t (* readData)(void* data, size_t length);
     int (* processTestUpdate)(struct RCP_TestData data);
     int (* processSolenoidData)(struct RCP_SolenoidData data);
-    int (* processStepperData)(struct RCP_StepperData data);
-    int (* processTransducerData)(struct RCP_TransducerData data);
-    int (* processGPSData)(struct RCP_GPSData data);
-    int (* processMagnetometerData)(struct RCP_AxisData data);
-    int (* processAMPressureData)(struct RCP_floatData data);
-    int (* processAMTemperatureData)(struct RCP_floatData data);
-    int (* processHumidityData)(struct RCP_floatData data);
-    int (* processAccelerationData)(struct RCP_AxisData data);
-    int (* processGyroData)(struct RCP_AxisData data);
+    int (* processStepperData)(struct RCP_TwoFloat data);
+    int (* processTransducerData)(struct RCP_OneFloat data);
+    int (* processGPSData)(struct RCP_FourFloat data);
+    int (* processMagnetometerData)(struct RCP_ThreeFloat data);
+    int (* processAMPressureData)(struct RCP_OneFloat data);
+    int (* processAMTemperatureData)(struct RCP_OneFloat data);
+    int (* processHumidityData)(struct RCP_OneFloat data);
+    int (* processAccelerationData)(struct RCP_ThreeFloat data);
+    int (* processGyroData)(struct RCP_ThreeFloat data);
     int (* processSerialData)(struct RCP_CustomData data);
-    int (* processLoadCellData)(struct RCP_floatData data);
-    int (* processPowerMonData)(struct RCP_PowerMonData data);
+    int (* processLoadCellData)(struct RCP_OneFloat data);
+    int (* processPowerMonData)(struct RCP_TwoFloat data);
 };
 
 // Provide library with callbacks to needed functions
