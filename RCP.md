@@ -49,6 +49,7 @@ The defined device classes are as follows:
 - 0x00: Test State (virtual device)
 - 0x01: Solenoid
 - 0x02: Stepper Motor
+- 0x03: Prompt Input
 - 0x80: Custom data (virtual device)
 - 0x90: Ambient Pressure
 - 0x91: Ambient Temperature
@@ -161,6 +162,39 @@ parameter bytes. However, if the operation is a write, the next 4 bytes of infor
 indicated function. Depending on the hardware implementation, these bytes may be interpreted as a 32 bit integer,
 a floating point number, or another representation not mentioned.
 
+### Prompt Inputs
+
+This packet class is used by the target device to prompt input from the host. As of now, this prompt request can 
+prompt for either numeric data, or go-no go authorization, but it can be expanded to include other prompt types. 
+When requesting a prompt, the target device will send a packet with the following structure:
+ - Header byte
+ - Device Class (0x03)
+ - Prompt Type:
+   - 0x00: Go-No Go authorization
+   - 0x01: Floating point input
+ - Prompt string (ascii chars)
+
+The prompt type byte indicates to the host what kind of data the target is expecting to receive back. Only 1 prompt 
+can be active at a time, and the host should respond to the target with the data type of the latest prompt request. 
+Depending on the prompt type, the host should respond as follows:
+ - Go-No Go authorization: 
+   - Header byte
+   - Device Class (0x03)
+   - If Go: 0x01
+   - If No Go: 0x00
+ - Floating point input:
+   - Header Byte
+   - Device Class (0x03)
+   - 4 byte floating point number
+
+The prompt string field of the target side packet contains a string of ascii characters that contain the prompt 
+string. This prompt string is _not_ null terminated, its length must be determined from the header byte packet 
+length. This prompt string should be displayed to users when asking for input.
+
+The prompt input device class cannot be queried, and if the host sends a packet to this device without having first 
+received a prompt request (or an incorrect data type is sent back) then the packet sent by the host should be 
+ignored by the target.
+
 ### Sensor Read Requests
 
 This packet can be used to request a value from a READ ONLY device on the target. Devices that can be read from but
@@ -230,7 +264,7 @@ All other sensors currently defined can be categorized into a few standard data 
 This packet can be used for sensors that send one single-precision (IEEE 754) float as data. This includes:
 - Ambient Pressure (bars)
 - Ambient Temperature (Celsius)
-- Pressure Transducer (bars)
+- Pressure Transducer (psi)
 - Hygrometer (relative humidity, percentage)
 - Load Cell (weight, kilograms)
 

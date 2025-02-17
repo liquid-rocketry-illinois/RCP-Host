@@ -24,6 +24,7 @@ enum RCP_DeviceClass {
     RCP_DEVCLASS_TEST_STATE = 0x00,
     RCP_DEVCLASS_SOLENOID = 0x01,
     RCP_DEVCLASS_STEPPER = 0x02,
+    RCP_DEVCLASS_PROMPT = 0x03,
     RCP_DEVCLASS_CUSTOM = 0x80,
 
     RCP_DEVCLASS_AM_PRESSURE = 0x90,
@@ -83,6 +84,20 @@ enum RCP_StepperControlMode {
     RCP_STEPPER_CONTROL_MODE_MASK = 0xC0
 };
 
+typedef uint8_t RCP_PromptDataType_t;
+
+enum RCP_PromptDataType {
+    RCP_PromptDataType_GONOGO = 0x00,
+    RCP_PromptDataType_Float = 0x01,
+};
+
+typedef uint8_t RCP_GONOGO_t;
+
+enum RCP_GONOGO {
+    RCP_GONOGO_NOGO = 0x00,
+    RCP_GONOGO_GO = 0x01,
+};
+
 struct RCP_TestData {
     uint32_t timestamp;
     int dataStreaming;
@@ -94,6 +109,11 @@ struct RCP_SolenoidData {
     uint32_t timestamp;
     RCP_SolenoidState_t state;
     uint8_t ID;
+};
+
+struct RCP_PromptInputRequest {
+    const RCP_PromptDataType_t type;
+    char* const prompt;
 };
 
 struct RCP_OneFloat {
@@ -134,6 +154,7 @@ struct RCP_LibInitData {
     size_t (* readData)(void* data, size_t length);
     int (* processTestUpdate)(struct RCP_TestData data);
     int (* processSolenoidData)(struct RCP_SolenoidData data);
+    int (* processPromptInput)(struct RCP_PromptInputRequest request);
     int (* processSerialData)(struct RCP_CustomData data);
     int (* processOneFloat)(struct RCP_OneFloat data);
     int (* processTwoFloat)(struct RCP_TwoFloat data);
@@ -171,6 +192,9 @@ int RCP_requestStepperRead(uint8_t ID);
 
 int RCP_requestDeviceReadNOID(RCP_DeviceClass_t device);
 int RCP_requestDeviceReadID(RCP_DeviceClass_t device, uint8_t ID);
+
+int RCP_promptRespondGONOGO(RCP_GONOGO_t gonogo);
+int RCP_promptRespondFloat(float value);
 
 int RCP_sendRawSerial(const uint8_t* data, uint8_t size);
 

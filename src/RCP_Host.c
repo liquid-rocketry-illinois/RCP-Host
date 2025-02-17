@@ -55,8 +55,8 @@ int RCP_poll() {
     if((buffer[0] & RCP_CHANNEL_MASK) != channel) return 0;
 
     // Extract timestamp
-    uint32_t timestamp = (buffer[2] << 24) | (buffer[3] << 16) | (buffer[4] << 8) | buffer[5];
-    uint8_t ID = buffer[6];
+    uint32_t timestamp = pktlen > 4 ? (buffer[2] << 24) | (buffer[3] << 16) | (buffer[4] << 8) | buffer[5] : 0;
+    uint8_t ID = pktlen > 5 ? buffer[6] : 0;
 
     // Simply follows data format in RCP.md and invokes the appropriate callbacks
     switch(buffer[1]) {
@@ -80,6 +80,17 @@ int RCP_poll() {
             };
 
             callbacks->processSolenoidData(d);
+            break;
+        }
+
+        case RCP_DEVCLASS_PROMPT: {
+            struct RCP_PromptInputRequest req = {
+                    .type = buffer[2],
+                    .prompt = malloc(pktlen - 1)
+            };
+
+            memcpy(req.prompt, buffer + 3, pktlen - 1);
+            callbacks->processPromptInput(req);
             break;
         }
 
@@ -257,6 +268,24 @@ int RCP_requestDeviceReadID(RCP_DeviceClass_t device, uint8_t ID) {
     buffer[1] = device;
     buffer[2] = ID;
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
+}
+
+int RCP_promptRespondGONOGO(RCP_GONOGO_t gonogo) {
+    if(callbacks == NULL) return -2;
+    uint8_t buffer[3] = {0};
+    buffer[0] = channel | 0x01;
+    buffer[1] = RCP_DEVCLASS_PROMPT;
+    buffer[2] = gonogo;
+    return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
+}
+
+int RCP_promptRespondFloat(float value) {
+    if(callbacks == NULL) return -2;
+    uint8_t buffer[6] = {0};
+    buffer[0] = channel | 0x04;
+    buffer[1] = RCP_DEVCLASS_PROMPT;
+    memcpy(buffer + 2, &value, 4);
+    return callbacks->sendData(buffer, 6) == 6 ? 0 : -1;
 }
 
 // Sends a raw array of bytes to the custom device class
