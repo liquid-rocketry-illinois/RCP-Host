@@ -150,16 +150,16 @@ struct RCP_CustomData {
 };
 
 struct RCP_LibInitData {
-    size_t (* sendData)(const void* data, size_t length);
-    size_t (* readData)(void* data, size_t length);
-    int (* processTestUpdate)(struct RCP_TestData data);
-    int (* processSolenoidData)(struct RCP_SolenoidData data);
-    int (* processPromptInput)(struct RCP_PromptInputRequest request);
-    int (* processSerialData)(struct RCP_CustomData data);
-    int (* processOneFloat)(struct RCP_OneFloat data);
-    int (* processTwoFloat)(struct RCP_TwoFloat data);
-    int (* processThreeFloat)(struct RCP_ThreeFloat data);
-    int (* processFourFloat)(struct RCP_FourFloat data);
+    size_t (*sendData)(const void* data, size_t length);
+    size_t (*readData)(void* data, size_t length);
+    int (*processTestUpdate)(struct RCP_TestData data);
+    int (*processSolenoidData)(struct RCP_SolenoidData data);
+    int (*processPromptInput)(struct RCP_PromptInputRequest request);
+    int (*processSerialData)(struct RCP_CustomData data);
+    int (*processOneFloat)(struct RCP_OneFloat data);
+    int (*processTwoFloat)(struct RCP_TwoFloat data);
+    int (*processThreeFloat)(struct RCP_ThreeFloat data);
+    int (*processFourFloat)(struct RCP_FourFloat data);
 };
 
 // Provide library with callbacks to needed functions
@@ -178,6 +178,8 @@ int RCP_sendEStop();
 int RCP_sendHeartbeat();
 
 int RCP_startTest(uint8_t testnum);
+int RCP_stopTest();
+int RCP_pauseUnpauseTest();
 int RCP_setDataStreaming(int datastreaming);
 int RCP_changeTestProgress(RCP_TestStateControlMode_t mode);
 int RCP_setHeartbeatTime(uint8_t heartbeatTime);

@@ -196,6 +196,14 @@ int RCP_startTest(uint8_t testnum) {
     return RCP__sendTestUpdate(RCP_TEST_START, testnum);
 }
 
+int RCP_stopTest() {
+    return RCP__sendTestUpdate(RCP_TEST_STOP, 0);
+}
+
+int RCP_pauseUnpauseTest() {
+    return RCP__sendTestUpdate(RCP_TEST_PAUSE, 0);
+}
+
 int RCP_setDataStreaming(int datastreaming) {
     return RCP__sendTestUpdate(datastreaming ? RCP_DATA_STREAM_START : RCP_DATA_STREAM_STOP, 0);
 }
