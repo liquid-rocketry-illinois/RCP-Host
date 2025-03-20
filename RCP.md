@@ -123,6 +123,7 @@ additional byte specifies which testing function to perform:
   to the target.
 - 0x10: Full stop the currently running test
 - 0x11: Pause/Unpause the currently running test
+- 0x12: Request the device performs whatever reset routine it has
 - 0x20: Stop data streaming
 - 0x21: Start data streaming (Full details in data packet section)
 - 0x30: Query current test progress (running, paused, stopped, e-stopped, currently streaming data). The target
@@ -234,7 +235,8 @@ packet length 5. This additional byte includes several pieces of information:
     - 01b: Test stopped
     - 10b: Test paused
     - 11b: Emergency Stopped
-- The next bit is unused
+- The next bit indicates if the device has completed its initialization and is ready to receive commands and begin 
+  processing
 - The next 4 bits indicate the currently set time between heartbeats, or zero for no heartbeats.
 
 ### Solenoid State Packet

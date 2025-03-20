@@ -48,6 +48,7 @@ enum RCP_TestStateControlMode {
     RCP_TEST_START = 0x00,
     RCP_TEST_STOP = 0x10,
     RCP_TEST_PAUSE = 0x11,
+    RCP_DEVICE_RESET = 0x12,
     RCP_DATA_STREAM_STOP = 0x20,
     RCP_DATA_STREAM_START = 0x21,
     RCP_TEST_QUERY = 0x30,
@@ -58,6 +59,7 @@ typedef uint8_t RCP_TestRunningState_t;
 
 enum RCP_TestRunningState {
     RCP_TEST_RUNNING = 0x00,
+    RCP_DEVICE_INITED_MASK = 0x10,
     RCP_TEST_STOPPED = 0x20,
     RCP_TEST_PAUSED = 0x40,
     RCP_TEST_ESTOP = 0x60,
@@ -102,6 +104,7 @@ struct RCP_TestData {
     uint32_t timestamp;
     int dataStreaming;
     RCP_TestRunningState_t state;
+    int isInited;
     uint8_t heartbeatTime;
 };
 
@@ -180,6 +183,7 @@ int RCP_sendHeartbeat();
 int RCP_startTest(uint8_t testnum);
 int RCP_stopTest();
 int RCP_pauseUnpauseTest();
+int RCP_deviceReset();
 int RCP_setDataStreaming(int datastreaming);
 int RCP_changeTestProgress(RCP_TestStateControlMode_t mode);
 int RCP_setHeartbeatTime(uint8_t heartbeatTime);

@@ -65,6 +65,7 @@ int RCP_poll() {
                     .timestamp = timestamp,
                     .dataStreaming = buffer[6] & 0x80,
                     .state = buffer[6] & RCP_TEST_STATE_MASK,
+                    .isInited = buffer[6] & RCP_DEVICE_INITED_MASK,
                     .heartbeatTime = buffer[6] & 0x0F
             };
 
@@ -202,6 +203,10 @@ int RCP_stopTest() {
 
 int RCP_pauseUnpauseTest() {
     return RCP__sendTestUpdate(RCP_TEST_PAUSE, 0);
+}
+
+int RCP_deviceReset() {
+    return RCP__sendTestUpdate(RCP_DEVICE_RESET, 0);
 }
 
 int RCP_setDataStreaming(int datastreaming) {
