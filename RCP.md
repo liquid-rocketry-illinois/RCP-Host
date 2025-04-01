@@ -173,7 +173,7 @@ When requesting a prompt, the target device will send a packet with the followin
  - Prompt Type:
    - 0x00: Go-No Go authorization
    - 0x01: Floating point input
- - Prompt string (ascii chars)
+ - Prompt string (ascii chars). This string DOES NOT CONTAIN a null terminator
 
 The prompt type byte indicates to the host what kind of data the target is expecting to receive back. Only 1 prompt 
 can be active at a time, and the host should respond to the target with the data type of the latest prompt request. 
