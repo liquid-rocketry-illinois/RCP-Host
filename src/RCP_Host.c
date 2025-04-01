@@ -87,22 +87,22 @@ int RCP_poll() {
         case RCP_DEVCLASS_PROMPT: {
             struct RCP_PromptInputRequest req = {
                     .type = buffer[2],
-                    .prompt = malloc(pktlen - 1)
+                    .prompt = malloc(pktlen)
             };
 
             memcpy(req.prompt, buffer + 3, pktlen - 1);
+            req.prompt[pktlen - 1] = 0;
             callbacks->processPromptInput(req);
             break;
         }
 
         case RCP_DEVCLASS_CUSTOM: {
-            uint8_t* sdata = (uint8_t*) malloc(pktlen);
-            memcpy(sdata, buffer + 2, pktlen);
             struct RCP_CustomData d = {
                     .length = pktlen,
-                    .data = sdata
+                    .data = malloc(pktlen)
             };
 
+            memcpy(d.data, buffer + 2, pktlen);
             callbacks->processSerialData(d);
             break;
         }
