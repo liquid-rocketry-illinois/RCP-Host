@@ -8,19 +8,15 @@
 extern "C" {
 #endif
 
-typedef uint8_t RCP_Channel_t;
-
-enum RCP_Channel {
+typedef enum {
     RCP_CH_ZERO = 0x00,
     RCP_CH_ONE = 0x40,
     RCP_CH_TWO = 0x80,
     RCP_CH_THREE = 0xC0,
     RCP_CHANNEL_MASK = 0xC0,
-};
+} RCP_Channel;
 
-typedef uint8_t RCP_DeviceClass_t;
-
-enum RCP_DeviceClass {
+typedef enum {
     RCP_DEVCLASS_TEST_STATE = 0x00,
     RCP_DEVCLASS_SOLENOID = 0x01,
     RCP_DEVCLASS_STEPPER = 0x02,
@@ -40,11 +36,9 @@ enum RCP_DeviceClass {
     RCP_DEVCLASS_MAGNETOMETER = 0xB2,
 
     RCP_DEVCLASS_GPS = 0xC0,
-};
+} RCP_DeviceClass;
 
-typedef uint8_t RCP_TestStateControlMode_t;
-
-enum RCP_TestStateControlMode {
+typedef enum {
     RCP_TEST_START = 0x00,
     RCP_TEST_STOP = 0x10,
     RCP_TEST_PAUSE = 0x11,
@@ -53,95 +47,86 @@ enum RCP_TestStateControlMode {
     RCP_DATA_STREAM_START = 0x21,
     RCP_TEST_QUERY = 0x30,
     RCP_HEARTBEATS_CONTROL = 0xF0
-};
+} RCP_TestStateControlMode;
 
-typedef uint8_t RCP_TestRunningState_t;
 
-enum RCP_TestRunningState {
+typedef enum {
     RCP_TEST_RUNNING = 0x00,
     RCP_DEVICE_INITED_MASK = 0x10,
     RCP_TEST_STOPPED = 0x20,
     RCP_TEST_PAUSED = 0x40,
     RCP_TEST_ESTOP = 0x60,
     RCP_TEST_STATE_MASK = 0x60,
-};
+} RCP_TestRunningState;
 
-typedef uint8_t RCP_SolenoidState_t;
-
-enum RCP_SolenoidState {
+typedef enum {
     RCP_SOLENOID_READ = 0x00,
     RCP_SOLENOID_ON = 0x40,
     RCP_SOLENOID_OFF = 0x80,
     RCP_SOLENOID_TOGGLE = 0xC0,
     RCP_SOLENOID_STATE_MASK = 0xC0,
-};
+} RCP_SolenoidState;
 
-typedef uint8_t RCP_StepperControlMode_t;
-
-enum RCP_StepperControlMode {
+typedef enum {
     RCP_STEPPER_QUERY_STATE = 0x00,
     RCP_STEPPER_ABSOLUTE_POS_CONTROL = 0x40,
     RCP_STEPPER_RELATIVE_POS_CONTROL = 0x80,
     RCP_STEPPER_SPEED_CONTROL = 0xC0,
     RCP_STEPPER_CONTROL_MODE_MASK = 0xC0
-};
+} RCP_StepperControlMode;
 
-typedef uint8_t RCP_PromptDataType_t;
-
-enum RCP_PromptDataType {
+typedef enum {
     RCP_PromptDataType_GONOGO = 0x00,
     RCP_PromptDataType_Float = 0x01,
-};
+} RCP_PromptDataType;
 
-typedef uint8_t RCP_GONOGO_t;
-
-enum RCP_GONOGO {
+typedef enum {
     RCP_GONOGO_NOGO = 0x00,
     RCP_GONOGO_GO = 0x01,
-};
+} RCP_GONOGO;
 
 struct RCP_TestData {
     uint32_t timestamp;
     int dataStreaming;
-    RCP_TestRunningState_t state;
+    RCP_TestRunningState state;
     int isInited;
     uint8_t heartbeatTime;
 };
 
 struct RCP_SolenoidData {
     uint32_t timestamp;
-    RCP_SolenoidState_t state;
+    RCP_SolenoidState state;
     uint8_t ID;
 };
 
 struct RCP_PromptInputRequest {
-    const RCP_PromptDataType_t type;
+    const RCP_PromptDataType type;
     char* const prompt;
 };
 
 struct RCP_OneFloat {
-    RCP_DeviceClass_t devclass;
+    RCP_DeviceClass devclass;
     uint32_t timestamp;
     uint8_t ID;
     float data;
 };
 
 struct RCP_TwoFloat {
-    RCP_DeviceClass_t devclass;
+    RCP_DeviceClass devclass;
     uint32_t timestamp;
     uint8_t ID;
     float data[2];
 };
 
 struct RCP_ThreeFloat {
-    RCP_DeviceClass_t devclass;
+    RCP_DeviceClass devclass;
     uint32_t timestamp;
     uint8_t ID;
     float data[3];
 };
 
 struct RCP_FourFloat {
-    RCP_DeviceClass_t devclass;
+    RCP_DeviceClass devclass;
     uint32_t timestamp;
     uint8_t ID;
     float data[4];
@@ -171,7 +156,7 @@ int RCP_isOpen();
 int RCP_shutdown();
 
 // Library will default to channel zero, but it can be changed here.
-void RCP_setChannel(RCP_Channel_t ch);
+void RCP_setChannel(RCP_Channel ch);
 
 // Function to call periodically to poll for data
 int RCP_poll();
@@ -185,21 +170,21 @@ int RCP_stopTest();
 int RCP_pauseUnpauseTest();
 int RCP_deviceReset();
 int RCP_setDataStreaming(int datastreaming);
-int RCP_changeTestProgress(RCP_TestStateControlMode_t mode);
+int RCP_changeTestProgress(RCP_TestStateControlMode mode);
 int RCP_setHeartbeatTime(uint8_t heartbeatTime);
 int RCP_requestTestState();
 
-int RCP_sendSolenoidWrite(uint8_t ID, RCP_SolenoidState_t state);
+int RCP_sendSolenoidWrite(uint8_t ID, RCP_SolenoidState state);
 int RCP_requestSolenoidRead(uint8_t ID);
 
 // Value should be a 4 byte integral type
-int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode_t mode, const void* value);
+int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode mode, const void* value);
 int RCP_requestStepperRead(uint8_t ID);
 
-int RCP_requestDeviceReadNOID(RCP_DeviceClass_t device);
-int RCP_requestDeviceReadID(RCP_DeviceClass_t device, uint8_t ID);
+int RCP_requestDeviceReadNOID(RCP_DeviceClass device);
+int RCP_requestDeviceReadID(RCP_DeviceClass device, uint8_t ID);
 
-int RCP_promptRespondGONOGO(RCP_GONOGO_t gonogo);
+int RCP_promptRespondGONOGO(RCP_GONOGO gonogo);
 int RCP_promptRespondFloat(float value);
 
 int RCP_sendRawSerial(const uint8_t* data, uint8_t size);

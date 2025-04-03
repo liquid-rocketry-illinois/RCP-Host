@@ -8,7 +8,7 @@ float toFloat(const uint8_t* start) {
     return ((float*) start)[0];
 }
 
-RCP_Channel_t channel = RCP_CH_ZERO;
+RCP_Channel channel = RCP_CH_ZERO;
 struct RCP_LibInitData* callbacks = NULL;
 
 // The only initialization that needs to happen is saving the callbacks struct
@@ -30,7 +30,7 @@ int RCP_shutdown() {
     return 0;
 }
 
-void RCP_setChannel(RCP_Channel_t ch) {
+void RCP_setChannel(RCP_Channel ch) {
     channel = ch;
 }
 
@@ -180,7 +180,7 @@ int RCP_sendEStop() {
 
 
 // Most of the testing command packets follow the same format, so they have been moved to a common function
-int RCP__sendTestUpdate(RCP_TestStateControlMode_t mode, uint8_t param) {
+int RCP__sendTestUpdate(RCP_TestStateControlMode mode, uint8_t param) {
     if(callbacks == NULL) return -2;
     uint8_t buffer[3] = {0};
     buffer[0] = channel | 0x01;
@@ -213,7 +213,7 @@ int RCP_setDataStreaming(int datastreaming) {
     return RCP__sendTestUpdate(datastreaming ? RCP_DATA_STREAM_START : RCP_DATA_STREAM_STOP, 0);
 }
 
-int RCP_changeTestProgress(RCP_TestStateControlMode_t mode) {
+int RCP_changeTestProgress(RCP_TestStateControlMode mode) {
     if(mode != RCP_TEST_STOP && mode != RCP_TEST_PAUSE) return -3;
     return RCP__sendTestUpdate(mode, 0);
 }
@@ -226,7 +226,7 @@ int RCP_requestTestState() {
     return RCP__sendTestUpdate(RCP_TEST_QUERY, 0);
 }
 
-int RCP_sendSolenoidWrite(uint8_t ID, RCP_SolenoidState_t state) {
+int RCP_sendSolenoidWrite(uint8_t ID, RCP_SolenoidState state) {
     if(callbacks == NULL) return -2;
     uint8_t buffer[3] = {0};
     buffer[0] = channel | 0x01;
@@ -244,7 +244,7 @@ int RCP_requestSolenoidRead(uint8_t ID) {
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 
-int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode_t mode, const void* _value) {
+int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode mode, const void* _value) {
     if(callbacks == NULL) return -2;
     uint8_t buffer[7] = {0};
     uint8_t* value = (uint8_t*) _value;
@@ -268,12 +268,12 @@ int RCP_requestStepperRead(uint8_t ID) {
 }
 
 // One shot read request to a device without an ID, just a device class (e.g. ambient temperature sensor)
-int RCP_requestDeviceReadNOID(RCP_DeviceClass_t device) {
+int RCP_requestDeviceReadNOID(RCP_DeviceClass device) {
     return RCP_requestDeviceReadID(device, 0);
 }
 
 // One shot read request to a device with an ID
-int RCP_requestDeviceReadID(RCP_DeviceClass_t device, uint8_t ID) {
+int RCP_requestDeviceReadID(RCP_DeviceClass device, uint8_t ID) {
     if(device <= 0x80 || (ID != 0 && device != RCP_DEVCLASS_PRESSURE_TRANSDUCER)) return -3;
     if(callbacks == NULL) return -2;
     uint8_t buffer[3] = {0};
@@ -283,7 +283,7 @@ int RCP_requestDeviceReadID(RCP_DeviceClass_t device, uint8_t ID) {
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 
-int RCP_promptRespondGONOGO(RCP_GONOGO_t gonogo) {
+int RCP_promptRespondGONOGO(RCP_GONOGO gonogo) {
     if(callbacks == NULL) return -2;
     uint8_t buffer[3] = {0};
     buffer[0] = channel | 0x01;
