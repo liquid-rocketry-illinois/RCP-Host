@@ -73,14 +73,14 @@ int RCP_poll() {
             break;
         }
 
-        case RCP_DEVCLASS_SOLENOID: {
-            struct RCP_SolenoidData d = {
+        case RCP_DEVCLASS_SIMPLE_ACTUATOR: {
+            struct RCP_SimpleActuatorData d = {
                     .timestamp = timestamp,
-                    .state = buffer[6] & RCP_SOLENOID_STATE_MASK,
-                    .ID = buffer[6] & ~RCP_SOLENOID_STATE_MASK
+                    .state = buffer[6] & RCP_SIMPLE_ACTUATOR_STATE_MASK,
+                    .ID = buffer[6] & ~RCP_SIMPLE_ACTUATOR_STATE_MASK
             };
 
-            callbacks->processSolenoidData(d);
+            callbacks->processSimpleActuatorData(d);
             break;
         }
 
@@ -226,12 +226,12 @@ int RCP_requestTestState() {
     return RCP__sendTestUpdate(RCP_TEST_QUERY, 0);
 }
 
-int RCP_sendSolenoidWrite(uint8_t ID, RCP_SolenoidState state) {
+int RCP_sendSolenoidWrite(uint8_t ID, RCP_SimpleActuatorState state) {
     if(callbacks == NULL) return -2;
     uint8_t buffer[3] = {0};
     buffer[0] = channel | 0x01;
-    buffer[1] = RCP_DEVCLASS_SOLENOID;
-    buffer[2] = (state & RCP_SOLENOID_STATE_MASK) | (ID & 0x3F);
+    buffer[1] = RCP_DEVCLASS_SIMPLE_ACTUATOR;
+    buffer[2] = (state & RCP_SIMPLE_ACTUATOR_STATE_MASK) | (ID & 0x3F);
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 
@@ -239,8 +239,8 @@ int RCP_requestSolenoidRead(uint8_t ID) {
     if(callbacks == NULL) return -2;
     uint8_t buffer[3] = {0};
     buffer[0] = channel | 0x01;
-    buffer[1] = RCP_DEVCLASS_SOLENOID;
-    buffer[2] = RCP_SOLENOID_READ | (ID & 0x3F);
+    buffer[1] = RCP_DEVCLASS_SIMPLE_ACTUATOR;
+    buffer[2] = RCP_SIMPL_ACTUATOR_READ | (ID & 0x3F);
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 

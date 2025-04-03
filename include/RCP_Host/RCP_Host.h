@@ -18,7 +18,7 @@ typedef enum {
 
 typedef enum {
     RCP_DEVCLASS_TEST_STATE = 0x00,
-    RCP_DEVCLASS_SOLENOID = 0x01,
+    RCP_DEVCLASS_SIMPLE_ACTUATOR = 0x01,
     RCP_DEVCLASS_STEPPER = 0x02,
     RCP_DEVCLASS_PROMPT = 0x03,
     RCP_DEVCLASS_CUSTOM = 0x80,
@@ -60,12 +60,12 @@ typedef enum {
 } RCP_TestRunningState;
 
 typedef enum {
-    RCP_SOLENOID_READ = 0x00,
-    RCP_SOLENOID_ON = 0x40,
-    RCP_SOLENOID_OFF = 0x80,
-    RCP_SOLENOID_TOGGLE = 0xC0,
-    RCP_SOLENOID_STATE_MASK = 0xC0,
-} RCP_SolenoidState;
+    RCP_SIMPL_ACTUATOR_READ = 0x00,
+    RCP_SIMPLE_ACTUATOR_ON = 0x40,
+    RCP_SIMPLE_ACTUATOR_OFF = 0x80,
+    RCP_SIMPLE_ACTUATOR_TOGGLE = 0xC0,
+    RCP_SIMPLE_ACTUATOR_STATE_MASK = 0xC0,
+} RCP_SimpleActuatorState;
 
 typedef enum {
     RCP_STEPPER_QUERY_STATE = 0x00,
@@ -93,10 +93,10 @@ struct RCP_TestData {
     uint8_t heartbeatTime;
 };
 
-struct RCP_SolenoidData {
+struct RCP_SimpleActuatorData {
     uint32_t timestamp;
-    RCP_SolenoidState state;
     uint8_t ID;
+    RCP_SimpleActuatorState state;
 };
 
 struct RCP_PromptInputRequest {
@@ -141,7 +141,7 @@ struct RCP_LibInitData {
     size_t (*sendData)(const void* data, size_t length);
     size_t (*readData)(void* data, size_t length);
     int (*processTestUpdate)(struct RCP_TestData data);
-    int (*processSolenoidData)(struct RCP_SolenoidData data);
+    int (*processSimpleActuatorData)(struct RCP_SimpleActuatorData data);
     int (*processPromptInput)(struct RCP_PromptInputRequest request);
     int (*processSerialData)(struct RCP_CustomData data);
     int (*processOneFloat)(struct RCP_OneFloat data);
@@ -174,8 +174,8 @@ int RCP_changeTestProgress(RCP_TestStateControlMode mode);
 int RCP_setHeartbeatTime(uint8_t heartbeatTime);
 int RCP_requestTestState();
 
-int RCP_sendSolenoidWrite(uint8_t ID, RCP_SolenoidState state);
-int RCP_requestSolenoidRead(uint8_t ID);
+int RCP_sendSimpleActuatorWrite(uint8_t ID, RCP_SimpleActuatorState state);
+int RCP_requestSimpleActuatorRead(uint8_t ID);
 
 // Value should be a 4 byte integral type
 int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode mode, const void* value);

@@ -47,7 +47,7 @@ identify an individual device on a target.
 The defined device classes are as follows:
 
 - 0x00: Test State (virtual device)
-- 0x01: Solenoid
+- 0x01: Simple Actuator
 - 0x02: Stepper Motor
 - 0x03: Prompt Input
 - 0x80: Custom data (virtual device)
@@ -133,18 +133,18 @@ additional byte specifies which testing function to perform:
 - 0xFF: Heartbeat packet
 - Remaining codes are not yet defined and can be used as needed.
 
-### Solenoid Command
+### Simple Actuator Command
 
-This packet class is a manual request to a solenoid. This command contains one parameter byte, making the total
-packet length 1. The additional byte encodes both the operation requested, and the solenoid ID to address. The first 2
-bits indicate the requested operation:
+This packet class is a manual request to a simple actuator. A simple actuator is any device which is either on or off. 
+This command contains one parameter byte, making the total packet length 1. The additional byte encodes both the 
+operation requested, and the actuator ID to address. The first 2 bits indicate the requested operation:
 
-- 00b: Query solenoid state
-- 01b: Turn solenoid on
-- 10b: Turn solenoid off
-- 11b: Toggle solenoid state
+- 00b: Query actuator state
+- 01b: Turn actuator on
+- 10b: Turn actuator off
+- 11b: Toggle actuator state
 
-The remaining 6 bits indicate the solenoid ID to address. The target is responsible for parsing this ID and translating
+The remaining 6 bits indicate the actuator ID to address. The target is responsible for parsing this ID and translating
 it to the appropriate hardware address.
 
 ### Stepper Motor Command
@@ -239,14 +239,14 @@ packet length 5. This additional byte includes several pieces of information:
   processing
 - The next 4 bits indicate the currently set time between heartbeats, or zero for no heartbeats.
 
-### Solenoid State Packet
+### Actuator State Packet
 
-This packet is used to return the state of a solenoid. This is only 1 additional byte, making the packet length 5. This
-additional byte encodes both the state of the solenoid and the solenoid ID.
+This packet is used to return the state of an actuator. This is only 1 additional byte, making the packet length 5. This
+additional byte encodes both the state of the actuator and the actuator ID.
 
 - The most significant bit is not used
-- The next bit indicates if the solenoid is on (1) or off (0)
-- The next 6 bits indicate the solenoid ID the data is from
+- The next bit indicates if the actuator is on (1) or off (0)
+- The next 6 bits indicate the actuator ID the data is from
 
 ### Custom Data
 
