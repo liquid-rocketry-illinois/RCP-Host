@@ -262,7 +262,7 @@ int RCP_requestSimpleActuatorRead(uint8_t ID) {
     uint8_t buffer[3] = {0};
     buffer[0] = channel | 0x01;
     buffer[1] = RCP_DEVCLASS_SIMPLE_ACTUATOR;
-    buffer[2] = RCP_SIMPL_ACTUATOR_READ | (ID & 0x3F);
+    buffer[2] = RCP_SIMPLE_ACTUATOR_READ | (ID & 0x3F);
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 

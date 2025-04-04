@@ -61,7 +61,7 @@ typedef enum {
 } RCP_TestRunningState;
 
 typedef enum {
-    RCP_SIMPL_ACTUATOR_READ = 0x00,
+    RCP_SIMPLE_ACTUATOR_READ = 0x00,
     RCP_SIMPLE_ACTUATOR_ON = 0x40,
     RCP_SIMPLE_ACTUATOR_OFF = 0x80,
     RCP_SIMPLE_ACTUATOR_TOGGLE = 0xC0,
