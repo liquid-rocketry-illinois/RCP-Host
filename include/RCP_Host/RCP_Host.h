@@ -28,6 +28,7 @@ typedef enum {
     RCP_DEVCLASS_PRESSURE_TRANSDUCER = 0x92,
     RCP_DEVCLASS_RELATIVE_HYGROMETER = 0x93,
     RCP_DEVCLASS_LOAD_CELL = 0x94,
+    RCP_DEVCLASS_BOOL_SENSOR = 0x95,
 
     RCP_DEVCLASS_POWERMON = 0xA0,
 
@@ -104,6 +105,12 @@ struct RCP_PromptInputRequest {
     char* const prompt;
 };
 
+struct RCP_BoolData {
+    uint32_t timestamp;
+    uint8_t ID;
+    int data;
+};
+
 struct RCP_OneFloat {
     RCP_DeviceClass devclass;
     uint32_t timestamp;
@@ -141,6 +148,7 @@ struct RCP_LibInitData {
     size_t (*sendData)(const void* data, size_t length);
     size_t (*readData)(void* data, size_t length);
     int (*processTestUpdate)(struct RCP_TestData data);
+    int (*processBoolData)(struct RCP_BoolData data);
     int (*processSimpleActuatorData)(struct RCP_SimpleActuatorData data);
     int (*processPromptInput)(struct RCP_PromptInputRequest request);
     int (*processSerialData)(struct RCP_CustomData data);

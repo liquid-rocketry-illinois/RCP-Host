@@ -31,8 +31,9 @@ to transmit this protocol, these features may already be available.
   transmitted data.
 - Parameter Bytes: The bytes in a packet that follow the class byte.
 - Packet length: The length of the packet, not including the header or class bytes.
+- ID: A unique identifying number within a device class to identify an individual device. IDs range from 0 - 63
 - Device: An actuator, sensor, or other component (including software components) on a target that can be controlled,
-  queried, or otherwise interacted with
+  queried, or otherwise interacted with. All devices can be fully qualified with its device class and ID
 - Interface: The method by which the host and target communicate with each other. For example, LoRa, USB, TCP/IP over
   various methods, etc.
 - Heartbeat packet: Packets sent from the host to the target. If consecutive heartbeats are not received by the
@@ -62,9 +63,9 @@ The defined device classes are as follows:
 - 0xB2: Magnetometer
 - 0xC0: GPS
 
-As an aside, devices are loosely assigned class numbers based on a few things. First, all read-only devices have the 
-MSB set. The next 3 bits for read-only's indicate how many bytes of data they send back when queried. From there the 
-order is simply numerical. This is not a strict standard, only a convention that will (hopefully) be maintained.  
+As an aside, devices are loosely assigned class numbers based on a few things. First, all read-only devices have the
+MSB set. The next 3 bits for read-only's indicate how many bytes of data they send back when queried. From there the
+order is simply numerical. This is not a strict standard, only a convention that will (hopefully) be maintained.
 
 ## Packet Structure
 
@@ -135,8 +136,8 @@ additional byte specifies which testing function to perform:
 
 ### Simple Actuator Command
 
-This packet class is a manual request to a simple actuator. A simple actuator is any device which is either on or off. 
-This command contains one parameter byte, making the total packet length 1. The additional byte encodes both the 
+This packet class is a manual request to a simple actuator. A simple actuator is any device which is either on or off.
+This command contains one parameter byte, making the total packet length 1. The additional byte encodes both the
 operation requested, and the actuator ID to address. The first 2 bits indicate the requested operation:
 
 - 00b: Query actuator state
@@ -165,35 +166,37 @@ a floating point number, or another representation not mentioned.
 
 ### Prompt Inputs
 
-This packet class is used by the target device to prompt input from the host. As of now, this prompt request can 
-prompt for either numeric data, or go-no go authorization, but it can be expanded to include other prompt types. 
+This packet class is used by the target device to prompt input from the host. As of now, this prompt request can
+prompt for either numeric data, or go-no go authorization, but it can be expanded to include other prompt types.
 When requesting a prompt, the target device will send a packet with the following structure:
- - Header byte
- - Device Class (0x03)
- - Prompt Type:
-   - 0x00: Go-No Go authorization
-   - 0x01: Floating point input
- - Prompt string (ascii chars). This string DOES NOT CONTAIN a null terminator
 
-The prompt type byte indicates to the host what kind of data the target is expecting to receive back. Only 1 prompt 
-can be active at a time, and the host should respond to the target with the data type of the latest prompt request. 
+- Header byte
+- Device Class (0x03)
+- Prompt Type:
+    - 0x00: Go-No Go authorization
+    - 0x01: Floating point input
+- Prompt string (ascii chars). This string DOES NOT CONTAIN a null terminator
+
+The prompt type byte indicates to the host what kind of data the target is expecting to receive back. Only 1 prompt
+can be active at a time, and the host should respond to the target with the data type of the latest prompt request.
 Depending on the prompt type, the host should respond as follows:
- - Go-No Go authorization: 
-   - Header byte
-   - Device Class (0x03)
-   - If Go: 0x01
-   - If No Go: 0x00
- - Floating point input:
-   - Header Byte
-   - Device Class (0x03)
-   - 4 byte floating point number
 
-The prompt string field of the target side packet contains a string of ascii characters that contain the prompt 
-string. This prompt string is _not_ null terminated, its length must be determined from the header byte packet 
+- Go-No Go authorization:
+    - Header byte
+    - Device Class (0x03)
+    - If Go: 0x01
+    - If No Go: 0x00
+- Floating point input:
+    - Header Byte
+    - Device Class (0x03)
+    - 4 byte floating point number
+
+The prompt string field of the target side packet contains a string of ascii characters that contain the prompt
+string. This prompt string is _not_ null terminated, its length must be determined from the header byte packet
 length. This prompt string should be displayed to users when asking for input.
 
-The prompt input device class cannot be queried, and if the host sends a packet to this device without having first 
-received a prompt request (or an incorrect data type is sent back) then the packet sent by the host should be 
+The prompt input device class cannot be queried, and if the host sends a packet to this device without having first
+received a prompt request (or an incorrect data type is sent back) then the packet sent by the host should be
 ignored by the target.
 
 ### Sensor Read Requests
@@ -235,7 +238,7 @@ packet length 5. This additional byte includes several pieces of information:
     - 01b: Test stopped
     - 10b: Test paused
     - 11b: Emergency Stopped
-- The next bit indicates if the device has completed its initialization and is ready to receive commands and begin 
+- The next bit indicates if the device has completed its initialization and is ready to receive commands and begin
   processing
 - The next 4 bits indicate the currently set time between heartbeats, or zero for no heartbeats.
 
@@ -247,6 +250,15 @@ additional byte encodes both the state of the actuator and the actuator ID.
 - The most significant bit is not used
 - The next bit indicates if the actuator is on (1) or off (0)
 - The next 6 bits indicate the actuator ID the data is from
+
+### Boolean Data Packet
+
+This packet is used to return the state of a simple boolean sensor. This is 1 additional byte, making the packet 
+total length 5. This additional byte encodes the ID and the state of the sensor. This byte is formatted as follows:
+
+- The most significant bit indicates state
+- The next bit is unused
+- The next 6 bits indicate the sensor ID
 
 ### Custom Data
 
@@ -264,6 +276,7 @@ All other sensors currently defined can be categorized into a few standard data 
 ### One float sensors
 
 This packet can be used for sensors that send one single-precision (IEEE 754) float as data. This includes:
+
 - Ambient Pressure (bars)
 - Ambient Temperature (Celsius)
 - Pressure Transducer (psi)
@@ -275,26 +288,28 @@ with units specified in the list. Following the 4 timestamp bytes, this packet h
 ### Two float sensors
 
 This packet can be used for sensors that send 2 single precision floats as data. This includes:
- - Stepper Motor (absolute position (degrees), speed (degrees per second))
- - Power Monitor (voltage, power (watts))
 
-with units and order specified in the list. Following the 4 timestamp bytes, this packet has 1 ID byte, then the 2 
+- Stepper Motor (absolute position (degrees), speed (degrees per second))
+- Power Monitor (voltage, power (watts))
+
+with units and order specified in the list. Following the 4 timestamp bytes, this packet has 1 ID byte, then the 2
 floats.
 
 ### Three float sensor
 
 This packet can be used for sensors that send 3 single precision floats as data. This includes:
- - Accelerometer (x, y, z axes (meters per second per second))
- - Gyroscope (x, y, z, axes (degrees per second))
- - Magnetometer (x, y, z axes (Gauss))
 
-with units and order specified in the list. Following the 4 timestamp bytes, this packet has 1 ID byte, then the 3 
+- Accelerometer (x, y, z axes (meters per second per second))
+- Gyroscope (x, y, z, axes (degrees per second))
+- Magnetometer (x, y, z axes (Gauss))
+
+with units and order specified in the list. Following the 4 timestamp bytes, this packet has 1 ID byte, then the 3
 floats.
 
 ### Four float sensor
 
-This packet can be used for sensors that send 4 single precision floats as data. This currently only includes GPS 
-data, which is ordered as longitude, latitude (degrees), altitude (meters above eclipse (HAE)), and ground speed 
+This packet can be used for sensors that send 4 single precision floats as data. This currently only includes GPS
+data, which is ordered as longitude, latitude (degrees), altitude (meters above eclipse (HAE)), and ground speed
 (meters per second).
 
 ---
