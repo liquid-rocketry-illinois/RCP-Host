@@ -246,7 +246,7 @@ int RCP_requestTestState() {
     return RCP__sendTestUpdate(RCP_TEST_QUERY, 0);
 }
 
-int RCP_sendSolenoidWrite(uint8_t ID, RCP_SimpleActuatorState state) {
+int RCP_sendSimpleActuatorWrite(uint8_t ID, RCP_SimpleActuatorState state) {
     if(callbacks == NULL)
         return -2;
     uint8_t buffer[3] = {0};
@@ -256,7 +256,7 @@ int RCP_sendSolenoidWrite(uint8_t ID, RCP_SimpleActuatorState state) {
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 
-int RCP_requestSolenoidRead(uint8_t ID) {
+int RCP_requestSimpleActuatorRead(uint8_t ID) {
     if(callbacks == NULL)
         return -2;
     uint8_t buffer[3] = {0};
