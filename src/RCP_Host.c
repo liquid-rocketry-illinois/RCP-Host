@@ -82,7 +82,7 @@ int RCP_poll() {
     case RCP_DEVCLASS_SIMPLE_ACTUATOR: {
         struct RCP_SimpleActuatorData d = {
             .timestamp = timestamp,
-            .state = buffer[6] & RCP_SIMPLE_ACTUATOR_STATE_MASK,
+            .state = buffer[6] & 0x40,
             .ID = buffer[6] & ~RCP_SIMPLE_ACTUATOR_STATE_MASK
         };
 

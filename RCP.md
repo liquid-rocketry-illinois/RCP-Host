@@ -247,8 +247,8 @@ packet length 5. This additional byte includes several pieces of information:
 This packet is used to return the state of an actuator. This is only 1 additional byte, making the packet length 5. This
 additional byte encodes both the state of the actuator and the actuator ID.
 
-- The most significant bit is not used
-- The next bit indicates if the actuator is on (1) or off (0)
+- The most significant bit indicates if the actuator is off
+- The next bit indicates if the actuator is on
 - The next 6 bits indicate the actuator ID the data is from
 
 ### Boolean Data Packet
