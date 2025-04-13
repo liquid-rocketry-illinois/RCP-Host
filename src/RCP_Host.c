@@ -314,7 +314,7 @@ int RCP_requestTareConfiguration(RCP_DeviceClass device, uint8_t ID, uint8_t dat
     buffer[2] = ID;
     buffer[3] = dataChannel;
     memcpy(buffer + 4, value, valueSize);
-    return callbacks->sendData(buffer, 2 + valueSize) == 2 + valueSize ? 0 : -1;
+    return callbacks->sendData(buffer, 4 + valueSize) == 4 + valueSize ? 0 : -1;
 }
 
 int RCP_promptRespondGONOGO(RCP_GONOGO gonogo) {
