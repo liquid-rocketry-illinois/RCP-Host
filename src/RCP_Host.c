@@ -266,19 +266,16 @@ int RCP_requestSimpleActuatorRead(uint8_t ID) {
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 
-int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode mode, const void* _value) {
+int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode mode, const void* _value, uint8_t valueSize) {
     if(callbacks == NULL)
         return -2;
-    uint8_t buffer[7] = {0};
-    uint8_t* value = (uint8_t*)_value;
-    buffer[0] = channel | 0x05;
+    if(valueSize >= 63) return -3;
+    uint8_t buffer[65] = {0};
+    buffer[0] = channel | (valueSize + 1);
     buffer[1] = RCP_DEVCLASS_STEPPER;
     buffer[2] = (mode & RCP_STEPPER_CONTROL_MODE_MASK) | (ID & 0x3F);
-    buffer[3] = value[0];
-    buffer[4] = value[1];
-    buffer[5] = value[2];
-    buffer[6] = value[3];
-    return callbacks->sendData(buffer, 7) == 7 ? 0 : -1;
+    memcpy(buffer + 3, _value, valueSize);
+    return callbacks->sendData(buffer, 3 + valueSize) == 1 + valueSize ? 0 : -1;
 }
 
 int RCP_requestStepperRead(uint8_t ID) {
@@ -291,14 +288,9 @@ int RCP_requestStepperRead(uint8_t ID) {
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 
-// One shot read request to a device without an ID, just a device class (e.g. ambient temperature sensor)
-int RCP_requestDeviceReadNOID(RCP_DeviceClass device) {
-    return RCP_requestDeviceReadID(device, 0);
-}
-
 // One shot read request to a device with an ID
-int RCP_requestDeviceReadID(RCP_DeviceClass device, uint8_t ID) {
-    if(device <= 0x80 || (ID != 0 && device != RCP_DEVCLASS_PRESSURE_TRANSDUCER))
+int RCP_requestSensorDeviceRead(RCP_DeviceClass device, uint8_t ID) {
+    if(device <= 0x80)
         return -3;
     if(callbacks == NULL)
         return -2;
@@ -307,6 +299,22 @@ int RCP_requestDeviceReadID(RCP_DeviceClass device, uint8_t ID) {
     buffer[1] = device;
     buffer[2] = ID;
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
+}
+
+int RCP_requestTareConfiguration(RCP_DeviceClass device, uint8_t ID, uint8_t dataChannel, const void* value,
+                                 uint8_t valueSize) {
+    if(device <= 0x80 || valueSize >= 62)
+        return -3;
+    if(callbacks == NULL)
+        return -2;
+
+    uint8_t buffer[65] = {0};
+    buffer[0] = channel | (2 + valueSize);
+    buffer[1] = device;
+    buffer[2] = ID;
+    buffer[3] = dataChannel;
+    memcpy(buffer + 4, value, valueSize);
+    return callbacks->sendData(buffer, 2 + valueSize) == 2 + valueSize ? 0 : -1;
 }
 
 int RCP_promptRespondGONOGO(RCP_GONOGO gonogo) {

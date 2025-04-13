@@ -201,11 +201,18 @@ ignored by the target.
 
 ### Sensor Read Requests
 
-This packet can be used to request a value from a READ ONLY device on the target. Devices that can be read from but
-also written to have their own packet formats. This includes devices like GPS, Acceleration, Pressure Transducers, etc.
-This packet contains 1 additional byte, making the packet length 1. The device class byte indicates the device to
-read from. The single parameter byte indicates the ID of the sensor, if applicable (i.e., transducers, other
-similar devices). If the requested device is not identified by an ID, then this byte should be zero.
+This packet can be used to request a value from a READ ONLY sensor device on the target, or to communicate new
+configuration settings for the device. There are multiple versions of this packet:
+
+- Basic sensor request: This packet can be used to only request the value from a sensor device. This packet
+  consists only of the header and class bytes, as well as one additional ID byte.
+- Tare request: This packet can be used to tare a sensor. When a tare request is received, the sensor should 
+  automatically and immediately begin applying this tare value to subsequent data packets. The format is as follows:
+    - Header, class, and ID bytes to identify the sensor
+    - A data channel byte indicates which data channel (for example, the
+      GPS data packet has 4 data channels) to complete the tare on (zero indexed)
+    - The tare value, in the sensors native units. For most sensors, this will be a 4 byte floating point value. This 
+      value is relative to the current data stream, not to the raw data produced by the sensor
 
 ---
 The remaining class codes are currently undefined, and can be used for future expansions.
@@ -253,7 +260,7 @@ additional byte encodes both the state of the actuator and the actuator ID.
 
 ### Boolean Data Packet
 
-This packet is used to return the state of a simple boolean sensor. This is 1 additional byte, making the packet 
+This packet is used to return the state of a simple boolean sensor. This is 1 additional byte, making the packet
 total length 5. This additional byte encodes the ID and the state of the sensor. This byte is formatted as follows:
 
 - The most significant bit indicates state

@@ -185,12 +185,12 @@ int RCP_requestTestState();
 int RCP_sendSimpleActuatorWrite(uint8_t ID, RCP_SimpleActuatorState state);
 int RCP_requestSimpleActuatorRead(uint8_t ID);
 
-// Value should be a 4 byte integral type
-int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode mode, const void* value);
+int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode mode, const void* value, uint8_t valueSize);
 int RCP_requestStepperRead(uint8_t ID);
 
-int RCP_requestDeviceReadNOID(RCP_DeviceClass device);
-int RCP_requestDeviceReadID(RCP_DeviceClass device, uint8_t ID);
+int RCP_requestSensorDeviceRead(RCP_DeviceClass device, uint8_t ID);
+int RCP_requestTareConfiguration(RCP_DeviceClass device, uint8_t ID, uint8_t dataChannel, const void* value,
+                                 uint8_t valueSize);
 
 int RCP_promptRespondGONOGO(RCP_GONOGO gonogo);
 int RCP_promptRespondFloat(float value);
