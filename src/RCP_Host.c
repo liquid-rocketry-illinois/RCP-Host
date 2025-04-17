@@ -92,7 +92,11 @@ int RCP_poll() {
 
     case RCP_DEVCLASS_PROMPT: {
         if(buffer[2] == RCP_PromptDataType_RESET) {
-            callbacks->processPromptInput({.type = RCP_PromptDataType_RESET, .prompt = NULL});
+            struct RCP_PromptInputRequest req = {
+                .type = RCP_PromptDataType_RESET,
+                .prompt = NULL
+            };
+            callbacks->processPromptInput(req);
             break;
         }
 
