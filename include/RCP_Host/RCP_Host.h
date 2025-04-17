@@ -79,6 +79,7 @@ typedef enum {
 typedef enum {
     RCP_PromptDataType_GONOGO = 0x00,
     RCP_PromptDataType_Float = 0x01,
+    RCP_PromptDataType_RESET = 0xFF,
 } RCP_PromptDataType;
 
 typedef enum {

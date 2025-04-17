@@ -175,6 +175,7 @@ When requesting a prompt, the target device will send a packet with the followin
 - Prompt Type:
     - 0x00: Go-No Go authorization
     - 0x01: Floating point input
+    - 0xFF: Clear Active prompt
 - Prompt string (ascii chars). This string DOES NOT CONTAIN a null terminator
 
 The prompt type byte indicates to the host what kind of data the target is expecting to receive back. Only 1 prompt
@@ -190,6 +191,8 @@ Depending on the prompt type, the host should respond as follows:
     - Header Byte
     - Device Class (0x03)
     - 4 byte floating point number
+- Clear Active Prompt: This packet does not contain a prompt string, and is a request from the target for the host 
+  to discard the last activated prompt. No error should occur if there is no active prompt
 
 The prompt string field of the target side packet contains a string of ascii characters that contain the prompt
 string. This prompt string is _not_ null terminated, its length must be determined from the header byte packet
