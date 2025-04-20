@@ -57,6 +57,7 @@ The defined device classes are as follows:
 - 0x92: Pressure Transducer
 - 0x93: Hygrometer (relative humidity)
 - 0x94: Load Cell (weight)
+- 0x95: Boolean Sensor
 - 0xA0: Power Monitor
 - 0xB0: Accelerometer
 - 0xB1: Gyroscope
