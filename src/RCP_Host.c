@@ -142,7 +142,7 @@ int RCP_poll() {
         struct RCP_BoolData d = {
             .timestamp = timestamp,
             .ID = buffer[2] & 0x3F,
-            .data = (buffer[2]) >> 7
+            .data = (buffer[6]) >> 7
         };
 
         callbacks->processBoolData(d);
