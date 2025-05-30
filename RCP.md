@@ -126,6 +126,7 @@ additional byte specifies which testing function to perform:
 - 0x10: Full stop the currently running test
 - 0x11: Pause/Unpause the currently running test
 - 0x12: Request the device performs whatever reset routine it has
+- 0x13: Request the device reset its time base for sensor measurements
 - 0x20: Stop data streaming
 - 0x21: Start data streaming (Full details in data packet section)
 - 0x30: Query current test progress (running, paused, stopped, e-stopped, currently streaming data). The target

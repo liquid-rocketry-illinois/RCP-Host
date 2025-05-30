@@ -237,6 +237,10 @@ int RCP_deviceReset() {
     return RCP__sendTestUpdate(RCP_DEVICE_RESET, 0);
 }
 
+int RCP_deviceTimeReset() {
+    return RCP__sendTestUpdate(RCP_DEVICE_RESET_TIME, 0);
+}
+
 int RCP_setDataStreaming(int datastreaming) {
     return RCP__sendTestUpdate(datastreaming ? RCP_DATA_STREAM_START : RCP_DATA_STREAM_STOP, 0);
 }

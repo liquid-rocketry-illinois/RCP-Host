@@ -44,6 +44,7 @@ typedef enum {
     RCP_TEST_STOP = 0x10,
     RCP_TEST_PAUSE = 0x11,
     RCP_DEVICE_RESET = 0x12,
+    RCP_DEVICE_RESET_TIME = 0x13,
     RCP_DATA_STREAM_STOP = 0x20,
     RCP_DATA_STREAM_START = 0x21,
     RCP_TEST_QUERY = 0x30,
@@ -178,6 +179,7 @@ int RCP_startTest(uint8_t testnum);
 int RCP_stopTest();
 int RCP_pauseUnpauseTest();
 int RCP_deviceReset();
+int RCP_deviceTimeReset();
 int RCP_setDataStreaming(int datastreaming);
 int RCP_changeTestProgress(RCP_TestStateControlMode mode);
 int RCP_setHeartbeatTime(uint8_t heartbeatTime);
