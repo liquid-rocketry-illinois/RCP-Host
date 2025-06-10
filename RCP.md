@@ -51,6 +51,7 @@ The defined device classes are as follows:
 - 0x01: Simple Actuator
 - 0x02: Stepper Motor
 - 0x03: Prompt Input
+- 0x04: Angled Actuator
 - 0x80: Custom data (virtual device)
 - 0x90: Ambient Pressure
 - 0x91: Ambient Temperature
@@ -203,6 +204,17 @@ length. This prompt string should be displayed to users when asking for input.
 The prompt input device class cannot be queried, and if the host sends a packet to this device without having first
 received a prompt request (or an incorrect data type is sent back) then the packet sent by the host should be
 ignored by the target.
+
+### Angled Actuator
+
+This packet class is used to control an angled actuator, which refers to any actuators which controls the angle of 
+something, such as a rocket control surface, a motor shaft, etc. and does not need any other option beyond angle 
+control. This packet comes in two flavors, but both begin with a parameter byte indicating the actuator ID. If no 
+other bytes are sent, then this packet is a read request from the actuator, and follows the single float sensor read 
+request packet format.
+
+The second flavor includes 4 additional bytes, which specify the degrees to set the actuator too, as a 4 byte float 
+in degrees.
 
 ### Sensor Read Requests
 

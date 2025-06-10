@@ -301,6 +301,16 @@ int RCP_requestStepperRead(uint8_t ID) {
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 
+int RCP_requestAngledActuatorWrite(uint8_t ID, float value) {
+    if(callbacks == NULL) return -2;
+    uint8_t buffer[7] = {0};
+    buffer[0] = channel | 0x05;
+    buffer[1] = RCP_DEVCLASS_ANGLED_ACTUATOR;
+    buffer[2] = ID;
+    memcpy(buffer + 3, &value, 4);
+    return callbacks->sendData(buffer, 7) == 7 ? 0 : -1;
+}
+
 // One shot read request to a device with an ID
 int RCP_requestSensorDeviceRead(RCP_DeviceClass device, uint8_t ID) {
     if(device <= 0x80)
