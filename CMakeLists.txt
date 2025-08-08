@@ -3,7 +3,14 @@ project(RCP-Host)
 
 set(CMAKE_C_STANDARD 11)
 
-add_library(RCP-Host STATIC src/RCP_Host.c)
+add_custom_command(
+        OUTPUT ${CMAKE_BINARY_DIR}/VERSION.cpp
+        DEPENDS ${CMAKE_SOURCE_DIR}/VERSION
+        COMMAND ${CMAKE_COMMAND} -DSOURCE:STRING=${CMAKE_SOURCE_DIR} -DBIN:STRING=${CMAKE_BINARY_DIR}
+        -DBTYPE:STRING=${CMAKE_BUILD_TYPE} -P ${CMAKE_SOURCE_DIR}/cmake/gen_version.cmake
+)
+
+add_library(RCP-Host STATIC src/RCP_Host.c ${CMAKE_BINARY_DIR}/VERSION.cpp)
 target_include_directories(RCP-Host PUBLIC include/)
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "Release")

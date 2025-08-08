@@ -8,6 +8,9 @@
 extern "C" {
 #endif
 
+extern const char* const RCP_VERSION;
+extern const char* const RCP_VERSION_END;
+
 typedef enum {
     RCP_CH_ZERO = 0x00,
     RCP_CH_ONE = 0x40,
@@ -197,4 +200,4 @@ int RCP_sendRawSerial(const uint8_t* data, uint8_t size);
 }
 #endif
 
-#endif //RCP_HOST_H
+#endif // RCP_HOST_H
