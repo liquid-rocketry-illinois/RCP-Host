@@ -82,8 +82,8 @@ int RCP_poll() {
     case RCP_DEVCLASS_SIMPLE_ACTUATOR: {
         struct RCP_SimpleActuatorData d = {
             .timestamp = timestamp,
-            .state = buffer[6] & 0x40,
-            .ID = buffer[6] & ~RCP_SIMPLE_ACTUATOR_STATE_MASK
+            .state = buffer[7] ? RCP_SIMPLE_ACTUATOR_ON : RCP_SIMPLE_ACTUATOR_OFF,
+            .ID = ID
         };
 
         callbacks->processSimpleActuatorData(d);
@@ -114,10 +114,9 @@ int RCP_poll() {
     case RCP_DEVCLASS_CUSTOM: {
         struct RCP_CustomData d = {
             .length = pktlen,
-            .data = malloc(pktlen)
+            .data = buffer + 2
         };
 
-        memcpy(d.data, buffer + 2, pktlen);
         callbacks->processSerialData(d);
         break;
     }
@@ -141,8 +140,8 @@ int RCP_poll() {
     case RCP_DEVCLASS_BOOL_SENSOR: {
         struct RCP_BoolData d = {
             .timestamp = timestamp,
-            .ID = buffer[2] & 0x3F,
-            .data = (buffer[6]) >> 7
+            .ID = ID,
+            .data = buffer[7]
         };
 
         callbacks->processBoolData(d);
@@ -207,7 +206,7 @@ int RCP_sendEStop() {
 
 
 // Most of the testing command packets follow the same format, so they have been moved to a common function
-int RCP__sendTestUpdate(RCP_TestStateControlMode mode, uint8_t param) {
+static int RCP__sendTestUpdate(RCP_TestStateControlMode mode, uint8_t param) {
     if(callbacks == NULL)
         return -2;
     uint8_t buffer[3] = {0};
@@ -262,43 +261,24 @@ int RCP_requestTestState() {
 int RCP_sendSimpleActuatorWrite(uint8_t ID, RCP_SimpleActuatorState state) {
     if(callbacks == NULL)
         return -2;
-    uint8_t buffer[3] = {0};
+    uint8_t buffer[4] = {0};
     buffer[0] = channel | 0x01;
     buffer[1] = RCP_DEVCLASS_SIMPLE_ACTUATOR;
-    buffer[2] = (state & RCP_SIMPLE_ACTUATOR_STATE_MASK) | (ID & 0x3F);
-    return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
+    buffer[2] = ID;
+    buffer[3] = state;
+    return callbacks->sendData(buffer, 4) == 4 ? 0 : -1;
 }
 
-int RCP_requestSimpleActuatorRead(uint8_t ID) {
+int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode mode, float value) {
     if(callbacks == NULL)
         return -2;
-    uint8_t buffer[3] = {0};
-    buffer[0] = channel | 0x01;
-    buffer[1] = RCP_DEVCLASS_SIMPLE_ACTUATOR;
-    buffer[2] = RCP_SIMPLE_ACTUATOR_READ | (ID & 0x3F);
-    return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
-}
-
-int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode mode, const void* _value, uint8_t valueSize) {
-    if(callbacks == NULL)
-        return -2;
-    if(valueSize >= 63) return -3;
-    uint8_t buffer[65] = {0};
-    buffer[0] = channel | (valueSize + 1);
+    uint8_t buffer[8] = {0};
+    buffer[0] = channel | 6;
     buffer[1] = RCP_DEVCLASS_STEPPER;
-    buffer[2] = (mode & RCP_STEPPER_CONTROL_MODE_MASK) | (ID & 0x3F);
-    memcpy(buffer + 3, _value, valueSize);
-    return callbacks->sendData(buffer, 3 + valueSize) == 1 + valueSize ? 0 : -1;
-}
-
-int RCP_requestStepperRead(uint8_t ID) {
-    if(callbacks == NULL)
-        return -2;
-    uint8_t buffer[3] = {0};
-    buffer[0] = channel | 0x01;
-    buffer[1] = RCP_DEVCLASS_STEPPER;
-    buffer[2] = RCP_STEPPER_QUERY_STATE | (ID & 0x3F);
-    return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
+    buffer[2] = ID;
+    buffer[3] = mode;
+    memcpy(buffer + 4, &value, 4);
+    return callbacks->sendData(buffer, 8) == 8 ? 0 : -1;
 }
 
 int RCP_requestAngledActuatorWrite(uint8_t ID, float value) {
@@ -312,11 +292,12 @@ int RCP_requestAngledActuatorWrite(uint8_t ID, float value) {
 }
 
 // One shot read request to a device with an ID
-int RCP_requestSensorDeviceRead(RCP_DeviceClass device, uint8_t ID) {
-    if(device <= 0x80)
-        return -3;
+int RCP_requestGeneralRead(RCP_DeviceClass device, uint8_t ID) {
     if(callbacks == NULL)
         return -2;
+
+    if(device == RCP_DEVCLASS_PROMPT) return -1;
+    if(device == RCP_DEVCLASS_TEST_STATE) return RCP_requestTestState();
     uint8_t buffer[3] = {0};
     buffer[0] = channel | 0x01;
     buffer[1] = device;
@@ -324,20 +305,19 @@ int RCP_requestSensorDeviceRead(RCP_DeviceClass device, uint8_t ID) {
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -1;
 }
 
-int RCP_requestTareConfiguration(RCP_DeviceClass device, uint8_t ID, uint8_t dataChannel, const void* value,
-                                 uint8_t valueSize) {
-    if(device <= 0x80 || valueSize >= 62)
+int RCP_requestTareConfiguration(RCP_DeviceClass device, uint8_t ID, uint8_t dataChannel, float value) {
+    if(device <= 0x80)
         return -3;
     if(callbacks == NULL)
         return -2;
 
-    uint8_t buffer[65] = {0};
-    buffer[0] = channel | (2 + valueSize);
+    uint8_t buffer[8] = {0};
+    buffer[0] = channel | 6;
     buffer[1] = device;
     buffer[2] = ID;
     buffer[3] = dataChannel;
-    memcpy(buffer + 4, value, valueSize);
-    return callbacks->sendData(buffer, 4 + valueSize) == 4 + valueSize ? 0 : -1;
+    memcpy(buffer + 4, &value, 4);
+    return callbacks->sendData(buffer, 8) == 8 ? 0 : -1;
 }
 
 int RCP_promptRespondGONOGO(RCP_GONOGO gonogo) {

@@ -38,12 +38,16 @@ to transmit this protocol, these features may already be available.
   various methods, etc.
 - Heartbeat packet: Packets sent from the host to the target. If consecutive heartbeats are not received by the
   target in the time specified, the target should initiate an emergency stop.
+- Fully Qualified Device Name (FQDN): The 16 bit identifier that makes up a unique number that identifies a device
+  on the target. The first 8 bits indicate the device class, the next indicate a device ID. Two devices may share
+  the same ID, as long as they are not under the same device class.
 
 ### Device Classes
 
 A device class is an 8 bit identifier which encodes the type of device of something. For example, a solenoid, a sensor,
-a software component, etc. Device classes, combined with a device ID number (if necessary), can be used to uniquely
-identify an individual device on a target.
+a software component, etc. Device classes, combined with a device ID number (if relevant), form the FQDN and can be
+used to uniquely identify an individual device on a target. Some devices, such as the test state, do not require
+IDs, since there can only be one such device present.
 
 The defined device classes are as follows:
 
@@ -66,8 +70,9 @@ The defined device classes are as follows:
 - 0xC0: GPS
 
 As an aside, devices are loosely assigned class numbers based on a few things. First, all read-only devices have the
-MSB set. The next 3 bits for read-only's indicate how many bytes of data they send back when queried. From there the
-order is simply numerical. This is not a strict standard, only a convention that will (hopefully) be maintained.
+MSB set. The next 3 bits for read-only's indicate how many data channels the device has. For example, GPS returns
+the latitude, longitude, ground speed, and altitude, thus it has 4 data channels. From there the order is simply
+numerical. This is not a strict standard, only a convention that will (hopefully) be maintained.
 
 ## Packet Structure
 
@@ -101,24 +106,32 @@ Any other length from 1 to 63 specifies the length of the packet excluding this 
 
 ### Class Byte
 
-This byte indicates the purpose of the rest of the packet. The exact function and definition of the class byte depends
-on if the packet is for control or for data. This byte is not included in the length field of the header byte.
+This byte indicates the purpose of the rest of the packet, in the form of the device class. The rest of the bytes in
+the packet are interpreted based on the device class. This byte is not included in the length field of the header byte.
 
 ## Control Packets
 
 Control packets are sent from the host to the target to request an update to the target state, or to request data from
-the target. The device to be addressed of a control packet is determined by the value of the class byte.
+the target. The device to be addressed of a control packet is determined by the value of the class byte, and in some
+cases the ID as well.
 
 For every write to a device, the target should send the new state of the device after its state has been changed.
 For example, if the host requests a change to a solenoid's state, the target should respond with a solenoid data
 packet with the new state of the solenoid. This new state is not necessarily what the host requests, but what, in
 reality, is the outcome. This data can be used by the host to determine if the change was successful.
 
-### Testing Command
+### Read Requests
 
-A testing command is a request to change the state of a test. This includes starting, stopping, and pausing tests,
-and controlling data streaming. The testing device requires 1 parameter byte (for a total length of 1). This
-additional byte specifies which testing function to perform:
+Any device that can have data read from it will respond to the same packet structure. By sending just the ID of the
+device to read from (as well as the class to form the FQDN), the associated device should respond with whatever data
+it would normally send back. Some exceptions to this format are noted in device specific sections below.
+
+### The Test State Device
+
+The test state device (device class 0x00) is a special device, in that it is not something physically present, but
+rather a software component needed for RCP compliance. Writing to this device controls things like starting, stopping,
+and pausing tests, controlling data streaming, and heartbeats. The testing device requires 1 parameter byte (for a
+total length of 1). This additional byte specifies which testing function to perform:
 
 - 0x0x: This indicates a request to begin a test. The first 4 bits of this parameter must all be zero, but the
   remaining 4 bits allow for a test number to be selected. This allows for the target to have multiple test sequences
@@ -135,43 +148,42 @@ additional byte specifies which testing function to perform:
 - 0xF0: Disable heartbeat packets
 - 0xFx: Enable heartbeat packets with seconds specified in the second nibble (excluding a value of 15)
 - 0xFF: Heartbeat packet
-- Remaining codes are not yet defined and can be used as needed.
+- Remaining codes are undefined behavior
 
 ### Simple Actuator Command
 
-This packet class is a manual request to a simple actuator. A simple actuator is any device which is either on or off.
-This command contains one parameter byte, making the total packet length 1. The additional byte encodes both the
-operation requested, and the actuator ID to address. The first 2 bits indicate the requested operation:
+This packet class is a manual request to a simple actuator. A simple actuator is any device which is either on or
+off. To read from this type of device, the normal read request packet can be used. The response format is indicated
+in the data packets section.
 
-- 00b: Query actuator state
-- 01b: Turn actuator on
-- 10b: Turn actuator off
-- 11b: Toggle actuator state
+To write to a simple actuator, 2 additional parameter bytes are needed. The first is the ID of the actuator to write
+to. The next byte indicates the function. The meanings of this parameter byte are indicated below:
 
-The remaining 6 bits indicate the actuator ID to address. The target is responsible for parsing this ID and translating
-it to the appropriate hardware address.
+- 0x00: Turn actuator off
+- 0x80: Turn actuator on
+- 0xC0: Toggle actuator state
 
 ### Stepper Motor Command
 
-This packet class is a manual request to a stepper motor. This command contains a variable number of parameter bytes
-depending on the requested operation, but it is always at least 1. The first parameter byte indicates the requested
-operation, and the stepper motor to address. The first 2 bits indicate the operation:
+This packet class is a manual request to a stepper motor. To read from this type of device, the normal read request
+packet can be used. The response format is indicated in the data packets section.
 
-- 00b: Query stepper motor state
-- 01b: Absolute positioning
-- 10b: Relative positioning
-- 11b: Speed based control
+To write to a stepper motor, additional parameter bytes are required. The first is the ID of the stepper to write to.
+The next byte indicates the function. The next 4 bytes are the control value, or in other words the value to set
+the stepper motor to. The meanings of the function byte are indicated below:
 
-The next 6 bits indicate the stepper motor ID. If the requested operation is a query, there are no additional
-parameter bytes. However, if the operation is a write, the next 4 bytes of information are the value for the
-indicated function. Depending on the hardware implementation, these bytes may be interpreted as a 32 bit integer,
-a floating point number, or another representation not mentioned.
+- 0x40: Absolute positioning
+- 0x80: Relative positioning
+- 0xC0: Speed based control
+
+The 4 bytes that make up the control value can be interpreted differently depending on the function requested.
 
 ### Prompt Inputs
 
-This packet class is used by the target device to prompt input from the host. As of now, this prompt request can
-prompt for either numeric data, or go-no go authorization, but it can be expanded to include other prompt types.
-When requesting a prompt, the target device will send a packet with the following structure:
+This packet class is used by the target device to prompt input from the host, and like the test state device, is a
+software component and has no ID byte. As of now, this prompt request can prompt for either numeric data, or go-no go
+authorization, but it can be expanded to include other prompt types. When requesting a prompt, the target device will
+send a packet with the following structure:
 
 - Header byte
 - Device Class (0x03)
@@ -194,7 +206,7 @@ Depending on the prompt type, the host should respond as follows:
     - Header Byte
     - Device Class (0x03)
     - 4 byte floating point number
-- Clear Active Prompt: This packet does not contain a prompt string, and is a request from the target for the host 
+- Clear Active Prompt: This packet does not contain a prompt string, and is a request from the target for the host
   to discard the last activated prompt. No error should occur if there is no active prompt
 
 The prompt string field of the target side packet contains a string of ascii characters that contain the prompt
@@ -207,14 +219,13 @@ ignored by the target.
 
 ### Angled Actuator
 
-This packet class is used to control an angled actuator, which refers to any actuators which controls the angle of 
-something, such as a rocket control surface, a motor shaft, etc. and does not need any other option beyond angle 
-control. This packet comes in two flavors, but both begin with a parameter byte indicating the actuator ID. If no 
-other bytes are sent, then this packet is a read request from the actuator, and follows the single float sensor read 
-request packet format.
+This packet class is used to control an angled actuator, which refers to any actuators which controls the angle of
+something, such as a rocket control surface, a motor shaft, etc. and does not need any other option beyond angle
+control. To read from this type of device, the normal read request packet can be used. The response format is indicated
+in the data packets section.
 
-The second flavor includes 4 additional bytes, which specify the degrees to set the actuator too, as a 4 byte float 
-in degrees.
+To write to an angled actuator, additional parameter bytes are required. The first is the ID of the actuator to
+write to. 4 additional bytes form a floating point value to set the actuator to, in degrees.
 
 ### Sensor Read Requests
 
@@ -222,17 +233,18 @@ This packet can be used to request a value from a READ ONLY sensor device on the
 configuration settings for the device. There are multiple versions of this packet:
 
 - Basic sensor request: This packet can be used to only request the value from a sensor device. This packet
-  consists only of the header and class bytes, as well as one additional ID byte.
-- Tare request: This packet can be used to tare a sensor. When a tare request is received, the sensor should 
+  follows the standard read request format.
+- Tare request: This packet can be used to tare a sensor. When a tare request is received, the sensor should
   automatically and immediately begin applying this tare value to subsequent data packets. The format is as follows:
     - Header, class, and ID bytes to identify the sensor
     - A data channel byte indicates which data channel (for example, the
       GPS data packet has 4 data channels) to complete the tare on (zero indexed)
-    - The tare value, in the sensors native units. For most sensors, this will be a 4 byte floating point value. This 
+    - The tare value, in the sensors native units. For most sensors, this will be a 4 byte floating point value. This
       value is relative to the current data stream, not to the raw data produced by the sensor
 
 ---
-The remaining class codes are currently undefined, and can be used for future expansions.
+
+The remaining class codes are currently undefined behavior.
 
 ## Data Packets
 
@@ -240,16 +252,11 @@ These packets are used to communicate state information from the target to the h
 a header byte and a class byte like control packets, and the parameter bytes indicate the data about that device.
 The exact format of the data depends on the device.
 
-If a target has multiple sensors belonging to the same device class (ex. ambient temperature, acceleraction, etc.), and
-this device class does not support IDs, it is the target's responsibility to determine which is the best data to send to
-the host.
-
-Data packets include a 4 byte time stamp immediately following the class byte. This timestamp indicates the milliseconds
-since data logging was started. This value **does not indicate absolute time in any way, and is not intended to be used
-for accurate timekeeping**. This time value is only for the host to be able to determine the rough time a data point
-was produced for data visualization. The timestamp bytes are parameter bytes and thus are included in the packet length.
-
-If a bit is unused, it should be set to zero.
+Data packets also include a 4 byte time stamp immediately following the class byte. This timestamp indicates the
+milliseconds since data logging was started. This value **does not indicate absolute time in any way, and is not
+intended to be used for accurate timekeeping**. This time value is only for the host to be able to determine the rough
+time a data point was produced for data visualization. The timestamp bytes are parameter bytes and thus are included in
+the packet length.
 
 ### Test State Packet
 
@@ -268,21 +275,21 @@ packet length 5. This additional byte includes several pieces of information:
 
 ### Actuator State Packet
 
-This packet is used to return the state of an actuator. This is only 1 additional byte, making the packet length 5. This
-additional byte encodes both the state of the actuator and the actuator ID.
+This packet is used to return the state of an actuator. This is 2 additional bytes, making the packet length 6. The
+first byte indicates the device ID. The next byte indicates the state of the device:
 
-- The most significant bit indicates if the actuator is off
-- The next bit indicates if the actuator is on
-- The next 6 bits indicate the actuator ID the data is from
+- 0x00: The actuator is off
+- 0x80: The actuator is on
+- Any other data is treated as on
 
-### Boolean Data Packet
+### Boolean Sensor Packet
 
-This packet is used to return the state of a simple boolean sensor. This is 1 additional byte, making the packet
-total length 5. This additional byte encodes the ID and the state of the sensor. This byte is formatted as follows:
+This packet is used to return the state of a simple boolean sensor. This is 2 additional bytes, making the packet
+total length 6. The first additional byte encodes the ID. The next byte indicates the device state:
 
-- The most significant bit indicates state
-- The next bit is unused
-- The next 6 bits indicate the sensor ID
+- 0x00: A false reading
+- 0x80: A true reading
+- Any other data is also treated as true
 
 ### Custom Data
 
@@ -337,4 +344,4 @@ data, which is ordered as longitude, latitude (degrees), altitude (meters above 
 (meters per second).
 
 ---
-The remaining class codes are currently undefined, and can be used for future expansions.
+The remaining class codes are currently undefined behavior.

@@ -52,7 +52,6 @@ typedef enum {
     RCP_HEARTBEATS_CONTROL = 0xF0
 } RCP_TestStateControlMode;
 
-
 typedef enum {
     RCP_TEST_RUNNING = 0x00,
     RCP_DEVICE_INITED_MASK = 0x10,
@@ -63,19 +62,15 @@ typedef enum {
 } RCP_TestRunningState;
 
 typedef enum {
-    RCP_SIMPLE_ACTUATOR_READ = 0x00,
-    RCP_SIMPLE_ACTUATOR_ON = 0x40,
-    RCP_SIMPLE_ACTUATOR_OFF = 0x80,
+    RCP_SIMPLE_ACTUATOR_OFF = 0x00,
+    RCP_SIMPLE_ACTUATOR_ON = 0x80,
     RCP_SIMPLE_ACTUATOR_TOGGLE = 0xC0,
-    RCP_SIMPLE_ACTUATOR_STATE_MASK = 0xC0,
 } RCP_SimpleActuatorState;
 
 typedef enum {
-    RCP_STEPPER_QUERY_STATE = 0x00,
     RCP_STEPPER_ABSOLUTE_POS_CONTROL = 0x40,
     RCP_STEPPER_RELATIVE_POS_CONTROL = 0x80,
     RCP_STEPPER_SPEED_CONTROL = 0xC0,
-    RCP_STEPPER_CONTROL_MODE_MASK = 0xC0
 } RCP_StepperControlMode;
 
 typedef enum {
@@ -143,7 +138,7 @@ struct RCP_FourFloat {
 };
 
 struct RCP_CustomData {
-    void* data;
+    const void* data;
     uint8_t length;
 };
 
@@ -187,15 +182,11 @@ int RCP_setHeartbeatTime(uint8_t heartbeatTime);
 int RCP_requestTestState();
 
 int RCP_sendSimpleActuatorWrite(uint8_t ID, RCP_SimpleActuatorState state);
-int RCP_requestSimpleActuatorRead(uint8_t ID);
-
-int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode mode, const void* value, uint8_t valueSize);
-int RCP_requestStepperRead(uint8_t ID);
+int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode mode, float value);
 int RCP_requestAngledActuatorWrite(uint8_t ID, float value);
 
-int RCP_requestSensorDeviceRead(RCP_DeviceClass device, uint8_t ID);
-int RCP_requestTareConfiguration(RCP_DeviceClass device, uint8_t ID, uint8_t dataChannel, const void* value,
-                                 uint8_t valueSize);
+int RCP_requestGeneralRead(RCP_DeviceClass device, uint8_t ID);
+int RCP_requestTareConfiguration(RCP_DeviceClass device, uint8_t ID, uint8_t dataChannel, float value);
 
 int RCP_promptRespondGONOGO(RCP_GONOGO gonogo);
 int RCP_promptRespondFloat(float value);
