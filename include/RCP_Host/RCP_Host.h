@@ -166,6 +166,7 @@ int RCP_shutdown();
 
 // Library will default to channel zero, but it can be changed here.
 void RCP_setChannel(RCP_Channel ch);
+RCP_Channel RCP_getChannel();
 
 // Function to call periodically to poll for data
 int RCP_poll();

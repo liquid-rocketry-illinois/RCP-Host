@@ -4,12 +4,12 @@
 #include <string.h>
 
 // Utility
-float toFloat(const uint8_t* start) {
+static float toFloat(const uint8_t* start) {
     return ((float*)start)[0];
 }
 
-RCP_Channel channel = RCP_CH_ZERO;
-struct RCP_LibInitData* callbacks = NULL;
+static RCP_Channel channel = RCP_CH_ZERO;
+static struct RCP_LibInitData* callbacks = NULL;
 
 // The only initialization that needs to happen is saving the callbacks struct
 int RCP_init(const struct RCP_LibInitData _callbacks) {
@@ -34,6 +34,10 @@ int RCP_shutdown() {
 
 void RCP_setChannel(RCP_Channel ch) {
     channel = ch;
+}
+
+RCP_Channel RCP_getChannel() {
+    return channel;
 }
 
 // The primary function that gets called periodically by the main application. Will read data from the buffer and
