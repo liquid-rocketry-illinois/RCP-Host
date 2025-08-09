@@ -104,6 +104,12 @@ only this header byte, and no other bytes.
 
 Any other length from 1 to 63 specifies the length of the packet excluding this header byte and the class byte.
 
+### Overflows
+
+While it is out of the scope of RCP as this protocol would be an OSI application layer protocol and is not concerned
+with transport or guaranteeing delivery, overflows of receiving buffers still have standard behavior. If a buffer 
+does overflow, the incomming packet should be discarded.
+
 ### Class Byte
 
 This byte indicates the purpose of the rest of the packet, in the form of the device class. The rest of the bytes in
