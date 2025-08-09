@@ -103,7 +103,7 @@ struct RCP_SimpleActuatorData {
 
 struct RCP_PromptInputRequest {
     const RCP_PromptDataType type;
-    char* const prompt;
+    const char* const prompt;
 };
 
 struct RCP_BoolData {

@@ -117,11 +117,9 @@ int RCP_poll() {
 
         struct RCP_PromptInputRequest req = {
             .type = buffer[2],
-            .prompt = malloc(pktlen)
+            .prompt = (char*) buffer + 3
         };
 
-        memcpy(req.prompt, buffer + 3, pktlen - 1);
-        req.prompt[pktlen - 1] = 0;
         callbacks->processPromptInput(req);
         break;
     }
