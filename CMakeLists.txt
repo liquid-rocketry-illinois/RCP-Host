@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.28)
 project(RCP-Host)
 
 set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 23)
+
+option(BUILD_TESTS "Build GTest RCP tests" OFF)
 
 add_custom_command(
         OUTPUT ${CMAKE_BINARY_DIR}/VERSION.cpp
@@ -21,4 +24,20 @@ target_compile_definitions(RCP-Host PRIVATE
 if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
     add_custom_target(RCP-Host-GithubRelease COMMAND ${CMAKE_SOURCE_DIR}\\GithubRelease.sh ${CMAKE_BINARY_DIR})
     add_dependencies(RCP-Host-GithubRelease RCP-Host)
+endif()
+
+if(${BUILD_TESTS})
+    add_subdirectory(test/googletest)
+
+    enable_testing()
+
+    add_executable(
+            RCP-Host-tests
+            test/test.cpp
+    )
+
+    target_link_libraries(RCP-Host-tests PRIVATE GTest::gtest_main RCP-Host)
+
+    include(GoogleTest)
+    gtest_discover_tests(RCP-Host-tests)
 endif()
