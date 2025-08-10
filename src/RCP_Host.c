@@ -366,5 +366,5 @@ int RCP_sendRawSerial(const uint8_t* data, uint8_t size) {
     buffer[0] = channel | size;
     buffer[1] = RCP_DEVCLASS_CUSTOM;
     memcpy(buffer + 2, data, size);
-    return callbacks->sendData(buffer, size + 2) == 3 ? 0 : -2;
+    return callbacks->sendData(buffer, size + 2) == size + 2 ? 0 : -2;
 }
