@@ -276,7 +276,7 @@ int RCP_sendSimpleActuatorWrite(uint8_t ID, RCP_SimpleActuatorState state) {
     if(callbacks == NULL)
         return -1;
     uint8_t buffer[4] = {0};
-    buffer[0] = channel | 0x01;
+    buffer[0] = channel | 0x02;
     buffer[1] = RCP_DEVCLASS_SIMPLE_ACTUATOR;
     buffer[2] = ID;
     buffer[3] = state;
