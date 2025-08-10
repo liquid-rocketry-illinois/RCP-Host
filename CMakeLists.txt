@@ -21,11 +21,6 @@ target_compile_definitions(RCP-Host PRIVATE
         $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
 )
 
-if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
-    add_custom_target(RCP-Host-GithubRelease COMMAND ${CMAKE_SOURCE_DIR}\\GithubRelease.sh ${CMAKE_BINARY_DIR})
-    add_dependencies(RCP-Host-GithubRelease RCP-Host)
-endif()
-
 if(${BUILD_TESTS})
     add_subdirectory(test/googletest)
 
@@ -40,4 +35,13 @@ if(${BUILD_TESTS})
 
     include(GoogleTest)
     gtest_discover_tests(RCP-Host-tests)
+endif()
+
+if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+    add_custom_target(RCP-Host-GithubRelease COMMAND ${CMAKE_SOURCE_DIR}\\GithubRelease.sh ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR})
+    add_dependencies(RCP-Host-GithubRelease RCP-Host)
+
+    if(${BUILD_TESTS})
+        add_dependencies(RCP-Host-GithubRelease RCP-Host-tests)
+    endif()
 endif()
