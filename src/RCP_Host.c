@@ -353,7 +353,7 @@ int RCP_promptRespondFloat(float value) {
 int RCP_sendRawSerial(const uint8_t* data, uint8_t size) {
     if(callbacks == NULL)
         return -1;
-    if(size > 63)
+    if(size > 63 || size == 0)
         return -3;
     uint8_t buffer[65];
     buffer[0] = channel | size;
