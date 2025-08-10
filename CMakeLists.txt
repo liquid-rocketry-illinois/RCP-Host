@@ -13,6 +13,11 @@ add_custom_command(
 add_library(RCP-Host STATIC src/RCP_Host.c ${CMAKE_BINARY_DIR}/VERSION.cpp)
 target_include_directories(RCP-Host PUBLIC include/)
 
+target_compile_definitions(RCP-Host PRIVATE
+        $<$<CXX_COMPILER_ID:MSVC>:/W3 /WX>
+        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
+)
+
 if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
     add_custom_target(RCP-Host-GithubRelease COMMAND ${CMAKE_SOURCE_DIR}\\GithubRelease.sh ${CMAKE_BINARY_DIR})
     add_dependencies(RCP-Host-GithubRelease RCP-Host)
