@@ -38,7 +38,7 @@ if(${BUILD_TESTS})
 endif()
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
-    add_custom_target(RCP-Host-GithubRelease COMMAND ${CMAKE_SOURCE_DIR}\\GithubRelease.sh ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR})
+    add_custom_target(RCP-Host-GithubRelease COMMAND ${CMAKE_CURRENT_SOURCE_DIR}\\GithubRelease.sh ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
     add_dependencies(RCP-Host-GithubRelease RCP-Host)
 
     if(${BUILD_TESTS})
