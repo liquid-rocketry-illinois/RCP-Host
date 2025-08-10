@@ -41,6 +41,7 @@ to transmit this protocol, these features may already be available.
 - Fully Qualified Device Name (FQDN): The 16 bit identifier that makes up a unique number that identifies a device
   on the target. The first 8 bits indicate the device class, the next indicate a device ID. Two devices may share
   the same ID, as long as they are not under the same device class.
+- Float value: IEEE754 floating point values, big endian
 
 ### Device Classes
 
