@@ -84,10 +84,10 @@ int RCP_poll() {
     case RCP_DEVCLASS_TEST_STATE: {
         struct RCP_TestData d = {
             .timestamp = timestamp,
-            .dataStreaming = buffer[6] & 0x80,
+            .dataStreaming = buffer[6] & RCP_DATA_STREAM_MASK,
             .state = buffer[6] & RCP_TEST_STATE_MASK,
             .isInited = buffer[6] & RCP_DEVICE_INITED_MASK,
-            .heartbeatTime = buffer[6] & 0x0F
+            .heartbeatTime = buffer[6] & RCP_HEARTBEAT_TIME_MASK
         };
 
         callbacks->processTestUpdate(d);

@@ -62,6 +62,8 @@ typedef enum {
     RCP_TEST_PAUSED = 0x40,
     RCP_TEST_ESTOP = 0x60,
     RCP_TEST_STATE_MASK = 0x60,
+    RCP_DATA_STREAM_MASK = 0x80,
+    RCP_HEARTBEAT_TIME_MASK = 0x0F,
 } RCP_TestRunningState;
 
 typedef enum {
