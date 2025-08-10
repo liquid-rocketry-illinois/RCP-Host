@@ -7,13 +7,13 @@ set(CMAKE_CXX_STANDARD 23)
 option(BUILD_TESTS "Build GTest RCP tests" OFF)
 
 add_custom_command(
-        OUTPUT ${CMAKE_BINARY_DIR}/VERSION.cpp
+        OUTPUT ${CMAKE_BINARY_DIR}/RCPVERSION.cpp
         DEPENDS ${CMAKE_SOURCE_DIR}/VERSION
         COMMAND ${CMAKE_COMMAND} -DSOURCE:STRING=${CMAKE_SOURCE_DIR} -DBIN:STRING=${CMAKE_BINARY_DIR}
         -DBTYPE:STRING=${CMAKE_BUILD_TYPE} -P ${CMAKE_SOURCE_DIR}/cmake/gen_version.cmake
 )
 
-add_library(RCP-Host STATIC src/RCP_Host.c ${CMAKE_BINARY_DIR}/VERSION.cpp)
+add_library(RCP-Host STATIC src/RCP_Host.c ${CMAKE_BINARY_DIR}/RCPVERSION.cpp)
 target_include_directories(RCP-Host PUBLIC include/)
 
 target_compile_definitions(RCP-Host PRIVATE
