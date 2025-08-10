@@ -16,7 +16,7 @@ add_custom_command(
 add_library(RCP-Host STATIC src/RCP_Host.c ${CMAKE_BINARY_DIR}/RCPVERSION.cpp)
 target_include_directories(RCP-Host PUBLIC include/)
 
-target_compile_definitions(RCP-Host PRIVATE
+target_compile_options(RCP-Host PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/W3 /WX>
         $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
 )

@@ -59,7 +59,7 @@ int RCP_poll() {
     uint8_t buffer[64] = {0};
 
     // Read in just the header byte to get the length of the packet
-    int bread = callbacks->readData(buffer, 1);
+    size_t bread = callbacks->readData(buffer, 1);
     if(bread != 1)
         return -2;
 
