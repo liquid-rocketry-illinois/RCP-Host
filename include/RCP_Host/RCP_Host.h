@@ -188,7 +188,7 @@ int RCP_requestTestState();
 
 int RCP_sendSimpleActuatorWrite(uint8_t ID, RCP_SimpleActuatorState state);
 int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode mode, float value);
-int RCP_requestAngledActuatorWrite(uint8_t ID, float value);
+int RCP_sendAngledActuatorWrite(uint8_t ID, float value);
 
 int RCP_requestGeneralRead(RCP_DeviceClass device, uint8_t ID);
 int RCP_requestTareConfiguration(RCP_DeviceClass device, uint8_t ID, uint8_t dataChannel, float value);

@@ -288,7 +288,7 @@ int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode mode, float value) {
     return callbacks->sendData(buffer, 8) == 8 ? 0 : -2;
 }
 
-int RCP_requestAngledActuatorWrite(uint8_t ID, float value) {
+int RCP_sendAngledActuatorWrite(uint8_t ID, float value) {
     if(callbacks == NULL) return -1;
     uint8_t buffer[7] = {0};
     buffer[0] = channel | 0x05;
