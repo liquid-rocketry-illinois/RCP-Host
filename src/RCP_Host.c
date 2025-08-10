@@ -257,13 +257,6 @@ int RCP_setDataStreaming(int datastreaming) {
     return RCP__sendTestUpdate(datastreaming ? RCP_DATA_STREAM_START : RCP_DATA_STREAM_STOP, 0);
 }
 
-// Returns -3 to indicate invalid mode supplied
-int RCP_changeTestProgress(RCP_TestStateControlMode mode) {
-    if(mode != RCP_TEST_STOP && mode != RCP_TEST_PAUSE)
-        return -3;
-    return RCP__sendTestUpdate(mode, 0);
-}
-
 int RCP_setHeartbeatTime(uint8_t heartbeatTime) {
     return RCP__sendTestUpdate(RCP_HEARTBEATS_CONTROL, (heartbeatTime & 0x0F));
 }

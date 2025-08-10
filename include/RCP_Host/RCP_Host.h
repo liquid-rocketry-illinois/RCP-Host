@@ -181,7 +181,6 @@ int RCP_pauseUnpauseTest();
 int RCP_deviceReset();
 int RCP_deviceTimeReset();
 int RCP_setDataStreaming(int datastreaming);
-int RCP_changeTestProgress(RCP_TestStateControlMode mode);
 int RCP_setHeartbeatTime(uint8_t heartbeatTime);
 int RCP_requestTestState();
 
