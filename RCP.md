@@ -157,6 +157,16 @@ total length of 1). This additional byte specifies which testing function to per
 - 0xFF: Heartbeat packet
 - Remaining codes are undefined behavior
 
+#### Heartbeats
+
+Heartbeats can be configured to ensure that communication between the host and target is maintained, and if not, 
+then an emergency stop should occur. The heartbeat packet is essentially a dummy packet. It does not actually change 
+the state of anything on the target (besides the watchdog), but it allows the host to send a heatbeat without 
+changing the target's state.
+
+If the target does not receive a heartbeat within the time interval, then it should immediately trigger an EStop. 
+Heartbeats from the target to host are not supported.
+
 ### Simple Actuator Command
 
 This packet class is a manual request to a simple actuator. A simple actuator is any device which is either on or
