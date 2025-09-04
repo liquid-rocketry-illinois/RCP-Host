@@ -134,6 +134,7 @@ int RCP_poll() {
         break;
     }
 
+    case RCP_DEVCLASS_ANGLED_ACTUATOR:
     case RCP_DEVCLASS_AM_PRESSURE:
     case RCP_DEVCLASS_AM_TEMPERATURE:
     case RCP_DEVCLASS_PRESSURE_TRANSDUCER:
