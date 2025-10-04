@@ -59,7 +59,7 @@ int RCP_poll() {
     uint8_t buffer[64] = {0};
 
     // Read in just the header byte to get the length of the packet
-    int bread = callbacks->readData(buffer, 1);
+    size_t bread = callbacks->readData(buffer, 1);
     if(bread != 1)
         return -2;
 
@@ -134,6 +134,7 @@ int RCP_poll() {
         break;
     }
 
+    case RCP_DEVCLASS_ANGLED_ACTUATOR:
     case RCP_DEVCLASS_AM_PRESSURE:
     case RCP_DEVCLASS_AM_TEMPERATURE:
     case RCP_DEVCLASS_PRESSURE_TRANSDUCER:
@@ -288,7 +289,7 @@ int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode mode, float value) {
     return callbacks->sendData(buffer, 8) == 8 ? 0 : -2;
 }
 
-int RCP_requestAngledActuatorWrite(uint8_t ID, float value) {
+int RCP_sendAngledActuatorWrite(uint8_t ID, float value) {
     if(callbacks == NULL) return -1;
     uint8_t buffer[7] = {0};
     buffer[0] = channel | 0x05;

@@ -148,7 +148,7 @@ TEST(RCPNoinit, NonInit) {
     TEST_NONINIT_RUN(RCP_sendHeartbeat);
     TEST_NONINIT_RUN(RCP_sendSimpleActuatorWrite, 0, RCP_SIMPLE_ACTUATOR_TOGGLE);
     TEST_NONINIT_RUN(RCP_sendStepperWrite, 0, RCP_STEPPER_SPEED_CONTROL, 0);
-    TEST_NONINIT_RUN(RCP_requestAngledActuatorWrite, 0, 0);
+    TEST_NONINIT_RUN(RCP_sendAngledActuatorWrite, 0, 0);
     TEST_NONINIT_RUN(RCP_requestGeneralRead, RCP_DEVCLASS_TEST_STATE, 0);
     TEST_NONINIT_RUN(RCP_requestTareConfiguration, RCP_DEVCLASS_GYROSCOPE, 0, 0, 0);
     TEST_NONINIT_RUN(RCP_promptRespondGONOGO, RCP_GONOGO_GO);
@@ -168,7 +168,7 @@ TEST(RCPBadIO, BadIO) {
     TEST_BADIO(RCP_sendHeartbeat);
     TEST_BADIO(RCP_sendSimpleActuatorWrite, 0, RCP_SIMPLE_ACTUATOR_TOGGLE);
     TEST_BADIO(RCP_sendStepperWrite, 0, RCP_STEPPER_SPEED_CONTROL, 0);
-    TEST_BADIO(RCP_requestAngledActuatorWrite, 0, 0);
+    TEST_BADIO(RCP_sendAngledActuatorWrite, 0, 0);
     TEST_BADIO(RCP_requestGeneralRead, RCP_DEVCLASS_TEST_STATE, 0);
     TEST_BADIO(RCP_requestTareConfiguration, RCP_DEVCLASS_GYROSCOPE, 0, 0, 0);
     TEST_BADIO(RCP_promptRespondGONOGO, RCP_GONOGO_GO);
@@ -794,7 +794,7 @@ TEST_F(RCPOut, PromptResponseFloat) {
 }
 
 TEST_F(RCPOut, AngledActuatorWrite) {
-    EXPECT_EQ(RCP_requestAngledActuatorWrite(5, PI), 0);
+    EXPECT_EQ(RCP_sendAngledActuatorWrite(5, PI), 0);
     CHECK_OUTBUF(0x05, RCP_DEVCLASS_ANGLED_ACTUATOR, 0x05, HFLOATARR(HPI));
 }
 

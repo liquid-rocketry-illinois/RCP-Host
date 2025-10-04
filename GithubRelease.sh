@@ -1,5 +1,4 @@
-cd $1
-cd ..
+cd $2
 
 which gh > /dev/null
 if [ $? -ne 0 ]; then
@@ -16,9 +15,17 @@ fi
 
 cd $1
 
+./RCP-Host-tests.exe
+if [ $? -ne 0 ]; then
+  echo "Some tests are failing!"
+  read -p "Press key to continue... "
+  exit 1
+fi
+
 mkdir -p releaseNotes
-read -p "Enter tag name/release name: " tagname
-echo tagname > releaseNotes/tagname
+tagname=$(cat $2/VERSION)
+echo "Using version $tagname"
+echo $tagname > releaseNotes/tagname
 
 echo "Complete Release Notes"
 echo "# Release Notes" > releaseNotes/notes

@@ -7,24 +7,19 @@ set(CMAKE_CXX_STANDARD 23)
 option(BUILD_TESTS "Build GTest RCP tests" OFF)
 
 add_custom_command(
-        OUTPUT ${CMAKE_BINARY_DIR}/VERSION.cpp
-        DEPENDS ${CMAKE_SOURCE_DIR}/VERSION
-        COMMAND ${CMAKE_COMMAND} -DSOURCE:STRING=${CMAKE_SOURCE_DIR} -DBIN:STRING=${CMAKE_BINARY_DIR}
-        -DBTYPE:STRING=${CMAKE_BUILD_TYPE} -P ${CMAKE_SOURCE_DIR}/cmake/gen_version.cmake
+        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/VERSION.cpp
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/VERSION
+        COMMAND ${CMAKE_COMMAND} -DSOURCE:STRING=${CMAKE_CURRENT_SOURCE_DIR} -DBIN:STRING=${CMAKE_CURRENT_BINARY_DIR}
+        -DBTYPE:STRING=${CMAKE_BUILD_TYPE} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/gen_version.cmake
 )
 
-add_library(RCP-Host STATIC src/RCP_Host.c ${CMAKE_BINARY_DIR}/VERSION.cpp)
+add_library(RCP-Host STATIC src/RCP_Host.c ${CMAKE_CURRENT_BINARY_DIR}/VERSION.cpp)
 target_include_directories(RCP-Host PUBLIC include/)
 
-target_compile_definitions(RCP-Host PRIVATE
+target_compile_options(RCP-Host PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/W3 /WX>
         $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
 )
-
-if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
-    add_custom_target(RCP-Host-GithubRelease COMMAND ${CMAKE_SOURCE_DIR}\\GithubRelease.sh ${CMAKE_BINARY_DIR})
-    add_dependencies(RCP-Host-GithubRelease RCP-Host)
-endif()
 
 if(${BUILD_TESTS})
     add_subdirectory(test/googletest)
@@ -40,4 +35,13 @@ if(${BUILD_TESTS})
 
     include(GoogleTest)
     gtest_discover_tests(RCP-Host-tests)
+endif()
+
+if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+    add_custom_target(RCP-Host-GithubRelease COMMAND ${CMAKE_CURRENT_SOURCE_DIR}\\GithubRelease.sh ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+    add_dependencies(RCP-Host-GithubRelease RCP-Host)
+
+    if(${BUILD_TESTS})
+        add_dependencies(RCP-Host-GithubRelease RCP-Host-tests)
+    endif()
 endif()
