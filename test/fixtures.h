@@ -2,6 +2,7 @@
 #define FIXTURES_H
 
 #include "RCP_Host/RCP_Host.h"
+#include "RingBuffer.h"
 #include "gtest/gtest.h"
 
 extern RCP_LibInitData initData;
@@ -64,14 +65,16 @@ class RCPPromptInputRequest : public RCPIn {
 public:
     ~RCPPromptInputRequest() override = default;
 
-    RCP_PromptInputRequest pir{};
+    RCP_PromptDataType type;
+    char prompt[64];
 };
 
 class RCPCustomData : public RCPIn {
 public:
     ~RCPCustomData() override = default;
 
-    RCP_CustomData cdata{};
+    uint8_t length;
+    uint8_t data[65];
 };
 
 class RCPFloats : public RCPIn {

@@ -12,8 +12,8 @@ RCP* context;
 #define TESTDATA dynamic_cast<RCPTestState*>(context)->testData
 #define BOOLDATA dynamic_cast<RCPBoolData*>(context)->bdata
 #define SACTD dynamic_cast<RCPSactD*>(context)->sactd
-#define PIR dynamic_cast<RCPPromptInputRequest*>(context)->pir
-#define CDATA dynamic_cast<RCPCustomData*>(context)->cdata
+#define PIR dynamic_cast<RCPPromptInputRequest*>(context)
+#define CDATA dynamic_cast<RCPCustomData*>(context)
 #define FLOATS dynamic_cast<RCPFloats*>(context)
 
 // Test values
@@ -30,7 +30,7 @@ RCP* context;
 #define PI4 12.56637f
 #define HPI4 0xda0f4941
 
-#define HFLOATARR(value) (uint8_t)(value >> 24), (uint8_t)(value >> 16), (uint8_t)(value >> 8), (uint8_t)value
+#define HFLOATARR(value) (uint8_t) (value >> 24), (uint8_t) (value >> 16), (uint8_t) (value >> 8), (uint8_t) value
 
 #define HELLO "HELLO"
 #define HELLOHEX 0x48, 0x45, 0x4C, 0x4C, 0x4F
@@ -75,12 +75,16 @@ int processSactD(RCP_SimpleActuatorData sactd) {
 }
 
 int processPIR(RCP_PromptInputRequest pir) {
-    PIR = pir;
+    PIR->type = pir.type;
+    if(pir.prompt == nullptr) PIR->prompt[0] = 0;
+    else strcpy(PIR->prompt, pir.prompt);
+
     return 0;
 }
 
 int processCustom(RCP_CustomData cdata) {
-    CDATA = cdata;
+    CDATA->length = cdata.length;
+    memcpy(CDATA->data, cdata.data, cdata.length);
     return 0;
 }
 
@@ -129,8 +133,7 @@ RCP_LibInitData initData{
 #define PUSHHELLO()                                                                                                    \
     do {                                                                                                               \
         uint8_t vals[] = {HELLOHEX};                                                                                   \
-        for(int i = 0; i < sizeof(vals); i++)                                                                          \
-            PUSH(vals[i]);                                                                                             \
+        for(int i = 0; i < sizeof(vals); i++) PUSH(vals[i]);                                                           \
     }                                                                                                                  \
     while(0)
 
@@ -505,8 +508,8 @@ TEST_F(RCPCustomData, SingleByte) {
     PUSH(0x05);
 
     RCP_poll();
-    EXPECT_EQ(CDATA.length, 1) << "Custom data length incorrect";
-    EXPECT_EQ(static_cast<const uint8_t*>(CDATA.data)[0], 0x05) << "Custom data byte 0 incorrect";
+    EXPECT_EQ(CDATA->length, 1) << "Custom data length incorrect";
+    EXPECT_EQ(CDATA->data[0], 0x05) << "Custom data byte 0 incorrect";
 }
 
 TEST_F(RCPCustomData, Multibyte) {
@@ -519,9 +522,9 @@ TEST_F(RCPCustomData, Multibyte) {
     PUSH(0x04);
 
     RCP_poll();
-    EXPECT_EQ(CDATA.length, 5) << "Custom data length incorrect";
-    EXPECT_EQ(static_cast<const uint8_t*>(CDATA.data)[0], 0x10) << "Custom data byte 0 incorrect";
-    EXPECT_EQ(static_cast<const uint8_t*>(CDATA.data)[4], 0x04) << "Custom data byte 4 incorrect";
+    EXPECT_EQ(CDATA->length, 5) << "Custom data length incorrect";
+    EXPECT_EQ(CDATA->data[0], 0x10) << "Custom data byte 0 incorrect";
+    EXPECT_EQ(CDATA->data[4], 0x04) << "Custom data byte 4 incorrect";
 }
 
 #define PUSHHEXFLOAT(val)                                                                                              \
@@ -649,8 +652,8 @@ TEST_F(RCPPromptInputRequest, PIRCLEAR) {
     PUSH(RCP_PromptDataType_RESET);
 
     RCP_poll();
-    EXPECT_EQ(PIR.type, RCP_PromptDataType_RESET) << "Incorrect reset prompt type";
-    EXPECT_EQ(PIR.prompt, nullptr) << "Incorrect reset prompt string";
+    EXPECT_EQ(PIR->type, RCP_PromptDataType_RESET) << "Incorrect reset prompt type";
+    EXPECT_EQ(strlen(PIR->prompt), 0) << "Incorrect reset prompt string";
 }
 
 TEST_F(RCPPromptInputRequest, PIRGNG) {
@@ -660,8 +663,8 @@ TEST_F(RCPPromptInputRequest, PIRGNG) {
     PUSHHELLO();
 
     RCP_poll();
-    EXPECT_EQ(PIR.type, RCP_PromptDataType_GONOGO) << "Incorrect GNG prompt type";
-    EXPECT_STREQ(PIR.prompt, HELLO) << "Prompt string mismatch";
+    EXPECT_EQ(PIR->type, RCP_PromptDataType_GONOGO) << "Incorrect GNG prompt type";
+    EXPECT_STREQ(PIR->prompt, HELLO) << "Prompt string mismatch";
 }
 
 TEST_F(RCPPromptInputRequest, PIRFloat) {
@@ -671,8 +674,8 @@ TEST_F(RCPPromptInputRequest, PIRFloat) {
     PUSHHELLO();
 
     RCP_poll();
-    EXPECT_EQ(PIR.type, RCP_PromptDataType_Float) << "Incorrect float prompt type";
-    EXPECT_STREQ(PIR.prompt, HELLO) << "Prompt string mismatch";
+    EXPECT_EQ(PIR->type, RCP_PromptDataType_Float) << "Incorrect float prompt type";
+    EXPECT_STREQ(PIR->prompt, HELLO) << "Prompt string mismatch";
 }
 
 #define CHECK_OUTBUF(...)                                                                                              \

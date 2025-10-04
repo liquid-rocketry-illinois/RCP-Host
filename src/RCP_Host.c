@@ -56,7 +56,7 @@ RCP_Channel RCP_getChannel(void) {
 int RCP_poll(void) {
     if(callbacks == NULL)
         return -1;
-    uint8_t buffer[64] = {0};
+    uint8_t buffer[66] = {0};
 
     // Read in just the header byte to get the length of the packet
     size_t bread = callbacks->readData(buffer, 1);
