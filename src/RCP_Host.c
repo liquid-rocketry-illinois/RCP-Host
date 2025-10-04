@@ -30,11 +30,11 @@ int RCP_init(const struct RCP_LibInitData _callbacks) {
     return 0;
 }
 
-int RCP_isOpen() {
+int RCP_isOpen(void) {
     return callbacks != NULL;
 }
 
-int RCP_shutdown() {
+int RCP_shutdown(void) {
     if(callbacks == NULL)
         return -1;
     free(callbacks);
@@ -46,14 +46,14 @@ void RCP_setChannel(RCP_Channel ch) {
     channel = ch;
 }
 
-RCP_Channel RCP_getChannel() {
+RCP_Channel RCP_getChannel(void) {
     return channel;
 }
 
 // The primary function that gets called periodically by the main application. Will read data from the buffer and
 // parse any received RCP messages
 // Can return 1 to indicate successful read of a wrong-channel packet
-int RCP_poll() {
+int RCP_poll(void) {
     if(callbacks == NULL)
         return -1;
     uint8_t buffer[64] = {0};
@@ -68,7 +68,7 @@ int RCP_poll() {
 
     // Need to read pktlen + 1 bytes in order to read the device class byte too
     bread = callbacks->readData(buffer + 1, pktlen + 1);
-    if(bread != pktlen + 1)
+    if(bread != (size_t) pktlen + 1)
         return -2;
 
     // Check channel after reading from buffer so packets not belonging to this channel are not clogging the buffer
@@ -211,7 +211,7 @@ int RCP_poll() {
     return 0;
 }
 
-int RCP_sendEStop() {
+int RCP_sendEStop(void) {
     if(callbacks == NULL)
         return -1;
     uint8_t ESTOP = channel | 0x00;
@@ -230,7 +230,7 @@ static int RCP__sendTestUpdate(RCP_TestStateControlMode mode, uint8_t param) {
     return callbacks->sendData(buffer, 3) == 3 ? 0 : -2;
 }
 
-int RCP_sendHeartbeat() {
+int RCP_sendHeartbeat(void) {
     return RCP__sendTestUpdate(RCP_HEARTBEATS_CONTROL, 0x0F);
 }
 
@@ -238,19 +238,19 @@ int RCP_startTest(uint8_t testnum) {
     return RCP__sendTestUpdate(RCP_TEST_START, testnum);
 }
 
-int RCP_stopTest() {
+int RCP_stopTest(void) {
     return RCP__sendTestUpdate(RCP_TEST_STOP, 0);
 }
 
-int RCP_pauseUnpauseTest() {
+int RCP_pauseUnpauseTest(void) {
     return RCP__sendTestUpdate(RCP_TEST_PAUSE, 0);
 }
 
-int RCP_deviceReset() {
+int RCP_deviceReset(void) {
     return RCP__sendTestUpdate(RCP_DEVICE_RESET, 0);
 }
 
-int RCP_deviceTimeReset() {
+int RCP_deviceTimeReset(void) {
     return RCP__sendTestUpdate(RCP_DEVICE_RESET_TIME, 0);
 }
 
@@ -262,7 +262,7 @@ int RCP_setHeartbeatTime(uint8_t heartbeatTime) {
     return RCP__sendTestUpdate(RCP_HEARTBEATS_CONTROL, (heartbeatTime & 0x0F));
 }
 
-int RCP_requestTestState() {
+int RCP_requestTestState(void) {
     return RCP__sendTestUpdate(RCP_TEST_QUERY, 0);
 }
 
@@ -360,5 +360,5 @@ int RCP_sendRawSerial(const uint8_t* data, uint8_t size) {
     buffer[0] = channel | size;
     buffer[1] = RCP_DEVCLASS_CUSTOM;
     memcpy(buffer + 2, data, size);
-    return callbacks->sendData(buffer, size + 2) == size + 2 ? 0 : -2;
+    return callbacks->sendData(buffer, size + 2) == (size_t) size + 2 ? 0 : -2;
 }

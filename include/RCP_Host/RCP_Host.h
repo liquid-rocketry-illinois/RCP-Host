@@ -163,28 +163,28 @@ struct RCP_LibInitData {
 
 // Provide library with callbacks to needed functions
 int RCP_init(struct RCP_LibInitData callbacks);
-int RCP_isOpen();
-int RCP_shutdown();
+int RCP_isOpen(void);
+int RCP_shutdown(void);
 
 // Library will default to channel zero, but it can be changed here.
 void RCP_setChannel(RCP_Channel ch);
-RCP_Channel RCP_getChannel();
+RCP_Channel RCP_getChannel(void);
 
 // Function to call periodically to poll for data
-int RCP_poll();
+int RCP_poll(void);
 
 // Functions to send controller packets
-int RCP_sendEStop();
-int RCP_sendHeartbeat();
+int RCP_sendEStop(void);
+int RCP_sendHeartbeat(void);
 
 int RCP_startTest(uint8_t testnum);
-int RCP_stopTest();
-int RCP_pauseUnpauseTest();
-int RCP_deviceReset();
-int RCP_deviceTimeReset();
+int RCP_stopTest(void);
+int RCP_pauseUnpauseTest(void);
+int RCP_deviceReset(void);
+int RCP_deviceTimeReset(void);
 int RCP_setDataStreaming(int datastreaming);
 int RCP_setHeartbeatTime(uint8_t heartbeatTime);
-int RCP_requestTestState();
+int RCP_requestTestState(void);
 
 int RCP_sendSimpleActuatorWrite(uint8_t ID, RCP_SimpleActuatorState state);
 int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode mode, float value);
