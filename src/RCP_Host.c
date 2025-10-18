@@ -74,36 +74,31 @@ int RCP_poll(void) {
                                  .isInited = buffer[6] & RCP_DEVICE_INITED_MASK,
                                  .heartbeatTime = buffer[6] & RCP_HEARTBEAT_TIME_MASK};
 
-        callbacks->processTestUpdate(d);
-        break;
+        return callbacks->processTestUpdate(d);
     }
 
     case RCP_DEVCLASS_SIMPLE_ACTUATOR: {
         struct RCP_SimpleActuatorData d = {
             .timestamp = timestamp, .state = buffer[7] ? RCP_SIMPLE_ACTUATOR_ON : RCP_SIMPLE_ACTUATOR_OFF, .ID = ID};
 
-        callbacks->processSimpleActuatorData(d);
-        break;
+        return callbacks->processSimpleActuatorData(d);
     }
 
     case RCP_DEVCLASS_PROMPT: {
         if(buffer[2] == RCP_PromptDataType_RESET) {
             struct RCP_PromptInputRequest req = {.type = RCP_PromptDataType_RESET, .prompt = NULL};
-            callbacks->processPromptInput(req);
-            break;
+            return callbacks->processPromptInput(req);
         }
 
         struct RCP_PromptInputRequest req = {.type = buffer[2], .prompt = (char*) buffer + 3};
 
-        callbacks->processPromptInput(req);
-        break;
+        return callbacks->processPromptInput(req);
     }
 
     case RCP_DEVCLASS_CUSTOM: {
         struct RCP_CustomData d = {.length = pktlen, .data = buffer + 2};
 
-        callbacks->processSerialData(d);
-        break;
+        return callbacks->processSerialData(d);
     }
 
     case RCP_DEVCLASS_ANGLED_ACTUATOR:
@@ -114,15 +109,13 @@ int RCP_poll(void) {
     case RCP_DEVCLASS_LOAD_CELL: {
         struct RCP_OneFloat d = {.devclass = buffer[1], .timestamp = timestamp, .ID = ID, .data = toFloat(buffer + 7)};
 
-        callbacks->processOneFloat(d);
-        break;
+        return callbacks->processOneFloat(d);
     }
 
     case RCP_DEVCLASS_BOOL_SENSOR: {
         struct RCP_BoolData d = {.timestamp = timestamp, .ID = ID, .data = buffer[7]};
 
-        callbacks->processBoolData(d);
-        break;
+        return callbacks->processBoolData(d);
     }
 
     case RCP_DEVCLASS_STEPPER:
@@ -131,8 +124,7 @@ int RCP_poll(void) {
 
         memcpy(d.data, buffer + 7, 8);
 
-        callbacks->processTwoFloat(d);
-        break;
+        return callbacks->processTwoFloat(d);
     }
 
     case RCP_DEVCLASS_ACCELEROMETER:
@@ -142,8 +134,7 @@ int RCP_poll(void) {
 
         memcpy(d.data, buffer + 7, 12);
 
-        callbacks->processThreeFloat(d);
-        break;
+        return callbacks->processThreeFloat(d);
     }
 
     case RCP_DEVCLASS_GPS: {
@@ -151,15 +142,12 @@ int RCP_poll(void) {
 
         memcpy(d.data, buffer + 7, 16);
 
-        callbacks->processFourFloat(d);
-        break;
+        return callbacks->processFourFloat(d);
     }
 
     default:
-        break;
+        return 0;
     }
-
-    return 0;
 }
 
 int RCP_sendEStop(void) {
