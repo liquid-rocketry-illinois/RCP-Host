@@ -59,7 +59,7 @@ The defined device classes are as follows:
 - 0x04: Angled Actuator
 - 0x80: Custom data (virtual device)
 - 0x90: Ambient Pressure
-- 0x91: Ambient Temperature
+- 0x91: Temperature
 - 0x92: Pressure Transducer
 - 0x93: Hygrometer (relative humidity)
 - 0x94: Load Cell (weight)
@@ -326,7 +326,7 @@ All other sensors currently defined can be categorized into a few standard data 
 This packet can be used for sensors that send one single-precision (IEEE 754) float as data. This includes:
 
 - Ambient Pressure (bars)
-- Ambient Temperature (Celsius)
+- Temperature (Celsius)
 - Pressure Transducer (psi)
 - Hygrometer (relative humidity, percentage)
 - Load Cell (weight, kilograms)
