@@ -332,6 +332,18 @@ A range of devices can be requested to tare to a given value. The tare informati
 - The next byte contains the data channel to tare
 - A float value, indicating by what value the data stream should be offset by. This value should be **added** to all future values sent by the device. If multiple tare requests are received over the runtime of a target, these values can simply be added together (i.e. tares are relative to the offset data stream, not to the raw stream itself)
 
+The devices which support tares are the following:
+- Ambient Pressure
+- Temperature
+- Pressure Transducer
+- Hygrometer
+- Load Cell
+- Power Monitor
+- Accelerometer
+- Gyroscope
+- Magnetometer
+- GPS
+
 # Standard Read Request Examples
 
 Many devices will follow an identical format for read requests, for simplicity. The information unit for such a request contains the class byte and the ID byte of the device to read from.
