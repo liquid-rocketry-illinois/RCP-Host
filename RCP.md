@@ -1,4 +1,5 @@
-﻿# LRI Rocket Control Protocol (RCP) v2.0.0
+﻿
+# LRI Rocket Control Protocol (RCP) v2.0.0
 
 # Introduction
 
@@ -77,7 +78,7 @@ After these first 2 bits, the remaining packet format is determined by the forma
 
 The compact format is the original RCP definition. This packet is restricted to 63 parameter bytes in length. The compact packet begins with the required channel bit and a format bit set to `0`. The remaining 6 bits in the first byte of the packet indicate the length of the packet.
 
-A compact packet of length of 0 is reserved for emergency stops. If a target receives a compact packet with length zero at any time, it should immediately enter an emergency stop state. This exact state is dependent on the target and it's physical  
+A compact packet of length of 0 is reserved for emergency stops. If a target receives a compact packet with length zero at any time, it should immediately enter an emergency stop state. This exact state is dependent on the target and it's physical    
 structure, and when receiving this packet it should complete whatever emergency protocols it has. An emergency stop packet contains only this header byte and no other bytes, and as such the only valid emergency stop packet is `0bx0000000`, where `x` indicates the channel. A host receiving an emergency stop packet has no meaning, so any zero-length compact packets received by the host should be discarded.
 
 Any other length from 1 to 63 specifies the length of the packet excluding this header byte and the following class byte.
@@ -216,8 +217,8 @@ The prompt device can be used by the target to ask the host for input at runtime
 The type byte indicates to the host what kind of data the target is expecting to receive. Only 1 prompt can be active at a time, and the host should respond to the target with the data type of the latest prompt request. Depending on the type, the host should respond with the appropriate information unit:
 - Go-No Go (boolean) prompt:
   - If go: `0x01`
-  - If No Go: `0x00`
-  - All other bit sequences are undefined behavior
+- If No Go: `0x00`
+- All other bit sequences are undefined behavior
 - Float input:
   - 4 bytes with the float value
 - Clear active prompt: This type does not expect a return value. It is instead a request from the target that the host discards the last prompt request. No error should occur if there is no active prompt.
@@ -314,15 +315,22 @@ All information units included in an amalgamation unit will all share the same t
 
 An amalgamation unit begins with the appropriate header, and the class byte `0xFF`. Following these, the 4 byte timestamp is attached. From there, the sub-information units are appended one after the other. All information units that can be amalgamated have a definite or otherwise calculable length, so there is no direct indication of the number of sub-units included in an amalgamation unit. Rather, the total length of the packet and the number of bytes already processed must be used to determine when there are no more sub-units to process.
 
-An example of a packet with an amalgamation unit looks as follows:
+An example of a packet with an amalgamation unit looks as follows:  
 `0x27 FF 00 00 00 FF | 90 00 40 00 00 00 | 92 00 40 00 00 00 | 92 01 40 40 00 00 | 95 00 80 | B0 00 3F 80 00 00 40 00 00 00 40 40 00 00`
 
 The bars deliminate the individual sub-units contained in this amalgamation unit. One can see the timestamp of `255`ms at the very beginning following the class byte, and how none of the sub-units have a timestamp like they would when non-amalgamated. This packet includes information from ambient pressure sensor `0`, PTs `0` and `1`, boolean sensor `0`, and from accelerometer `0`.
 
-This packet could also have been encoded in the extended format:
+This packet could also have been encoded in the extended format:  
 `0x40 00 26 FF 00 00 00 FF | 90 00 40 00 00 00 | 92 00 40 00 00 00 | 92 01 40 40 00 00 | 95 00 80 | B0 00 3F 80 00 00 40 00 00 00 40 40 00 00`
 
 Note that an amalgamation unit cannot be a sub-unit of another amalgamation unit, and amalgamation units cannot be sent from the host to the target. They are only for reading data, not for writing.
+
+## Tare Requests
+
+A range of devices can be requested to tare to a given value. The tare information unit is as follows:
+- The first byte contains the device ID
+- The next byte contains the data channel to tare
+- A float value, indicating by what value the data stream should be offset by. This value should be **added** to all future values sent by the device. If multiple tare requests are received over the runtime of a target, these values can simply be added together (i.e. tares are relative to the offset data stream, not to the raw stream itself)
 
 # Standard Read Request Examples
 
@@ -334,6 +342,6 @@ Many devices will follow an identical format for read requests, for simplicity. 
 - `0x01 94 02`: Read from load cell `2`
 - `0x01 04 00`: Read from angled actuator `0`
 
----
+---  
 
 All other class codes are reserved and are undefined behavior if received.
