@@ -90,7 +90,7 @@ Extended packets begin with the appropriate channel bit and the format bit set t
 
 The 16-bit packet length only includes the number of parameter bytes minus one; the class byte is **not** included, and to determine the actual number of parameter bytes the length must be incremented by 1. This is so such that a length of 0 has a meaning; in this case it will mean there is 1 parameter byte. A length of 1 means 2 parameter bytes, length of 2 means 3, and so on. This means the maximum number of parameter bytes for an extended packet is 65536 bytes.
 
-Other than the way packet length is signaled, there is no other difference between the extended and compact format. Either format can be used for transmitting an information unit that could fit in a compact packet.
+Other than the way packet length is signaled, there is no other difference between the extended and compact format. Either format can be used for transmitting an information unit that could fit in a compact packet. Extended packets cannot be sent from the host.
 
 ## Overflows
 
