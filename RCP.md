@@ -31,30 +31,34 @@ This protocol does not perform error checking or acknowledgements. Depending on 
 A device class is an 8 bit identifier which encodes the type of device, and the functionality of a packet. For example: a solenoid, a sensor, a software component, etc. Device classes, combined with a device ID number (if relevant), form the FQDN and can be used to uniquely identify an individual device on a target. Some devices, such as the test state, do not require IDs, since there can only be one such device present.
 
 The defined device classes are as follows:
-- `0x00`: [Test State](#test-state) +*
-- `0x01`: [Simple Actuator](#simple-actuator) *
-- `0x02`: [Stepper Motor](#stepper-motor) *
-- `0x03`: [Prompt Input](#prompt-input) +&
-- `0x04`: [Angled Actuator](#angled-actuator) *
-- `0x80`: [Target Log](#target-log)
+- `0x00`: [Test State](#test-state) +*%
+- `0x01`: [Simple Actuator](#simple-actuator) *%
+- `0x02`: [Stepper Motor](#stepper-motor) *%
+- `0x03`: [Prompt Input](#prompt-input) +&^%
+- `0x04`: [Angled Actuator](#angled-actuator) *%
+- `0x80`: [Target Log](#target-log) ^%
 - `0x90`: [Ambient Pressure](#xf-units) *
 - `0x91`: [Temperature](#xf-units) *
 - `0x92`: [Pressure Transducer](#xf-units) *
 - `0x93`: [Hygrometer](#xf-units) (relative humidity) *
 - `0x94`: [Load Cell](#xf-units) (weight) *
-- `0x95`: [Boolean Sensor](#boolean-sensor) *
+- `0x95`: [Boolean Sensor](#boolean-sensor) *%
 - `0xA0`: [Power Monitor](#xf-units) *
 - `0xB0`: [Accelerometer](#xf-units) *
 - `0xB1`: [Gyroscope](#xf-units) *
 - `0xB2`: [Magnetometer](#xf-units) *
 - `0xC0`: [GPS](#xf-units) *
-- `0xFF`: [Amalgamate Unit](#amalgamation-units) +
+- `0xFF`: [Amalgamate Unit](#amalgamation-units) +^%
 
 Entries marked with `+` are virtual devices with no ID available. This means that these devices don't have a physical representation on the target itself. Rather, this is purely software, but is still a component that can be queried for information and updated to perform actions on the target.
 
 Entries marked with `*` can be [amalgamated](#amalgamation-units). This means that their information units can be batched into a single packet to reduce the number of discrete things that need to be sent over the interface.
 
 Entries marked with `&` are information units that are not timestamped.
+
+Entries marked with `^` cannot be queried.
+
+Entries marked with `%` cannot be tared.
 
 As an aside, devices are loosely assigned class numbers based on a few things. First, all read-only devices have the MSB set. The next 3 bits for read-only's indicate how many data channels the device has. For example, GPS returns the latitude, longitude, ground speed, and altitude, thus it has 4 data channels. From there the order is simply numerical. This is not a strict standard, only a convention that will (hopefully) be maintained.
 
