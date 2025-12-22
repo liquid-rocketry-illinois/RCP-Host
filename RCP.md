@@ -1,4 +1,5 @@
 ﻿
+
 # LRI Rocket Control Protocol (RCP) v2.0.0
 
 # Introduction
@@ -82,7 +83,7 @@ After these first 2 bits, the remaining packet format is determined by the forma
 
 The compact format is the original RCP definition. This packet is restricted to 63 parameter bytes in length. The compact packet begins with the required channel bit and a format bit set to `0`. The remaining 6 bits in the first byte of the packet indicate the length of the packet.
 
-A compact packet of length of 0 is reserved for emergency stops. If a target receives a compact packet with length zero at any time, it should immediately enter an emergency stop state. This exact state is dependent on the target and it's physical    
+A compact packet of length of 0 is reserved for emergency stops. If a target receives a compact packet with length zero at any time, it should immediately enter an emergency stop state. This exact state is dependent on the target and it's physical      
 structure, and when receiving this packet it should complete whatever emergency protocols it has. An emergency stop packet contains only this header byte and no other bytes, and as such the only valid emergency stop packet is `0bx0000000`, where `x` indicates the channel. A host receiving an emergency stop packet has no meaning, so any zero-length compact packets received by the host should be discarded.
 
 Any other length from 1 to 63 specifies the length of the packet excluding this header byte and the following class byte.
@@ -134,7 +135,7 @@ Writing to the test state device controls some target-level state. The first par
 
 #### Heartbeat Specifics
 
-When heartbeats are enabled, both the host and target shall expect to receive a heartbeat from the other at least as often as the specified interval. If the target does not receive a heartbeat from the host in the specified interval, it should assume communications to the host have been lost irrecoverably, and the programmed emergency stop procedure should be activated. It is up to the host to decide what to do on loss of heartbeats.
+When heartbeats are enabled, the target shall expect to receive a heartbeat from the host at least as often as the specified interval. If the target does not receive a heartbeat from the host in the specified interval, it should assume communications to the host have been lost irrecoverably, and the programmed emergency stop procedure should be activated. On receiving a heartbeat from the host, the target will respond with the normal test state response packet, which the host can treat as a heartbeat from the target if needed.
 
 ### Response
 
@@ -319,12 +320,12 @@ All information units included in an amalgamation unit will all share the same t
 
 An amalgamation unit begins with the appropriate header, and the class byte `0xFF`. Following these, the 4 byte timestamp is attached. From there, the sub-information units are appended one after the other. All information units that can be amalgamated have a definite or otherwise calculable length, so there is no direct indication of the number of sub-units included in an amalgamation unit. Rather, the total length of the packet and the number of bytes already processed must be used to determine when there are no more sub-units to process.
 
-An example of a packet with an amalgamation unit looks as follows:  
+An example of a packet with an amalgamation unit looks as follows:    
 `0x27 FF 00 00 00 FF | 90 00 40 00 00 00 | 92 00 40 00 00 00 | 92 01 40 40 00 00 | 95 00 80 | B0 00 3F 80 00 00 40 00 00 00 40 40 00 00`
 
 The bars deliminate the individual sub-units contained in this amalgamation unit. One can see the timestamp of `255`ms at the very beginning following the class byte, and how none of the sub-units have a timestamp like they would when non-amalgamated. This packet includes information from ambient pressure sensor `0`, PTs `0` and `1`, boolean sensor `0`, and from accelerometer `0`.
 
-This packet could also have been encoded in the extended format:  
+This packet could also have been encoded in the extended format:    
 `0x40 00 26 FF 00 00 00 FF | 90 00 40 00 00 00 | 92 00 40 00 00 00 | 92 01 40 40 00 00 | 95 00 80 | B0 00 3F 80 00 00 40 00 00 00 40 40 00 00`
 
 Note that an amalgamation unit cannot be a sub-unit of another amalgamation unit, and amalgamation units cannot be sent from the host to the target. They are only for reading data, not for writing.
@@ -358,6 +359,5 @@ Many devices will follow an identical format for read requests, for simplicity. 
 - `0x01 94 02`: Read from load cell `2`
 - `0x01 04 00`: Read from angled actuator `0`
 
----  
-
+---   
 All other class codes are reserved and are undefined behavior if received.
