@@ -22,6 +22,7 @@ target_compile_options(RCP-Host PRIVATE
 )
 
 if(${BUILD_TESTS})
+    target_compile_definitions(RCP-Host PRIVATE -DRCPH_TEST_MODE)
     add_subdirectory(test/googletest)
 
     enable_testing()

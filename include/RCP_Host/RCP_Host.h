@@ -183,7 +183,6 @@ struct RCP_LibInitData {
     RCP_Error (*processTwoFloat)(struct RCP_2F data);
     RCP_Error (*processThreeFloat)(struct RCP_3F data);
     RCP_Error (*processFourFloat)(struct RCP_4F data);
-    void (*heartbeatReceived)();
 };
 
 // Provide library with callbacks to needed functions

@@ -1,18 +1,25 @@
+// Macroing the staticness of the internals allows for unit testing
+#ifdef RCPH_TEST_MODE
+#define STATIC
+#else
+#define STATIC static
+#endif
+
 #include "RCP_Host/RCP_Host.h"
 
 #include <stdlib.h>
 #include <string.h>
 
 // Stores some basic state
-static RCP_Channel channel = RCP_CH_ZERO;
-static RCP_PromptDataType activePromptType = RCP_PromptDataType_RESET;
+STATIC RCP_Channel channel = RCP_CH_ZERO;
+STATIC RCP_PromptDataType activePromptType = RCP_PromptDataType_RESET;
 
 // Callback struct and buffer for storing packet
-static struct RCP_LibInitData* callbacks = NULL;
-static uint8_t* buffer = NULL;
+STATIC struct RCP_LibInitData* callbacks = NULL;
+STATIC uint8_t* buffer = NULL;
 
 // String representations of the valid error messages
-static char const* const err_msgs[] = {"Success",
+STATIC char const* const err_msgs[] = {"Success",
                                        "Not Initialized",
                                        "Memory Allocation Error",
                                        "IO Send Error",
@@ -25,20 +32,14 @@ static char const* const err_msgs[] = {"Success",
 // Initialize the library by allocated and setting the callbacks struct, allocating the packet buffer, and resetting
 // state
 RCP_Error RCP_init(const struct RCP_LibInitData _callbacks) {
-    if(callbacks != NULL || buffer != NULL) {
-        return RCP_ERR_INIT;
-    }
+    if(callbacks != NULL || buffer != NULL) return RCP_ERR_INIT;
 
     callbacks = malloc(sizeof(struct RCP_LibInitData));
-    if(callbacks == NULL) {
-        return RCP_ERR_MEMALLOC;
-    }
+    if(callbacks == NULL) return RCP_ERR_MEMALLOC;
     *callbacks = _callbacks;
 
     buffer = malloc(RCP_MAX_EXTENDED_BYTES + RCP_MAX_NON_PARAM);
-    if(buffer == NULL) {
-        return RCP_ERR_MEMALLOC;
-    }
+    if(buffer == NULL) return RCP_ERR_MEMALLOC;
 
     channel = RCP_CH_ZERO;
     activePromptType = RCP_PromptDataType_RESET;
@@ -51,9 +52,8 @@ int RCP_isOpen(void) { return callbacks != NULL && buffer != NULL; }
 
 // Deallocate the buffer and callbacks
 RCP_Error RCP_shutdown(void) {
-    if(callbacks == NULL || buffer == NULL) {
+    if(callbacks == NULL || buffer == NULL)
         return RCP_ERR_INIT;
-    }
 
     free(callbacks);
     callbacks = NULL;
@@ -86,7 +86,7 @@ RCP_Channel RCP_getChannel(void) { return channel; }
 //   if there is one
 // - inc: A pointer to a size_t that indicates how many parameter bytes were parsed, so that when processing an
 //   amalgamated IU, the caller knows how many bytes to move forward
-static RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_t params, const uint8_t* postTS,
+STATIC RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_t params, const uint8_t* postTS,
                            size_t* inc) {
     // The value to be assigned to inc, if it is not null at the very end
     size_t incval = 0;
@@ -319,7 +319,7 @@ RCP_Error RCP_sendEStop(void) {
 }
 
 // Most of the testing command packets follow the same format, so they have been moved to a common function
-static RCP_Error RCP__sendTestUpdate(RCP_TestStateControlMode mode, uint8_t param) {
+STATIC RCP_Error RCP__sendTestUpdate(RCP_TestStateControlMode mode, uint8_t param) {
     if(callbacks == NULL) return RCP_ERR_INIT;
     uint8_t len = 3;
 
@@ -405,7 +405,7 @@ RCP_Error RCP_requestGeneralRead(RCP_DeviceClass device, uint8_t ID) {
 }
 
 RCP_Error RCP_requestTareConfiguration(RCP_DeviceClass device, uint8_t ID, uint8_t dataChannel, float offset) {
-    if(callbacks == NULL) return -1;
+    if(callbacks == NULL) return RCP_ERR_INIT;
     if(device <= 0x80 || device == RCP_DEVCLASS_BOOL_SENSOR || device == RCP_DEVCLASS_AMALGAMATE)
         return RCP_ERR_INVALID_DEVCLASS;
 
@@ -419,7 +419,7 @@ RCP_Error RCP_requestTareConfiguration(RCP_DeviceClass device, uint8_t ID, uint8
 
 RCP_Error RCP_promptRespondGONOGO(RCP_GONOGO gonogo) {
     if(callbacks == NULL) return RCP_ERR_INIT;
-    if(activePromptType == RCP_PromptDataType_RESET) return RCP_ERR_NO_ACTIVE_PROMPT;
+    if(activePromptType != RCP_PromptDataType_GONOGO) return RCP_ERR_NO_ACTIVE_PROMPT;
 
     buffer[0] = channel | 0x01;
     buffer[1] = RCP_DEVCLASS_PROMPT;
@@ -429,7 +429,7 @@ RCP_Error RCP_promptRespondGONOGO(RCP_GONOGO gonogo) {
 
 RCP_Error RCP_promptRespondFloat(float value) {
     if(callbacks == NULL) return RCP_ERR_INIT;
-    if(activePromptType == RCP_PromptDataType_RESET) return RCP_ERR_NO_ACTIVE_PROMPT;
+    if(activePromptType != RCP_PromptDataType_Float) return RCP_ERR_NO_ACTIVE_PROMPT;
 
     buffer[0] = channel | 0x04;
     buffer[1] = RCP_DEVCLASS_PROMPT;
