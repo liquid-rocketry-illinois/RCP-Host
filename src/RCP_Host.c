@@ -259,6 +259,7 @@ RCP_Error RCP_poll(void) {
         // Assign length
         params = buffer[1] << 8;
         params |= buffer[2];
+        params++;
 
         // Do nothing on zero length packets
         if(params == 0) return RCP_ERR_SUCCESS;
