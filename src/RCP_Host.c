@@ -306,7 +306,7 @@ RCP_Error RCP_poll(void) {
     if(devclass != RCP_DEVCLASS_AMALGAMATE) return processIU(devclass, timestamp, params, head, NULL);
 
     // Otherwise, continue looping over subunits until we've gone through all of them
-    while(head - (preambleLen + params) != buffer) {
+    while(head < buffer + preambleLen + params + 1) {
         size_t inc = 0;
         devclass = head[0];
         head++;
