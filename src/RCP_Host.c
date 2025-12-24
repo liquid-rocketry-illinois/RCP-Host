@@ -263,7 +263,7 @@ RCP_Error RCP_poll(void) {
 
         // Read rest of the bytes
         bread = callbacks->readData(buffer + 3, params + 1);
-        if(bread != params + 1) return RCP_ERR_IO_RCV;
+        if(bread != (size_t) (params + 1)) return RCP_ERR_IO_RCV;
 
         // Exit early if wrong channel
         if((buffer[0] & RCP_CHANNEL_MASK) != channel) return RCP_ERR_SUCCESS;
@@ -282,7 +282,7 @@ RCP_Error RCP_poll(void) {
 
         // Read rest of the bytes
         bread = callbacks->readData(buffer + 1, params + 1);
-        if(bread != params + 1) return RCP_ERR_IO_RCV;
+        if(bread != (size_t) (params + 1)) return RCP_ERR_IO_RCV;
 
         // Exit early if wrong channel
         if((buffer[0] & RCP_CHANNEL_MASK) != channel) return RCP_ERR_SUCCESS;
