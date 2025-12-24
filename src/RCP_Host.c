@@ -297,9 +297,12 @@ RCP_Error RCP_poll(void) {
     RCP_DeviceClass devclass = *head;
     head++;
 
-    // Extract the timestamp. If the packet doesn't have a timestamp, this is meaningless and the value is unused
-    uint32_t timestamp = (head[0] << 24) | (head[1] << 16) | head[2] << 8 | head[3];
-    head += 4;
+    // Extract the timestamp. If the packet doesn't have a timestamp (at the time, only the prompt class), do not assign timestamp and don't increment head
+    uint32_t timestamp = 0;
+    if(devclass != RCP_DEVCLASS_PROMPT) {
+        timestamp = (head[0] << 24) | (head[1] << 16) | head[2] << 8 | head[3];
+        head += 4;
+    }
 
     // If not an amalgamate IU, process the IU directly
     if(devclass != RCP_DEVCLASS_AMALGAMATE) return processIU(devclass, timestamp, params, head, NULL);
