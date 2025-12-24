@@ -32,7 +32,7 @@ typedef enum {
 typedef enum {
     RCP_CH_ZERO = 0x00,
     RCP_CH_ONE = 0x80,
-    RCP_CHANNEL_MASK = 0xC0,
+    RCP_CHANNEL_MASK = 0x80,
 } RCP_Channel;
 
 typedef enum {
