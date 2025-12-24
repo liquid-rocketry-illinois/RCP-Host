@@ -198,7 +198,7 @@ STATIC RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_
     case RCP_DEVCLASS_GYROSCOPE:
     case RCP_DEVCLASS_MAGNETOMETER: {
         // All the 3F devices
-        struct RCP_3F d = {.devclass = buffer[1], .timestamp = timestamp, .ID = postTS[0]};
+        struct RCP_3F d = {.devclass = devclass, .timestamp = timestamp, .ID = postTS[0]};
 
         memcpy(d.data, postTS + 1, 12);
 
@@ -209,7 +209,7 @@ STATIC RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_
 
     case RCP_DEVCLASS_GPS: {
         // All the 4F devices
-        struct RCP_4F d = {.devclass = buffer[1], .timestamp = timestamp, .ID = postTS[0]};
+        struct RCP_4F d = {.devclass = devclass, .timestamp = timestamp, .ID = postTS[0]};
 
         memcpy(d.data, postTS + 1, 16);
 
