@@ -260,6 +260,9 @@ RCP_Error RCP_poll(void) {
         params = buffer[1] << 8;
         params |= buffer[2];
 
+        // Do nothing on zero length packets
+        if(params == 0) return RCP_ERR_SUCCESS;
+
         // Read rest of the bytes
         bread = callbacks->readData(buffer + 3, params + 1);
         if(bread != params + 1) return RCP_ERR_IO_RCV;
@@ -275,6 +278,9 @@ RCP_Error RCP_poll(void) {
     else {
         // Determine parameter bytes
         params = buffer[0] & RCP_COMPACT_LENGTH_MASK;
+
+        // Do nothing on zero length packets
+        if(params == 0) return RCP_ERR_SUCCESS;
 
         // Read rest of the bytes
         bread = callbacks->readData(buffer + 1, params + 1);
