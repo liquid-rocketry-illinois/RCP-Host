@@ -322,7 +322,7 @@ RCP_Error RCP_poll(void) {
 RCP_Error RCP_sendEStop(void) {
     if(callbacks == NULL) return RCP_ERR_INIT;
     buffer[0] = channel | 0x00;
-    return callbacks->sendData(&buffer, 1) == 1 ? RCP_ERR_SUCCESS : RCP_ERR_IO_SEND;
+    return callbacks->sendData(buffer, 1) == 1 ? RCP_ERR_SUCCESS : RCP_ERR_IO_SEND;
 }
 
 // Most of the testing command packets follow the same format, so they have been moved to a common function
