@@ -222,7 +222,7 @@ The prompt device can be used by the target to ask the host for input at runtime
 The type byte indicates to the host what kind of data the target is expecting to receive. Only 1 prompt can be active at a time, and the host should respond to the target with the data type of the latest prompt request. Depending on the type, the host should respond with the appropriate information unit:
 - Go-No Go (boolean) prompt:
   - If go: `0x01`
-- If No Go: `0x00`
+  - If No Go: `0x00`
 - All other bit sequences are undefined behavior
 - Float input:
   - 4 bytes with the float value
