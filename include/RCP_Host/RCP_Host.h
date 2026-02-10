@@ -25,6 +25,7 @@ typedef enum {
     RCP_DEVCLASS_STEPPER = 0x02,
     RCP_DEVCLASS_PROMPT = 0x03,
     RCP_DEVCLASS_ANGLED_ACTUATOR = 0x04,
+    RCP_DEVCLASS_MOTOR = 0x05,
     RCP_DEVCLASS_CUSTOM = 0x80,
 
     RCP_DEVCLASS_AM_PRESSURE = 0x90,
@@ -188,6 +189,7 @@ int RCP_requestTestState(void);
 
 int RCP_sendSimpleActuatorWrite(uint8_t ID, RCP_SimpleActuatorState state);
 int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode mode, float value);
+int RCP_sendMotorWrite(uint8_t ID, float value);
 int RCP_sendAngledActuatorWrite(uint8_t ID, float value);
 
 int RCP_requestGeneralRead(RCP_DeviceClass device, uint8_t ID);

@@ -210,6 +210,16 @@ int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode mode, float value) {
     return callbacks->sendData(buffer, 8) == 8 ? 0 : -2;
 }
 
+int RCP_sendMotorWrite(uint8_t ID, float value) {
+    if(callbacks == NULL) return -1;
+    uint8_t buffer[7] = {0};
+    buffer[0] = channel | 5;
+    buffer[1] = RCP_DEVCLASS_MOTOR;
+    buffer[2] = ID;
+    memcpy(buffer + 3, &value, 4);
+    return callbacks->sendData(buffer, 7) == 7 ? 0 : -2;
+}
+
 int RCP_sendAngledActuatorWrite(uint8_t ID, float value) {
     if(callbacks == NULL) return -1;
     uint8_t buffer[7] = {0};

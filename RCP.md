@@ -57,6 +57,7 @@ The defined device classes are as follows:
 - 0x02: Stepper Motor
 - 0x03: Prompt Input
 - 0x04: Angled Actuator
+- 0x05: Motor
 - 0x80: Custom data (virtual device)
 - 0x90: Ambient Pressure
 - 0x91: Temperature
@@ -244,6 +245,15 @@ in the data packets section.
 To write to an angled actuator, additional parameter bytes are required. The first is the ID of the actuator to
 write to. 4 additional bytes form a floating point value to set the actuator to, in degrees.
 
+### Motor
+
+This packet class is for controlling motors that are not steppers. These are motors where you can set/get the speed, but
+not exact position. This device responds to normal read requests. The response format is indicated in the data packets
+section. Motors cannot be tared.
+
+To write to a motor, additional parameter bytes are required. The first is the ID of the motor to write to. 4 additional
+bytes form a floating point value to set the actuator to, in RPM.
+
 ### Sensor Read Requests
 
 This packet can be used to request a value from a READ ONLY sensor device on the target, or to communicate new
@@ -330,6 +340,7 @@ This packet can be used for sensors that send one single-precision (IEEE 754) fl
 - Pressure Transducer (psi)
 - Hygrometer (relative humidity, percentage)
 - Load Cell (weight, kilograms)
+- Motor (speed, RPM)
 
 with units specified in the list. Following the 4 timestamp bytes, this packet has 1 ID byte, then the float.
 
