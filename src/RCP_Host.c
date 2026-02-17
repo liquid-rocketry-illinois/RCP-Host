@@ -163,6 +163,7 @@ STATIC RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_
     case RCP_DEVCLASS_TEMPERATURE:
     case RCP_DEVCLASS_PRESSURE_TRANSDUCER:
     case RCP_DEVCLASS_RELATIVE_HYGROMETER:
+    case RCP_DEVCLASS_MOTOR:
     case RCP_DEVCLASS_LOAD_CELL: {
         // All the 1F devices
         struct RCP_1F d = {.devclass = devclass, .timestamp = timestamp, .ID = postTS[0]};
@@ -392,6 +393,15 @@ RCP_Error RCP_sendAngledActuatorWrite(uint8_t ID, float value) {
     if(callbacks == NULL) return RCP_ERR_INIT;
     buffer[0] = channel | 0x05;
     buffer[1] = RCP_DEVCLASS_ANGLED_ACTUATOR;
+    buffer[2] = ID;
+    memcpy(buffer + 3, &value, 4);
+    return callbacks->sendData(buffer, 7) == 7 ? RCP_ERR_SUCCESS : RCP_ERR_IO_SEND;
+}
+
+RCP_Error RCP_sendMotorWrite(uint8_t ID, float value) {
+    if(callbacks == NULL) return RCP_ERR_INIT;
+    buffer[0] = channel | 5;
+    buffer[1] = RCP_DEVCLASS_MOTOR;
     buffer[2] = ID;
     memcpy(buffer + 3, &value, 4);
     return callbacks->sendData(buffer, 7) == 7 ? RCP_ERR_SUCCESS : RCP_ERR_IO_SEND;

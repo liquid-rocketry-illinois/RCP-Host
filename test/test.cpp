@@ -153,6 +153,7 @@ namespace TEST_Constants {
         EXPECT_EQ(RCP_DEVCLASS_STEPPER, 0x02);
         EXPECT_EQ(RCP_DEVCLASS_PROMPT, 0x03);
         EXPECT_EQ(RCP_DEVCLASS_ANGLED_ACTUATOR, 0x04);
+        EXPECT_EQ(RCP_DEVCLASS_MOTOR, 0x05);
         EXPECT_EQ(RCP_DEVCLASS_TARGET_LOG, 0x80);
         EXPECT_EQ(RCP_DEVCLASS_AM_PRESSURE, 0x90);
         EXPECT_EQ(RCP_DEVCLASS_TEMPERATURE, 0x91);
@@ -232,6 +233,7 @@ namespace TEST_Preinit {
         TEST_NONINIT_RUN(RCP_sendSimpleActuatorWrite, 0, RCP_SIMPLE_ACTUATOR_TOGGLE);
         TEST_NONINIT_RUN(RCP_sendStepperWrite, 0, RCP_STEPPER_SPEED_CONTROL, 0);
         TEST_NONINIT_RUN(RCP_sendAngledActuatorWrite, 0, 0);
+        TEST_NONINIT_RUN(RCP_sendMotorWrite, 0, 0);
         TEST_NONINIT_RUN(RCP_requestGeneralRead, RCP_DEVCLASS_TEST_STATE, 0);
         TEST_NONINIT_RUN(RCP_requestTareConfiguration, RCP_DEVCLASS_GYROSCOPE, 0, 0, 0);
         TEST_NONINIT_RUN(RCP_promptRespondGONOGO, RCP_GONOGO_GO);
@@ -280,6 +282,7 @@ namespace TEST_BadIO {
         TEST_BADIOSEND(RCP_sendSimpleActuatorWrite, 0, RCP_SIMPLE_ACTUATOR_TOGGLE);
         TEST_BADIOSEND(RCP_sendStepperWrite, 0, RCP_STEPPER_SPEED_CONTROL, 0);
         TEST_BADIOSEND(RCP_sendAngledActuatorWrite, 0, 0);
+        TEST_BADIOSEND(RCP_sendMotorWrite, 0, 0);
         TEST_BADIOSEND(RCP_requestGeneralRead, RCP_DEVCLASS_TEST_STATE, 0);
         TEST_BADIOSEND(RCP_requestTareConfiguration, RCP_DEVCLASS_GYROSCOPE, 0, 0, 0);
 
@@ -706,6 +709,18 @@ namespace TEST_processIU {
             .endState = RCP_1F{
                 .devclass = RCP_DEVCLASS_AM_PRESSURE,
                 .timestamp = TS1,
+                .ID = 1,
+                .data = PI
+            }
+        },
+        EnvInfo{
+            .envName = "1F_Motor",
+            .devclass = RCP_DEVCLASS_MOTOR,
+            .timestamp = TS2,
+            .pkt = {0x01, HFLOATARR(HPI)},
+            .endState = RCP_1F{
+                .devclass = RCP_DEVCLASS_MOTOR,
+                .timestamp = TS2,
                 .ID = 1,
                 .data = PI
             }
@@ -1318,6 +1333,9 @@ namespace TEST_RCP_Senders {
         retval = RCP_requestTareConfiguration(RCP_DEVCLASS_STEPPER, 0, 0, 0);
         EXPECT_EQ(retval, RCP_ERR_INVALID_DEVCLASS);
 
+        retval = RCP_requestTareConfiguration(RCP_DEVCLASS_MOTOR, 0, 0, 0);
+        EXPECT_EQ(retval, RCP_ERR_INVALID_DEVCLASS);
+
         retval = RCP_requestTareConfiguration(RCP_DEVCLASS_PROMPT, 0, 0, 0);
         EXPECT_EQ(retval, RCP_ERR_INVALID_DEVCLASS);
 
@@ -1441,6 +1459,11 @@ namespace TEST_RCP_Senders {
             .envName = "StepperWrite",
             .endState = {0x06, RCP_DEVCLASS_STEPPER, 0x17, RCP_STEPPER_SPEED_CONTROL, HFLOATARR(HPI)},
             .function = [] { return RCP_sendStepperWrite(0x17, RCP_STEPPER_SPEED_CONTROL, PI); }
+        },
+        EnvInfo{
+            .envName = "MotorWrite",
+            .endState = {0x05, RCP_DEVCLASS_MOTOR, 0x11, HFLOATARR(HPI)},
+            .function = [] { return RCP_sendMotorWrite(0x11, PI); }
         },
         EnvInfo{
             .envName = "AngledActuatorWrite",

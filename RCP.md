@@ -37,6 +37,7 @@ The defined device classes are as follows:
 - `0x02`: [Stepper Motor](#stepper-motor) *%
 - `0x03`: [Prompt Input](#prompt-input) +&^%
 - `0x04`: [Angled Actuator](#angled-actuator) *%
+- `0x05`: [Motor](#motor) *%
 - `0x80`: [Target Log](#target-log) ^%
 - `0x90`: [Ambient Pressure](#xf-units) *
 - `0x91`: [Temperature](#xf-units) *
@@ -252,6 +253,23 @@ This device responds with a [1F](#xf-units) packet.
 
 - `0x05 04 01 41 8e 80 00`: Sets actuator `1` to angle `17.8125` degrees
 
+## Motor
+
+The motor class is designed for controlling motors that are not steppers, i.e. have a single speed parameter. A motor cannot have its exact position set, only its speed. This device follows the standard read requests, but cannot be tared. 
+
+### Writes
+
+To write to a mtor, use the following format:
+- The first byte contains the ID of the device to write to
+- The next 4 bytes contain a float encoding the speed to set the motor to (rotations per minute)
+
+### Response
+
+This device responds with a [1F](#xf-units) packet.
+
+### Examples
+- `0x05 05 07 41 8e 80 00`: Sets motor `7` to speed `17.8125` RPM 
+
 ## Target Log
 
 This device allows the target to send logging messages back to the host. Following the 4 byte timestamp, the rest of the packet is ASCII chars encoding the message. The string is **not** null terminated, so the length must be calculated from the packet length.
@@ -289,6 +307,7 @@ xF units lend themselves well to amalgamation, as specified under the [amalgamat
 
 The 1F devices include:
 - Angled Actuator (degrees)
+- Motor (rotations per minute)
 - Ambient Pressure (bars)
 - Temperature (Celsius)
 - Pressure Transducer (PSI)
