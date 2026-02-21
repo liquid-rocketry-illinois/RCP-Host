@@ -65,6 +65,7 @@ The defined device classes are as follows:
 - 0x93: Hygrometer (relative humidity)
 - 0x94: Load Cell (weight)
 - 0x95: Boolean Sensor
+- 0x96: Flow Meter
 - 0xA0: Power Monitor
 - 0xB0: Accelerometer
 - 0xB1: Gyroscope
@@ -341,6 +342,7 @@ This packet can be used for sensors that send one single-precision (IEEE 754) fl
 - Hygrometer (relative humidity, percentage)
 - Load Cell (weight, kilograms)
 - Motor (speed, RPM)
+- Flow Meter (gallons per minute)
 
 with units specified in the list. Following the 4 timestamp bytes, this packet has 1 ID byte, then the float.
 
