@@ -702,18 +702,6 @@ namespace TEST_processIU {
             }
         },
         EnvInfo{
-            .envName = "1F_AMPressure",
-            .devclass = RCP_DEVCLASS_AM_PRESSURE,
-            .timestamp = TS1,
-            .pkt = {0x01, HFLOATARR(HPI)},
-            .endState = RCP_1F{
-                .devclass = RCP_DEVCLASS_AM_PRESSURE,
-                .timestamp = TS1,
-                .ID = 1,
-                .data = PI
-            }
-        },
-        EnvInfo{
             .envName = "1F_Motor",
             .devclass = RCP_DEVCLASS_MOTOR,
             .timestamp = TS2,
@@ -721,6 +709,18 @@ namespace TEST_processIU {
             .endState = RCP_1F{
                 .devclass = RCP_DEVCLASS_MOTOR,
                 .timestamp = TS2,
+                .ID = 1,
+                .data = PI
+            }
+        },
+        EnvInfo{
+            .envName = "1F_AMPressure",
+            .devclass = RCP_DEVCLASS_AM_PRESSURE,
+            .timestamp = TS1,
+            .pkt = {0x01, HFLOATARR(HPI)},
+            .endState = RCP_1F{
+                .devclass = RCP_DEVCLASS_AM_PRESSURE,
+                .timestamp = TS1,
                 .ID = 1,
                 .data = PI
             }
