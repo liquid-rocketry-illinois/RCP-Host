@@ -45,6 +45,7 @@ The defined device classes are as follows:
 - `0x93`: [Hygrometer](#xf-units) (relative humidity) *
 - `0x94`: [Load Cell](#xf-units) (weight) *
 - `0x95`: [Boolean Sensor](#boolean-sensor) *%
+- `0x96`: [Flow Meter](#xf-units) *
 - `0xA0`: [Power Monitor](#xf-units) *
 - `0xB0`: [Accelerometer](#xf-units) *
 - `0xB1`: [Gyroscope](#xf-units) *
@@ -313,6 +314,7 @@ The 1F devices include:
 - Pressure Transducer (PSI)
 - Hygrometer (% relative humidity)
 - Load Cell (kg)
+- Flow Meter (gallons per minute)
 
 The 2F devices include, with the data channels in the order specified:
 - Stepper Motor: absolute position (degrees), speed (degrees/second)
@@ -362,6 +364,7 @@ The devices which support tares are the following:
 - Pressure Transducer
 - Hygrometer
 - Load Cell
+- Flow Meter
 - Power Monitor
 - Accelerometer
 - Gyroscope

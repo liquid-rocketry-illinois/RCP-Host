@@ -164,6 +164,7 @@ STATIC RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_
     case RCP_DEVCLASS_PRESSURE_TRANSDUCER:
     case RCP_DEVCLASS_RELATIVE_HYGROMETER:
     case RCP_DEVCLASS_MOTOR:
+    case RCP_DEVCLASS_FLOW_METER:
     case RCP_DEVCLASS_LOAD_CELL: {
         // All the 1F devices
         struct RCP_1F d = {.devclass = devclass, .timestamp = timestamp, .ID = postTS[0]};

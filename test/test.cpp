@@ -773,6 +773,18 @@ namespace TEST_processIU {
                 .data = PI
             }
         },
+        EnvInfo{
+            .envName = "1F_FlowMeter",
+            .devclass = RCP_DEVCLASS_FLOW_METER,
+            .timestamp = TS1,
+            .pkt = {0xF0, HFLOATARR(HPI2)},
+            .endState = RCP_1F{
+                .devclass = RCP_DEVCLASS_FLOW_METER,
+                .timestamp = TS1,
+                .ID = 0xF0,
+                .data = PI2
+            }
+        },
 
         EnvInfo{
             .envName = "2F_Stepper",
