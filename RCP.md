@@ -358,6 +358,8 @@ A range of devices can be requested to tare to a given value. The tare informati
 - The next byte contains the data channel to tare
 - A float value, indicating by what value the data stream should be offset by. This value should be **added** to all future values sent by the device. If multiple tare requests are received over the runtime of a target, these values can simply be added together (i.e. tares are relative to the offset data stream, not to the raw stream itself)
 
+The target will not send any response after a tare request is received.
+
 The devices which support tares are the following:
 - Ambient Pressure
 - Temperature
