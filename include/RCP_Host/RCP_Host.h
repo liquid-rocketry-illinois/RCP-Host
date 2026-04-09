@@ -26,6 +26,7 @@ typedef enum {
     RCP_DEVCLASS_PROMPT = 0x03,
     RCP_DEVCLASS_ANGLED_ACTUATOR = 0x04,
     RCP_DEVCLASS_MOTOR = 0x05,
+    RCP_DEVCLASS_DISCRETE_ACTUATOR = 0x06,
     RCP_DEVCLASS_CUSTOM = 0x80,
 
     RCP_DEVCLASS_AM_PRESSURE = 0x90,
@@ -116,6 +117,12 @@ struct RCP_BoolData {
     int data;
 };
 
+struct RCP_DiscreteActuatorData {
+    uint32_t timestamp;
+    uint8_t ID;
+    uint8_t state;
+};
+
 struct RCP_OneFloat {
     RCP_DeviceClass devclass;
     uint32_t timestamp;
@@ -155,6 +162,7 @@ struct RCP_LibInitData {
     int (*processTestUpdate)(struct RCP_TestData data);
     int (*processBoolData)(struct RCP_BoolData data);
     int (*processSimpleActuatorData)(struct RCP_SimpleActuatorData data);
+    int (*processDiscreteActuatorData)(struct RCP_DiscreteActuatorData data);
     int (*processPromptInput)(struct RCP_PromptInputRequest request);
     int (*processSerialData)(struct RCP_CustomData data);
     int (*processOneFloat)(struct RCP_OneFloat data);
@@ -192,6 +200,7 @@ int RCP_sendSimpleActuatorWrite(uint8_t ID, RCP_SimpleActuatorState state);
 int RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode mode, float value);
 int RCP_sendMotorWrite(uint8_t ID, float value);
 int RCP_sendAngledActuatorWrite(uint8_t ID, float value);
+int RCP_sendDiscreteActuatorWrite(uint8_t ID, uint8_t state);
 
 int RCP_requestGeneralRead(RCP_DeviceClass device, uint8_t ID);
 int RCP_requestTareConfiguration(RCP_DeviceClass device, uint8_t ID, uint8_t dataChannel, float value);

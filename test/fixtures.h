@@ -69,6 +69,13 @@ public:
     char prompt[64];
 };
 
+class RCPDiscreteActuator : public RCPIn {
+public:
+    ~RCPDiscreteActuator() override = default;
+
+    RCP_DiscreteActuatorData data;
+};
+
 class RCPCustomData : public RCPIn {
 public:
     ~RCPCustomData() override = default;

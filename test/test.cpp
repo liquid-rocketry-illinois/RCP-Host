@@ -15,6 +15,7 @@ RCP* context;
 #define PIR dynamic_cast<RCPPromptInputRequest*>(context)
 #define CDATA dynamic_cast<RCPCustomData*>(context)
 #define FLOATS dynamic_cast<RCPFloats*>(context)
+#define DACT dynamic_cast<RCPDiscreteActuator*>(context)->data
 
 // Test values
 // Only works on big endian systems
@@ -82,6 +83,11 @@ int processPIR(RCP_PromptInputRequest pir) {
     return 0;
 }
 
+int processDACT(RCP_DiscreteActuatorData da) {
+    DACT = da;
+    return 0;
+}
+
 int processCustom(RCP_CustomData cdata) {
     CDATA->length = cdata.length;
     memcpy(CDATA->data, cdata.data, cdata.length);
@@ -114,6 +120,7 @@ RCP_LibInitData initData{
     .processTestUpdate = processTestUpdate,
     .processBoolData = processBoolData,
     .processSimpleActuatorData = processSactD,
+    .processDiscreteActuatorData = processDACT,
     .processPromptInput = processPIR,
     .processSerialData = processCustom,
     .processOneFloat = processFloat1,
@@ -153,6 +160,7 @@ TEST(RCPNoinit, NonInit) {
     TEST_NONINIT_RUN(RCP_sendStepperWrite, 0, RCP_STEPPER_SPEED_CONTROL, 0);
     TEST_NONINIT_RUN(RCP_sendMotorWrite, 0, 0);
     TEST_NONINIT_RUN(RCP_sendAngledActuatorWrite, 0, 0);
+    TEST_NONINIT_RUN(RCP_sendDiscreteActuatorWrite, 0, 0);
     TEST_NONINIT_RUN(RCP_requestGeneralRead, RCP_DEVCLASS_TEST_STATE, 0);
     TEST_NONINIT_RUN(RCP_requestTareConfiguration, RCP_DEVCLASS_GYROSCOPE, 0, 0, 0);
     TEST_NONINIT_RUN(RCP_promptRespondGONOGO, RCP_GONOGO_GO);
@@ -174,6 +182,7 @@ TEST(RCPBadIO, BadIO) {
     TEST_BADIO(RCP_sendStepperWrite, 0, RCP_STEPPER_SPEED_CONTROL, 0);
     TEST_BADIO(RCP_sendMotorWrite, 0, 0);
     TEST_BADIO(RCP_sendAngledActuatorWrite, 0, 0);
+    TEST_BADIO(RCP_sendDiscreteActuatorWrite, 0, 0);
     TEST_BADIO(RCP_requestGeneralRead, RCP_DEVCLASS_TEST_STATE, 0);
     TEST_BADIO(RCP_requestTareConfiguration, RCP_DEVCLASS_GYROSCOPE, 0, 0, 0);
     TEST_BADIO(RCP_promptRespondGONOGO, RCP_GONOGO_GO);
@@ -211,6 +220,7 @@ TEST(RCPConstants, Constants) {
     EXPECT_EQ(RCP_DEVCLASS_PROMPT, 0x03);
     EXPECT_EQ(RCP_DEVCLASS_ANGLED_ACTUATOR, 0x04);
     EXPECT_EQ(RCP_DEVCLASS_MOTOR, 0x05);
+    EXPECT_EQ(RCP_DEVCLASS_DISCRETE_ACTUATOR, 0x06);
     EXPECT_EQ(RCP_DEVCLASS_CUSTOM, 0x80);
     EXPECT_EQ(RCP_DEVCLASS_AM_PRESSURE, 0x90);
     EXPECT_EQ(RCP_DEVCLASS_TEMPERATURE, 0x91);
@@ -503,6 +513,34 @@ TEST_F(RCPBoolData, BoolSenseOn) {
     EXPECT_TRUE(BOOLDATA.data);
 }
 
+// ------------ SECTION: Receiving Discrete Actuator Data ------------ //
+
+TEST_F(RCPDiscreteActuator, Test1) {
+    PUSH(0x06);
+    PUSH(RCP_DEVCLASS_DISCRETE_ACTUATOR);
+    PUSH_TIMESTAMP();
+    PUSH(0x00);
+    PUSH(0x02);
+
+    RCP_poll();
+    EXPECT_EQ(DACT.timestamp, 0);
+    EXPECT_EQ(DACT.ID, 0);
+    EXPECT_EQ(DACT.state, 2);
+}
+
+TEST_F(RCPDiscreteActuator, Test2) {
+    PUSH(0x06);
+    PUSH(RCP_DEVCLASS_DISCRETE_ACTUATOR);
+    PUSH_TIMESTAMP();
+    PUSH(0xFF);
+    PUSH(0xAB);
+
+    RCP_poll();
+    EXPECT_EQ(DACT.timestamp, 0);
+    EXPECT_EQ(DACT.ID, 0xFF);
+    EXPECT_EQ(DACT.state, 0xAB);
+}
+
 // ------------ SECTION: Receiving custom data ------------ //
 
 TEST_F(RCPCustomData, SingleByte) {
@@ -787,6 +825,11 @@ TEST_F(RCPOut, StepperSpeedControl) {
 TEST_F(RCPOut, MotorControl) {
     EXPECT_EQ(RCP_sendMotorWrite(6, PI), 0);
     CHECK_OUTBUF(0x05, RCP_DEVCLASS_MOTOR, 0x06, HFLOATARR(HPI));
+}
+
+TEST_F(RCPOut, DiscreteActuator) {
+    EXPECT_EQ(RCP_sendDiscreteActuatorWrite(4, 0x97), 0);
+    CHECK_OUTBUF(0x02, RCP_DEVCLASS_DISCRETE_ACTUATOR, 0x04, 0x97);
 }
 
 TEST_F(RCPOut, PromptResponseGNG_GO) {

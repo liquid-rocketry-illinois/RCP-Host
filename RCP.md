@@ -58,6 +58,7 @@ The defined device classes are as follows:
 - 0x03: Prompt Input
 - 0x04: Angled Actuator
 - 0x05: Motor
+- 0x06: Discrete Actuator
 - 0x80: Custom data (virtual device)
 - 0x90: Ambient Pressure
 - 0x91: Temperature
@@ -255,6 +256,14 @@ section. Motors cannot be tared.
 To write to a motor, additional parameter bytes are required. The first is the ID of the motor to write to. 4 additional
 bytes form a floating point value to set the actuator to, in RPM.
 
+### Discrete Actuator
+
+This packet class is for controlling an actuator with a discrete, non-binary number of states such as the tri-state 
+actuators on RANDE.
+
+To write to such an actuator, additional parameter bytes are required. The first is the ID of the actuator to write 
+to. The next is an 8-bit unsigned integer representing the target state. 
+
 ### Sensor Read Requests
 
 This packet can be used to request a value from a READ ONLY sensor device on the target, or to communicate new
@@ -309,6 +318,11 @@ first byte indicates the device ID. The next byte indicates the state of the dev
 - 0x00: The actuator is off
 - 0x80: The actuator is on
 - Any other data is treated as on
+
+### Discrete Actuator
+
+This packet returns the state of a discrete actuator. This is 2 additional bytes, making the packet length 6. The 
+first byte is the ID, the next is the current state of the actuator.
 
 ### Boolean Sensor Packet
 

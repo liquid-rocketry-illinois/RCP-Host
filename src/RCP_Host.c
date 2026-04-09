@@ -84,6 +84,12 @@ int RCP_poll(void) {
         return callbacks->processSimpleActuatorData(d);
     }
 
+    case RCP_DEVCLASS_DISCRETE_ACTUATOR: {
+        struct RCP_DiscreteActuatorData d = {.timestamp = timestamp, .ID = buffer[6], .state = buffer[7]};
+
+        return callbacks->processDiscreteActuatorData(d);
+    }
+
     case RCP_DEVCLASS_PROMPT: {
         if(buffer[2] == RCP_PromptDataType_RESET) {
             struct RCP_PromptInputRequest req = {.type = RCP_PromptDataType_RESET, .prompt = NULL};
@@ -230,6 +236,16 @@ int RCP_sendAngledActuatorWrite(uint8_t ID, float value) {
     buffer[2] = ID;
     memcpy(buffer + 3, &value, 4);
     return callbacks->sendData(buffer, 7) == 7 ? 0 : -2;
+}
+
+int RCP_sendDiscreteActuatorWrite(uint8_t ID, uint8_t state) {
+    if(callbacks == NULL) return -1;
+    uint8_t buffer[4] = {0};
+    buffer[0] = channel | 0x02;
+    buffer[1] = RCP_DEVCLASS_DISCRETE_ACTUATOR;
+    buffer[2] = ID;
+    buffer[3] = state;
+    return callbacks->sendData(buffer, 4) == 4 ? 0 : -2;
 }
 
 // One shot read request to a device with an ID
