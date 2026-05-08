@@ -68,6 +68,7 @@ The defined device classes are as follows:
 - 0x95: Boolean Sensor
 - 0x96: Flow Meter
 - 0x97: Altitude
+- 0x98: Radio Connection Strength
 - 0xA0: Power Monitor
 - 0xB0: Accelerometer
 - 0xB1: Gyroscope
@@ -361,6 +362,7 @@ This packet can be used for sensors that send one single-precision (IEEE 754) fl
 - Motor (speed, RPM)
 - Flow Meter (gallons per minute)
 - Altitude (meters)
+- Radio Strength RSSI (dBm)
 
 with units specified in the list. Following the 4 timestamp bytes, this packet has 1 ID byte, then the float.
 
