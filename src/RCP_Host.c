@@ -114,7 +114,8 @@ int RCP_poll(void) {
     case RCP_DEVCLASS_PRESSURE_TRANSDUCER:
     case RCP_DEVCLASS_RELATIVE_HYGROMETER:
     case RCP_DEVCLASS_FLOW_METER:
-    case RCP_DEVCLASS_LOAD_CELL: {
+    case RCP_DEVCLASS_LOAD_CELL:
+    case RCP_DEVCLASS_ALTITUDE: {
         struct RCP_OneFloat d = {.devclass = buffer[1], .timestamp = timestamp, .ID = ID, .data = toFloat(buffer + 7)};
 
         return callbacks->processOneFloat(d);
