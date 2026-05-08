@@ -72,7 +72,9 @@ The defined device classes are as follows:
 - 0xB0: Accelerometer
 - 0xB1: Gyroscope
 - 0xB2: Magnetometer
+- 0xB3: Roll/Pitch/Yaw
 - 0xC0: GPS
+- 0xC1: Quaternion
 
 As an aside, devices are loosely assigned class numbers based on a few things. First, all read-only devices have the
 MSB set. The next 3 bits for read-only's indicate how many data channels the device has. For example, GPS returns
@@ -379,15 +381,16 @@ This packet can be used for sensors that send 3 single precision floats as data.
 - Accelerometer (x, y, z axes (meters per second per second))
 - Gyroscope (x, y, z, axes (degrees per second))
 - Magnetometer (x, y, z axes (Gauss))
+- Roll/Pitch/Yaw (degrees)
 
 with units and order specified in the list. Following the 4 timestamp bytes, this packet has 1 ID byte, then the 3
 floats.
 
 ### Four float sensor
 
-This packet can be used for sensors that send 4 single precision floats as data. This currently only includes GPS
+This packet can be used for sensors that send 4 single precision floats as data. This includes GPS
 data, which is ordered as longitude, latitude (degrees), altitude (meters above eclipse (HAE)), and ground speed
-(meters per second).
+(meters per second), as well as generic use quaternions.
 
 ---
 The remaining class codes are currently undefined behavior.

@@ -138,7 +138,8 @@ int RCP_poll(void) {
 
     case RCP_DEVCLASS_ACCELEROMETER:
     case RCP_DEVCLASS_GYROSCOPE:
-    case RCP_DEVCLASS_MAGNETOMETER: {
+    case RCP_DEVCLASS_MAGNETOMETER:
+    case RCP_DEVCLASS_RPY: {
         struct RCP_ThreeFloat d = {.devclass = buffer[1], .timestamp = timestamp, .ID = ID};
 
         memcpy(d.data, buffer + 7, 12);
@@ -146,7 +147,8 @@ int RCP_poll(void) {
         return callbacks->processThreeFloat(d);
     }
 
-    case RCP_DEVCLASS_GPS: {
+    case RCP_DEVCLASS_GPS:
+    case RCP_DEVCLASS_QUATERNION: {
         struct RCP_FourFloat d = {.devclass = buffer[1], .timestamp = timestamp, .ID = ID};
 
         memcpy(d.data, buffer + 7, 16);
