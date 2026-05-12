@@ -39,7 +39,11 @@ RCP_Error RCP_init(const struct RCP_LibInitData _callbacks) {
     *callbacks = _callbacks;
 
     buffer = malloc(RCP_MAX_EXTENDED_BYTES + RCP_MAX_NON_PARAM);
-    if(buffer == NULL) return RCP_ERR_MEMALLOC;
+    if(buffer == NULL) {
+        free(callbacks);
+        callbacks = NULL;
+        return RCP_ERR_MEMALLOC;
+    }
 
     channel = RCP_CH_ZERO;
     activePromptType = RCP_PromptDataType_RESET;
