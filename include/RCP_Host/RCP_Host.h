@@ -42,6 +42,7 @@ typedef enum {
     RCP_DEVCLASS_PROMPT = 0x03,
     RCP_DEVCLASS_ANGLED_ACTUATOR = 0x04,
     RCP_DEVCLASS_MOTOR = 0x05,
+    RCP_DEVCLASS_DISCRETE_ACTUATOR = 0x06,
     RCP_DEVCLASS_TARGET_LOG = 0x80,
 
     RCP_DEVCLASS_AM_PRESSURE = 0x90,
@@ -51,14 +52,18 @@ typedef enum {
     RCP_DEVCLASS_LOAD_CELL = 0x94,
     RCP_DEVCLASS_BOOL_SENSOR = 0x95,
     RCP_DEVCLASS_FLOW_METER = 0x96,
+    RCP_DEVCLASS_ALTITUDE = 0x97,
+    RCP_DEVCLASS_RADIO_STRENGTH = 0x98,
 
     RCP_DEVCLASS_POWERMON = 0xA0,
 
     RCP_DEVCLASS_ACCELEROMETER = 0xB0,
     RCP_DEVCLASS_GYROSCOPE = 0xB1,
     RCP_DEVCLASS_MAGNETOMETER = 0xB2,
+    RCP_DEVCLASS_RPY = 0xB3,
 
     RCP_DEVCLASS_GPS = 0xC0,
+    RCP_DEVCLASS_QUATERNION = 0xC1,
 
     RCP_DEVCLASS_AMALGAMATE = 0xFF
 } RCP_DeviceClass;
@@ -139,6 +144,12 @@ struct RCP_BoolData {
     int data;
 };
 
+struct RCP_DiscreteActuatorData {
+    uint32_t timestamp;
+    uint8_t ID;
+    uint8_t state;
+};
+
 struct RCP_1F {
     RCP_DeviceClass devclass;
     uint32_t timestamp;
@@ -179,6 +190,7 @@ struct RCP_LibInitData {
     RCP_Error (*processTestUpdate)(struct RCP_TestData data);
     RCP_Error (*processBoolData)(struct RCP_BoolData data);
     RCP_Error (*processSimpleActuatorData)(struct RCP_SimpleActuatorData data);
+    RCP_Error (*processDiscreteActuatorData)(struct RCP_DiscreteActuatorData data);
     RCP_Error (*processPromptInput)(struct RCP_PromptInputRequest request);
     RCP_Error (*processTargetLog)(struct RCP_TargetLogData data);
     RCP_Error (*processOneFloat)(struct RCP_1F data);
@@ -217,6 +229,7 @@ RCP_Error RCP_sendSimpleActuatorWrite(uint8_t ID, RCP_SimpleActuatorState state)
 RCP_Error RCP_sendStepperWrite(uint8_t ID, RCP_StepperControlMode mode, float value);
 RCP_Error RCP_sendAngledActuatorWrite(uint8_t ID, float value);
 RCP_Error RCP_sendMotorWrite(uint8_t ID, float value);
+RCP_Error RCP_sendDiscreteActuatorWrite(uint8_t ID, uint8_t state);
 
 RCP_Error RCP_requestGeneralRead(RCP_DeviceClass device, uint8_t ID);
 RCP_Error RCP_requestTareConfiguration(RCP_DeviceClass device, uint8_t ID, uint8_t dataChannel, float offset);

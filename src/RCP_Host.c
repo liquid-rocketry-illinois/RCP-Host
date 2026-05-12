@@ -128,6 +128,13 @@ STATIC RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_
         break;
     }
 
+    case RCP_DEVCLASS_DISCRETE_ACTUATOR: {
+        struct RCP_DiscreteActuatorData d = {.timestamp = timestamp, .ID = postTS[0], .state = postTS[1]};
+        incval = 2;
+        rerrno = callbacks->processDiscreteActuatorData(d);
+        break;
+    }
+
     case RCP_DEVCLASS_PROMPT: {
         // Params will only be zero when this function is called when processing amalgamated subunits. If that is the
         // case and a prompt IU is detected, exit since it is ill-formed
@@ -165,7 +172,9 @@ STATIC RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_
     case RCP_DEVCLASS_PRESSURE_TRANSDUCER:
     case RCP_DEVCLASS_RELATIVE_HYGROMETER:
     case RCP_DEVCLASS_LOAD_CELL:
-    case RCP_DEVCLASS_FLOW_METER: {
+    case RCP_DEVCLASS_FLOW_METER:
+    case RCP_DEVCLASS_ALTITUDE:
+    case RCP_DEVCLASS_RADIO_STRENGTH: {
         // All the 1F devices
         struct RCP_1F d = {.devclass = devclass, .timestamp = timestamp, .ID = postTS[0]};
 
@@ -198,7 +207,8 @@ STATIC RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_
 
     case RCP_DEVCLASS_ACCELEROMETER:
     case RCP_DEVCLASS_GYROSCOPE:
-    case RCP_DEVCLASS_MAGNETOMETER: {
+    case RCP_DEVCLASS_MAGNETOMETER:
+    case RCP_DEVCLASS_RPY: {
         // All the 3F devices
         struct RCP_3F d = {.devclass = devclass, .timestamp = timestamp, .ID = postTS[0]};
 
@@ -209,7 +219,8 @@ STATIC RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_
         break;
     }
 
-    case RCP_DEVCLASS_GPS: {
+    case RCP_DEVCLASS_GPS:
+    case RCP_DEVCLASS_QUATERNION: {
         // All the 4F devices
         struct RCP_4F d = {.devclass = devclass, .timestamp = timestamp, .ID = postTS[0]};
 
@@ -406,6 +417,16 @@ RCP_Error RCP_sendMotorWrite(uint8_t ID, float value) {
     buffer[2] = ID;
     memcpy(buffer + 3, &value, 4);
     return callbacks->sendData(buffer, 7) == 7 ? RCP_ERR_SUCCESS : RCP_ERR_IO_SEND;
+}
+
+RCP_Error RCP_sendDiscreteActuatorWrite(uint8_t ID, uint8_t state) {
+    if(callbacks == NULL) return -1;
+    uint8_t buffer[4] = {0};
+    buffer[0] = channel | 0x02;
+    buffer[1] = RCP_DEVCLASS_DISCRETE_ACTUATOR;
+    buffer[2] = ID;
+    buffer[3] = state;
+    return callbacks->sendData(buffer, 4) == 4 ? RCP_ERR_SUCCESS : RCP_ERR_IO_SEND;
 }
 
 // One shot read request to a device with an ID

@@ -38,6 +38,7 @@ The defined device classes are as follows:
 - `0x03`: [Prompt Input](#prompt-input) +&^%
 - `0x04`: [Angled Actuator](#angled-actuator) *%
 - `0x05`: [Motor](#motor) *%
+- `0x06`: [Discrete Actuator](#discrete-actuator) *%
 - `0x80`: [Target Log](#target-log) ^%
 - `0x90`: [Ambient Pressure](#xf-units) *
 - `0x91`: [Temperature](#xf-units) *
@@ -46,11 +47,15 @@ The defined device classes are as follows:
 - `0x94`: [Load Cell](#xf-units) (weight) *
 - `0x95`: [Boolean Sensor](#boolean-sensor) *%
 - `0x96`: [Flow Meter](#xf-units) *
+- `0x97`: [Altitude](#xf-units) *
+- `0x98`: [Radio Strength](#xf-units) *
 - `0xA0`: [Power Monitor](#xf-units) *
 - `0xB0`: [Accelerometer](#xf-units) *
 - `0xB1`: [Gyroscope](#xf-units) *
 - `0xB2`: [Magnetometer](#xf-units) *
+- `0xB3`: [Roll/Pitch/Yaw](#xf-units) *
 - `0xC0`: [GPS](#xf-units) *
+- `0xC1`: [Quaternion](#xf-units) *
 - `0xFF`: [Amalgamate Unit](#amalgamation-units) +^%
 
 Entries marked with `+` are virtual devices with no ID available. This means that these devices don't have a physical representation on the target itself. Rather, this is purely software, but is still a component that can be queried for information and updated to perform actions on the target.
@@ -271,6 +276,27 @@ This device responds with a [1F](#xf-units) packet.
 ### Examples
 - `0x05 05 07 41 8e 80 00`: Sets motor `7` to speed `17.8125` RPM 
 
+## Discrete Actuator
+
+This class is designed for an actuator that has a discrete number of states more than 2. This class supports up to 256 states per device.
+
+### Writes
+
+To write to a discrete actuator, use the following format:
+ - The first byte contains the ID of the device to write to
+ - The next byte contains the state to move to
+
+### Response
+
+Besides the timestamp (if required), the parameter bytes for this class contains 2 bytes:
+ - The ID
+ - The current state
+
+### Examples
+
+ - `0x02 06 03 44`: Sets actuator 3 to state 0x44
+ - `0x06 06 01 02 03 04 20 30`: Target response indicating at time 0x01020304, actuator 0x20 was in state 0x30
+
 ## Target Log
 
 This device allows the target to send logging messages back to the host. Following the 4 byte timestamp, the rest of the packet is ASCII chars encoding the message. The string is **not** null terminated, so the length must be calculated from the packet length.
@@ -315,6 +341,8 @@ The 1F devices include:
 - Hygrometer (% relative humidity)
 - Load Cell (kg)
 - Flow Meter (gallons per minute)
+- Altitude (meters)
+- Radio Strength (dBm)
 
 The 2F devices include, with the data channels in the order specified:
 - Stepper Motor: absolute position (degrees), speed (degrees/second)
@@ -324,9 +352,11 @@ The 3F devices include, with the data channels in the order specified:
 - Accelerometer: x, y, z (meters/second/second)
 - Gyroscope: x, y, z (degrees/second)
 - Magnetometer: x, y, z (gauss)
+- System Roll/Pitch/Yaw (degrees)
 
 The 4F devices include, with the data channels in the order specified:
 - GPS: latitude, longitude (degrees), altitude (meters above eclipse (HAE)), ground speed (meters per second)
+- Generic Quaternion
 
 ### Examples
 
@@ -367,11 +397,15 @@ The devices which support tares are the following:
 - Hygrometer
 - Load Cell
 - Flow Meter
+- Altitude
+- Radio Strength
 - Power Monitor
 - Accelerometer
 - Gyroscope
 - Magnetometer
+- Roll/Pitch/Yaw
 - GPS
+- Quaternion
 
 # Standard Read Request Examples
 

@@ -1,7 +1,7 @@
 #include <utility>
 
-#include "RingBuffer.h"
 #include "RCP_Host/RCP_Host.h"
+#include "RingBuffer.h"
 #include "gtest/gtest.h"
 
 // Exposing some internals for testing purposes
@@ -19,6 +19,7 @@ static size_t RCV_STUB(void*, size_t len) { return len; }
 static RCP_Error TEST_STUB(RCP_TestData) { return RCP_ERR_SUCCESS; }
 static RCP_Error BOOL_STUB(RCP_BoolData) { return RCP_ERR_SUCCESS; }
 static RCP_Error SACT_STUB(RCP_SimpleActuatorData) { return RCP_ERR_SUCCESS; }
+static RCP_Error DACT_STUB(RCP_DiscreteActuatorData) { return RCP_ERR_SUCCESS; }
 static RCP_Error PROMPT_STUB(RCP_PromptInputRequest) { return RCP_ERR_SUCCESS; }
 static RCP_Error LOG_STUB(RCP_TargetLogData) { return RCP_ERR_SUCCESS; }
 static RCP_Error F1_STUB(RCP_1F) { return RCP_ERR_SUCCESS; }
@@ -31,6 +32,7 @@ RCP_LibInitData CALLBACK_STUBS = {.sendData = SEND_STUB,
                                   .processTestUpdate = TEST_STUB,
                                   .processBoolData = BOOL_STUB,
                                   .processSimpleActuatorData = SACT_STUB,
+                                  .processDiscreteActuatorData = DACT_STUB,
                                   .processPromptInput = PROMPT_STUB,
                                   .processTargetLog = LOG_STUB,
                                   .processOneFloat = F1_STUB,
@@ -47,6 +49,10 @@ bool operator==(const RCP_TestData& left, const RCP_TestData& right) {
 }
 
 bool operator==(const RCP_SimpleActuatorData& left, const RCP_SimpleActuatorData& right) {
+    return std::tie(left.timestamp, left.ID, left.state) == std::tie(right.timestamp, right.ID, right.state);
+}
+
+bool operator==(const RCP_DiscreteActuatorData& left, const RCP_DiscreteActuatorData& right) {
     return std::tie(left.timestamp, left.ID, left.state) == std::tie(right.timestamp, right.ID, right.state);
 }
 
@@ -78,6 +84,7 @@ bool operator==(const RCP_4F& left, const RCP_4F& right) {
 struct HostData {
     RCP_TestData testData{};
     RCP_SimpleActuatorData sactData{};
+    RCP_DiscreteActuatorData dactData{};
     RCP_BoolData boolData{};
 
     RCP_PromptDataType ptype = RCP_PromptDataType_RESET;
@@ -93,12 +100,14 @@ struct HostData {
 
     // These are intentionally non-explicit to save typing later
     HostData() = default;
-    HostData(RCP_TestData testData, RCP_SimpleActuatorData sactData, RCP_BoolData boolData, RCP_PromptDataType ptype,
-             std::string pstring, uint32_t logtimestamp, std::string log, RCP_1F f1, RCP_2F f2, RCP_3F f3, RCP_4F f4) :
-        testData(testData), sactData(sactData), boolData(boolData), ptype(ptype), pstring(std::move(pstring)),
-        logtimestamp(logtimestamp), log(std::move(log)), f1(f1), f2(f2), f3(f3), f4(f4) {}
+    HostData(RCP_TestData testData, RCP_SimpleActuatorData sactData, RCP_DiscreteActuatorData dactData,
+             RCP_BoolData boolData, RCP_PromptDataType ptype, std::string pstring, uint32_t logtimestamp,
+             std::string log, RCP_1F f1, RCP_2F f2, RCP_3F f3, RCP_4F f4) :
+        testData(testData), sactData(sactData), dactData(dactData), boolData(boolData), ptype(ptype),
+        pstring(std::move(pstring)), logtimestamp(logtimestamp), log(std::move(log)), f1(f1), f2(f2), f3(f3), f4(f4) {}
     HostData(RCP_TestData testData) : HostData() { this->testData = testData; }
     HostData(RCP_SimpleActuatorData sactData) : HostData() { this->sactData = sactData; }
+    HostData(RCP_DiscreteActuatorData dactData) : HostData() { this->dactData = dactData; }
     HostData(RCP_BoolData boolData) : HostData() { this->boolData = boolData; }
     HostData(RCP_PromptDataType ptype, std::string pstring) : HostData() {
         this->ptype = ptype;
@@ -154,6 +163,7 @@ namespace TEST_Constants {
         EXPECT_EQ(RCP_DEVCLASS_PROMPT, 0x03);
         EXPECT_EQ(RCP_DEVCLASS_ANGLED_ACTUATOR, 0x04);
         EXPECT_EQ(RCP_DEVCLASS_MOTOR, 0x05);
+        EXPECT_EQ(RCP_DEVCLASS_DISCRETE_ACTUATOR, 0x06);
         EXPECT_EQ(RCP_DEVCLASS_TARGET_LOG, 0x80);
         EXPECT_EQ(RCP_DEVCLASS_AM_PRESSURE, 0x90);
         EXPECT_EQ(RCP_DEVCLASS_TEMPERATURE, 0x91);
@@ -161,11 +171,15 @@ namespace TEST_Constants {
         EXPECT_EQ(RCP_DEVCLASS_RELATIVE_HYGROMETER, 0x93);
         EXPECT_EQ(RCP_DEVCLASS_LOAD_CELL, 0x94);
         EXPECT_EQ(RCP_DEVCLASS_BOOL_SENSOR, 0x95);
+        EXPECT_EQ(RCP_DEVCLASS_ALTITUDE, 0x97);
+        EXPECT_EQ(RCP_DEVCLASS_RADIO_STRENGTH, 0x98);
         EXPECT_EQ(RCP_DEVCLASS_POWERMON, 0xA0);
         EXPECT_EQ(RCP_DEVCLASS_ACCELEROMETER, 0xB0);
         EXPECT_EQ(RCP_DEVCLASS_GYROSCOPE, 0xB1);
         EXPECT_EQ(RCP_DEVCLASS_MAGNETOMETER, 0xB2);
+        EXPECT_EQ(RCP_DEVCLASS_RPY, 0xB3);
         EXPECT_EQ(RCP_DEVCLASS_GPS, 0xC0);
+        EXPECT_EQ(RCP_DEVCLASS_QUATERNION, 0xC1);
 
         // Test state values
         EXPECT_EQ(RCP_TEST_START, 0x00);
@@ -234,6 +248,7 @@ namespace TEST_Preinit {
         TEST_NONINIT_RUN(RCP_sendStepperWrite, 0, RCP_STEPPER_SPEED_CONTROL, 0);
         TEST_NONINIT_RUN(RCP_sendAngledActuatorWrite, 0, 0);
         TEST_NONINIT_RUN(RCP_sendMotorWrite, 0, 0);
+        TEST_NONINIT_RUN(RCP_sendDiscreteActuatorWrite, 0, 0);
         TEST_NONINIT_RUN(RCP_requestGeneralRead, RCP_DEVCLASS_TEST_STATE, 0);
         TEST_NONINIT_RUN(RCP_requestTareConfiguration, RCP_DEVCLASS_GYROSCOPE, 0, 0, 0);
         TEST_NONINIT_RUN(RCP_promptRespondGONOGO, RCP_GONOGO_GO);
@@ -283,6 +298,7 @@ namespace TEST_BadIO {
         TEST_BADIOSEND(RCP_sendStepperWrite, 0, RCP_STEPPER_SPEED_CONTROL, 0);
         TEST_BADIOSEND(RCP_sendAngledActuatorWrite, 0, 0);
         TEST_BADIOSEND(RCP_sendMotorWrite, 0, 0);
+        TEST_BADIOSEND(RCP_sendDiscreteActuatorWrite, 0, 0);
         TEST_BADIOSEND(RCP_requestGeneralRead, RCP_DEVCLASS_TEST_STATE, 0);
         TEST_BADIOSEND(RCP_requestTareConfiguration, RCP_DEVCLASS_GYROSCOPE, 0, 0, 0);
 
@@ -364,6 +380,11 @@ namespace TEST_processIU {
             return RCP_ERR_SUCCESS;
         }
 
+        static RCP_Error dactUpdate(RCP_DiscreteActuatorData dactData) {
+            ctx->hostData.dactData = dactData;
+            return RCP_ERR_SUCCESS;
+        }
+
         static RCP_Error promptRequest(RCP_PromptInputRequest pir) {
             ctx->hostData.ptype = pir.type;
             ctx->hostData.pstring = std::string(pir.prompt, pir.length);
@@ -423,6 +444,7 @@ namespace TEST_processIU {
                                                      .processTestUpdate = testUpdate,
                                                      .processBoolData = boolUpdate,
                                                      .processSimpleActuatorData = sactUpdate,
+                                                     .processDiscreteActuatorData = dactUpdate,
                                                      .processPromptInput = promptRequest,
                                                      .processTargetLog = logUpdate,
                                                      .processOneFloat = F1,
@@ -644,6 +666,31 @@ namespace TEST_processIU {
         }
     };
 
+    static EnvInfo PTESTS_DACT[] = {
+        EnvInfo{
+            .envName = "DAct20",
+            .devclass = RCP_DEVCLASS_DISCRETE_ACTUATOR,
+            .timestamp = TS1,
+            .pkt = {0x04, 0x20},
+            .endState = RCP_DiscreteActuatorData{
+                .timestamp = TS1,
+                .ID = 0x04,
+                .state = 0x20
+            }
+        },
+        EnvInfo{
+            .envName = "DAct0",
+            .devclass = RCP_DEVCLASS_DISCRETE_ACTUATOR,
+            .timestamp = TS2,
+            .pkt = {0x77, 0x00},
+            .endState = RCP_DiscreteActuatorData{
+                .timestamp = TS2,
+                .ID = 0x77,
+                .state = 0x00
+            }
+        }
+    };
+
     static EnvInfo PTESTS_BOOL[] = {
         EnvInfo{
             .envName = "BoolOn",
@@ -785,6 +832,30 @@ namespace TEST_processIU {
                 .data = PI2
             }
         },
+        EnvInfo{
+            .envName = "1F_Altitude",
+            .devclass = RCP_DEVCLASS_ALTITUDE,
+            .timestamp = TS1,
+            .pkt = {0x02, HFLOATARR(HPI3)},
+            .endState = RCP_1F{
+                .devclass = RCP_DEVCLASS_ALTITUDE,
+                .timestamp = TS1,
+                .ID = 0x02,
+                .data = PI3
+            }
+        },
+        EnvInfo{
+            .envName = "1F_RadioStrength",
+            .devclass = RCP_DEVCLASS_RADIO_STRENGTH,
+            .timestamp = TS1,
+            .pkt = {0x33, HFLOATARR(HPI4)},
+            .endState = RCP_1F{
+                .devclass = RCP_DEVCLASS_RADIO_STRENGTH,
+                .timestamp = TS1,
+                .ID = 0x33,
+                .data = PI4
+            }
+        },
 
         EnvInfo{
             .envName = "2F_Stepper",
@@ -847,6 +918,18 @@ namespace TEST_processIU {
                 .data = {PI, PI2, PI3}
             }
         },
+        EnvInfo{
+            .envName = "3F_RPY",
+            .devclass = RCP_DEVCLASS_RPY,
+            .timestamp = TS1,
+            .pkt = {0x0F, HFLOATARR(HPI), HFLOATARR(HPI2), HFLOATARR(HPI3)},
+            .endState = RCP_3F{
+                .devclass = RCP_DEVCLASS_RPY,
+                .timestamp = TS1,
+                .ID = 0x0F,
+                .data = {PI, PI2, PI3}
+            }
+        },
 
         EnvInfo{
             .envName = "4F_GPS",
@@ -860,11 +943,24 @@ namespace TEST_processIU {
                 .data = {PI, PI2, PI3, PI4}
             }
         },
+        EnvInfo{
+            .envName = "4F_QUATERNION",
+            .devclass = RCP_DEVCLASS_QUATERNION,
+            .timestamp = TS2,
+            .pkt = {0x10, HFLOATARR(HPI), HFLOATARR(HPI2), HFLOATARR(HPI3), HFLOATARR(HPI4)},
+            .endState = RCP_4F{
+                .devclass = RCP_DEVCLASS_QUATERNION,
+                .timestamp = TS2,
+                .ID = 0x10,
+                .data = {PI, PI2, PI3, PI4}
+            }
+        },
     };
     // clang-format on
 
     INSTANTIATE_TEST_SUITE_P(TestState, ProcessIU, testing::ValuesIn(PTESTS_TESTSTATE), envToName);
     INSTANTIATE_TEST_SUITE_P(SimpleActuator, ProcessIU, testing::ValuesIn(PTESTS_SACT), envToName);
+    INSTANTIATE_TEST_SUITE_P(DiscreteActuator, ProcessIU, testing::ValuesIn(PTESTS_DACT), envToName);
     INSTANTIATE_TEST_SUITE_P(BoolSensor, ProcessIU, testing::ValuesIn(PTESTS_BOOL), envToName);
     INSTANTIATE_TEST_SUITE_P(TargetLog, ProcessIU, testing::ValuesIn(PTESTS_LOG), envToName);
     INSTANTIATE_TEST_SUITE_P(xF, ProcessIU, testing::ValuesIn(PTESTS_xF), envToName);
@@ -896,6 +992,11 @@ namespace TEST_RCP_poll {
 
         static RCP_Error sactUpdate(RCP_SimpleActuatorData sactData) {
             ctx->hostData.sactData = sactData;
+            return RCP_ERR_SUCCESS;
+        }
+
+        static RCP_Error dactUpdate(RCP_DiscreteActuatorData dactData) {
+            ctx->hostData.dactData = dactData;
             return RCP_ERR_SUCCESS;
         }
 
@@ -959,6 +1060,7 @@ namespace TEST_RCP_poll {
                                                  .processTestUpdate = testUpdate,
                                                  .processBoolData = boolUpdate,
                                                  .processSimpleActuatorData = sactUpdate,
+                                                 .processDiscreteActuatorData = dactUpdate,
                                                  .processPromptInput = promptRequest,
                                                  .processTargetLog = logUpdate,
                                                  .processOneFloat = F1,
@@ -1176,7 +1278,7 @@ namespace TEST_RCP_poll {
                 RCP_DEVCLASS_ACCELEROMETER, 0x05, HFLOATARR(HPI), HFLOATARR(HPI2), HFLOATARR(HPI3),
                 RCP_DEVCLASS_GPS, 0x00, HFLOATARR(HPI), HFLOATARR(HPI2), HFLOATARR(HPI3), HFLOATARR(HPI4)},
             .endState = HostData{
-                RCP_TestData{}, RCP_SimpleActuatorData{}, RCP_BoolData{}, RCP_PromptDataType_RESET, "", 0, "",
+                RCP_TestData{}, RCP_SimpleActuatorData{}, RCP_DiscreteActuatorData{}, RCP_BoolData{}, RCP_PromptDataType_RESET, "", 0, "",
                 RCP_1F{
                     .devclass = RCP_DEVCLASS_AM_PRESSURE,
                     .timestamp = TS1,
@@ -1207,10 +1309,11 @@ namespace TEST_RCP_poll {
         // format because it can send multiple IDs of one devclass
         EnvInfo{
             .envName = "Amalged_Longer",
-            .pkt = {0x40, 0x00, 0x3E, RCP_DEVCLASS_AMALGAMATE, HFLOATARR(TS2), // 4
+            .pkt = {0x40, 0x00, 0x41, RCP_DEVCLASS_AMALGAMATE, HFLOATARR(TS2), // 4
                 RCP_DEVCLASS_TEST_STATE, 0x90, 0x05, 0xF0, 0x0F, // 5
                 RCP_DEVCLASS_SIMPLE_ACTUATOR, 0x05, RCP_SIMPLE_ACTUATOR_ON, // 3
                 RCP_DEVCLASS_BOOL_SENSOR, 0x03, RCP_SIMPLE_ACTUATOR_ON, // 3
+                RCP_DEVCLASS_DISCRETE_ACTUATOR, 0x04, 0xF7, // 3
                 // Float packets are in a different order here to test the offsetting for GPS
                 RCP_DEVCLASS_GPS, 0x00, HFLOATARR(HPI), HFLOATARR(HPI2), HFLOATARR(HPI3), HFLOATARR(HPI4), // 18
                 RCP_DEVCLASS_ANGLED_ACTUATOR, 0x0F, HFLOATARR(HPI), // 6
@@ -1231,6 +1334,11 @@ namespace TEST_RCP_poll {
                     .timestamp = TS2,
                     .ID = 5,
                     .state = RCP_SIMPLE_ACTUATOR_ON
+                },
+                RCP_DiscreteActuatorData{
+                    .timestamp = TS2,
+                    .ID = 4,
+                    .state = 0xF7
                 },
                 RCP_BoolData{
                     .timestamp = TS2,
@@ -1315,6 +1423,7 @@ namespace TEST_RCP_Senders {
                                                        .processTestUpdate = TEST_STUB,
                                                        .processBoolData = BOOL_STUB,
                                                        .processSimpleActuatorData = SACT_STUB,
+                                                       .processDiscreteActuatorData = DACT_STUB,
                                                        .processPromptInput = PROMPT_STUB,
                                                        .processTargetLog = LOG_STUB,
                                                        .processOneFloat = F1_STUB,
@@ -1361,6 +1470,9 @@ namespace TEST_RCP_Senders {
         EXPECT_EQ(retval, RCP_ERR_INVALID_DEVCLASS);
 
         retval = RCP_requestTareConfiguration(RCP_DEVCLASS_AMALGAMATE, 0, 0, 0);
+        EXPECT_EQ(retval, RCP_ERR_INVALID_DEVCLASS);
+
+        retval = RCP_requestTareConfiguration(RCP_DEVCLASS_DISCRETE_ACTUATOR, 0, 0, 0);
         EXPECT_EQ(retval, RCP_ERR_INVALID_DEVCLASS);
     }
 
@@ -1466,6 +1578,11 @@ namespace TEST_RCP_Senders {
             .envName = "SimpleActuatorWrite",
             .endState = {0x02, RCP_DEVCLASS_SIMPLE_ACTUATOR, 0x05, RCP_SIMPLE_ACTUATOR_ON},
             .function = [] { return RCP_sendSimpleActuatorWrite(5, RCP_SIMPLE_ACTUATOR_ON); }
+        },
+        EnvInfo{
+            .envName = "DiscreteActuatorWrite",
+            .endState = {0x02, RCP_DEVCLASS_DISCRETE_ACTUATOR, 0x06, 0x97},
+            .function = [] { return RCP_sendDiscreteActuatorWrite(0x06, 0x97); }
         },
         EnvInfo{
             .envName = "StepperWrite",
