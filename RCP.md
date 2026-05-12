@@ -265,7 +265,7 @@ The motor class is designed for controlling motors that are not steppers, i.e. h
 
 ### Writes
 
-To write to a mtor, use the following format:
+To write to a motor, use the following format:
 - The first byte contains the ID of the device to write to
 - The next 4 bytes contain a float encoding the speed to set the motor to (rotations per minute)
 
