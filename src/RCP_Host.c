@@ -420,7 +420,7 @@ RCP_Error RCP_sendMotorWrite(uint8_t ID, float value) {
 }
 
 RCP_Error RCP_sendDiscreteActuatorWrite(uint8_t ID, uint8_t state) {
-    if(callbacks == NULL) return -1;
+    if(callbacks == NULL) return RCP_ERR_INIT;
     uint8_t buffer[4] = {0};
     buffer[0] = channel | 0x02;
     buffer[1] = RCP_DEVCLASS_DISCRETE_ACTUATOR;
