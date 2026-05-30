@@ -15,7 +15,7 @@ STATIC RCP_Channel channel = RCP_CH_ZERO;
 STATIC RCP_PromptDataType activePromptType = RCP_PromptDataType_RESET;
 
 // Callback struct and buffer for storing packet
-STATIC struct RCP_LibInitData* callbacks = NULL;
+STATIC RCP_LibInitData* callbacks = NULL;
 STATIC uint8_t* buffer = NULL;
 
 // String representations of the valid error messages
@@ -31,10 +31,10 @@ STATIC char const* const err_msgs[] = {"Success",
 
 // Initialize the library by allocated and setting the callbacks struct, allocating the packet buffer, and resetting
 // state
-RCP_Error RCP_init(const struct RCP_LibInitData _callbacks) {
+RCP_Error RCP_init(const RCP_LibInitData _callbacks) {
     if(callbacks != NULL || buffer != NULL) return RCP_ERR_INIT;
 
-    callbacks = malloc(sizeof(struct RCP_LibInitData));
+    callbacks = malloc(sizeof(RCP_LibInitData));
     if(callbacks == NULL) return RCP_ERR_MEMALLOC;
     *callbacks = _callbacks;
 
@@ -99,7 +99,7 @@ STATIC RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_
 
     switch(devclass) {
     case RCP_DEVCLASS_TEST_STATE: {
-        struct RCP_TestData d = {.timestamp = timestamp,
+        RCP_TestData d = {.timestamp = timestamp,
                                  .dataStreaming = postTS[0] & RCP_DATA_STREAM_MASK,
                                  .state = postTS[0] & RCP_TEST_STATE_MASK,
                                  .isInited = postTS[0] & RCP_DEVICE_INITED_MASK,
@@ -124,7 +124,7 @@ STATIC RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_
     case RCP_DEVCLASS_SIMPLE_ACTUATOR:
     case RCP_DEVCLASS_DISCRETE_ACTUATOR:
     case RCP_DEVCLASS_BOOL_SENSOR: {
-        struct RCP_ByteData d = {.devclass = devclass, .ID = postTS[0], .timestamp = timestamp, .data = postTS[1]};
+        RCP_ByteData d = {.devclass = devclass, .ID = postTS[0], .timestamp = timestamp, .data = postTS[1]};
         if(devclass == RCP_DEVCLASS_SIMPLE_ACTUATOR) d.data = d.data ? RCP_SIMPLE_ACTUATOR_ON : RCP_SIMPLE_ACTUATOR_OFF;
 
         incval = 2;
@@ -138,12 +138,12 @@ STATIC RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_
         if(params == 0) return RCP_ERR_AMALG_SUBUNIT;
 
         if(postTS[0] == RCP_PromptDataType_RESET) {
-            struct RCP_PromptInputRequest req = {.type = RCP_PromptDataType_RESET, .prompt = NULL, .length = 0};
+            RCP_PromptInputRequest req = {.type = RCP_PromptDataType_RESET, .prompt = NULL, .length = 0};
             return callbacks->processPromptInput(req);
         }
 
         // It is up to the callback function to appropriately parse out the number of chars
-        struct RCP_PromptInputRequest req = {.type = postTS[0], .prompt = (char*) (postTS + 1), .length = params - 1};
+        RCP_PromptInputRequest req = {.type = postTS[0], .prompt = (char*) (postTS + 1), .length = params - 1};
         activePromptType = req.type;
 
         incval = 0;
@@ -155,7 +155,7 @@ STATIC RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_
         // See Prompt IU section
         if(params == 0) return RCP_ERR_AMALG_SUBUNIT;
 
-        struct RCP_TargetLogData d = {.timestamp = timestamp, .data = (char*) postTS, .length = params - 4};
+        RCP_TargetLogData d = {.timestamp = timestamp, .data = (char*) postTS, .length = params - 4};
 
         incval = 0;
         rerrno = callbacks->processTargetLog(d);
@@ -173,7 +173,7 @@ STATIC RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_
     case RCP_DEVCLASS_ALTITUDE:
     case RCP_DEVCLASS_RADIO_STRENGTH: {
         // All the 1F devices
-        struct RCP_1F d = {.devclass = devclass, .timestamp = timestamp, .ID = postTS[0]};
+        RCP_1F d = {.devclass = devclass, .timestamp = timestamp, .ID = postTS[0]};
 
         memcpy(&d.data, postTS + 1, 4);
 
@@ -185,7 +185,7 @@ STATIC RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_
     case RCP_DEVCLASS_STEPPER:
     case RCP_DEVCLASS_POWERMON: {
         // All the 2F devices
-        struct RCP_2F d = {.devclass = devclass, .timestamp = timestamp, .ID = postTS[0]};
+        RCP_2F d = {.devclass = devclass, .timestamp = timestamp, .ID = postTS[0]};
 
         memcpy(d.data, postTS + 1, 8);
 
@@ -199,7 +199,7 @@ STATIC RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_
     case RCP_DEVCLASS_MAGNETOMETER:
     case RCP_DEVCLASS_RPY: {
         // All the 3F devices
-        struct RCP_3F d = {.devclass = devclass, .timestamp = timestamp, .ID = postTS[0]};
+        RCP_3F d = {.devclass = devclass, .timestamp = timestamp, .ID = postTS[0]};
 
         memcpy(d.data, postTS + 1, 12);
 
@@ -211,7 +211,7 @@ STATIC RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_
     case RCP_DEVCLASS_GPS:
     case RCP_DEVCLASS_QUATERNION: {
         // All the 4F devices
-        struct RCP_4F d = {.devclass = devclass, .timestamp = timestamp, .ID = postTS[0]};
+        RCP_4F d = {.devclass = devclass, .timestamp = timestamp, .ID = postTS[0]};
 
         memcpy(d.data, postTS + 1, 16);
 

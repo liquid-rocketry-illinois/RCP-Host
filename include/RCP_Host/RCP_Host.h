@@ -116,7 +116,7 @@ typedef enum {
     RCP_GONOGO_GO = 0x01,
 } RCP_GONOGO;
 
-struct RCP_TestData {
+typedef struct {
     uint32_t timestamp;
     int dataStreaming;
     RCP_TestRunningState state;
@@ -124,70 +124,70 @@ struct RCP_TestData {
     uint8_t heartbeatTime;
     uint8_t runningTest;
     uint8_t testProgress;
-};
+} RCP_TestData;
 
-struct RCP_PromptInputRequest {
+typedef struct {
     RCP_PromptDataType type;
     const char* prompt;
     uint16_t length;
-};
+} RCP_PromptInputRequest;
 
-struct RCP_ByteData {
+typedef struct {
     RCP_DeviceClass devclass;
     uint8_t ID;
     uint32_t timestamp;
     uint8_t data;
-};
+} RCP_ByteData;
 
-struct RCP_1F {
+typedef struct {
     RCP_DeviceClass devclass;
     uint32_t timestamp;
     uint8_t ID;
     float data;
-};
+} RCP_1F;
 
-struct RCP_2F {
+typedef struct {
     RCP_DeviceClass devclass;
     uint32_t timestamp;
     uint8_t ID;
     float data[2];
-};
+} RCP_2F;
 
-struct RCP_3F {
+typedef struct {
     RCP_DeviceClass devclass;
     uint32_t timestamp;
     uint8_t ID;
     float data[3];
-};
+} RCP_3F;
 
-struct RCP_4F {
+typedef struct {
     RCP_DeviceClass devclass;
     uint32_t timestamp;
     uint8_t ID;
     float data[4];
-};
+} RCP_4F;
 
-struct RCP_TargetLogData {
+typedef struct {
     uint32_t timestamp;
     const char* data;
     uint16_t length;
-};
+} RCP_TargetLogData;
 
-struct RCP_LibInitData {
+typedef struct {
     size_t (*sendData)(const void* data, size_t length);
     size_t (*readData)(void* data, size_t length);
-    RCP_Error (*processTestUpdate)(struct RCP_TestData data);
-    RCP_Error (*processByteData)(struct RCP_ByteData data);
-    RCP_Error (*processPromptInput)(struct RCP_PromptInputRequest request);
-    RCP_Error (*processTargetLog)(struct RCP_TargetLogData data);
-    RCP_Error (*processOneFloat)(struct RCP_1F data);
-    RCP_Error (*processTwoFloat)(struct RCP_2F data);
-    RCP_Error (*processThreeFloat)(struct RCP_3F data);
-    RCP_Error (*processFourFloat)(struct RCP_4F data);
-};
+    RCP_Error (*processTestUpdate)(RCP_TestData data);
+    RCP_Error (*processByteData)(RCP_ByteData data);
+    RCP_Error (*processPromptInput)(RCP_PromptInputRequest request);
+    RCP_Error (*processTargetLog)(RCP_TargetLogData data);
+    RCP_Error (*processOneFloat)(RCP_1F data);
+    RCP_Error (*processTwoFloat)(RCP_2F data);
+    RCP_Error (*processThreeFloat)(RCP_3F data);
+    RCP_Error (*processFourFloat)(RCP_4F data);
+} RCP_LibInitData;
 
 // Provide library with callbacks to needed functions
-RCP_Error RCP_init(struct RCP_LibInitData callbacks);
+RCP_Error RCP_init(RCP_LibInitData callbacks);
 int RCP_isOpen(void);
 RCP_Error RCP_shutdown(void);
 const char* RCP_errstr(RCP_Error rerrno);
