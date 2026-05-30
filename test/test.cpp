@@ -6,12 +6,15 @@
 
 // Exposing some internals for testing purposes
 extern "C" {
-extern RCP_Channel channel;
-extern RCP_PromptDataType activePromptType;
-extern RCP_LibInitData* callbacks;
-extern uint8_t* buffer;
 RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_t params, const uint8_t* postTS, size_t* inc);
+typedef struct {
+    RCP_Channel channel;
+    RCP_PromptDataType activePromptType;
+    RCP_LibInitData callbacks;
+    uint8_t buffer[RCP_MAX_EXTENDED_BYTES + RCP_MAX_NON_PARAM];
+} RCP_ContextData;
 }
+
 
 // Emtpy stub callbacks for tests that don't need a particular callback
 static size_t SEND_STUB(const void*, size_t len) { return len; }
@@ -237,7 +240,6 @@ namespace TEST_Preinit {
     TEST(RCPNoinit, NonInit) {
         ASSERT_FALSE(RCP_isOpen()) << "RCP isOpen returns true when not open";
 
-        TEST_NONINIT_RUN(RCP_shutdown);
         TEST_NONINIT_RUN(RCP_poll);
         TEST_NONINIT_RUN(RCP_sendEStop);
         TEST_NONINIT_RUN(RCP_sendHeartbeat);
@@ -268,17 +270,23 @@ namespace TEST_BadIO {
         static size_t badSend(const void*, size_t) { return 0; }
         static size_t badRcv(void*, size_t) { return 0; }
 
+        RCP_Context ctx;
+
     protected:
         RCPBadIO() {
             RCP_LibInitData cbks = CALLBACK_STUBS;
             cbks.sendData = badSend;
             cbks.readData = badRcv;
 
-
-            RCP_init(cbks);
+            ctx = RCP_createContext(cbks);
+            RCP_setContext(ctx);
         }
 
-        ~RCPBadIO() override { RCP_shutdown(); }
+        ~RCPBadIO() override { RCP_destroyContext(ctx); }
+
+        void setActivePromptType(RCP_PromptDataType type) {
+            static_cast<RCP_ContextData*>(ctx)->activePromptType = type;
+        }
     };
 
 #define TEST_BADIOSEND(function, ...)                                                                                  \
@@ -307,10 +315,10 @@ namespace TEST_BadIO {
         TEST_BADIOSEND(RCP_requestGeneralRead, RCP_DEVCLASS_TEST_STATE, 0);
         TEST_BADIOSEND(RCP_requestTareConfiguration, RCP_DEVCLASS_GYROSCOPE, 0, 0, 0);
 
-        activePromptType = RCP_PromptDataType_GONOGO;
+        setActivePromptType(RCP_PromptDataType_GONOGO);
         TEST_BADIOSEND(RCP_promptRespondGONOGO, RCP_GONOGO_GO);
 
-        activePromptType = RCP_PromptDataType_Float;
+        setActivePromptType(RCP_PromptDataType_Float);
         TEST_BADIOSEND(RCP_promptRespondFloat, 0);
     }
 
@@ -321,18 +329,14 @@ namespace TEST_BadIO {
 // ------------ SECTION: RCP_init ------------ //
 
 namespace TEST_RCP_init {
-    TEST(RCP_init, RCPInitWhenAlreadyInited) {
-        RCP_init(CALLBACK_STUBS);
-        TEST_NONINIT_RUN(RCP_init, CALLBACK_STUBS);
-        RCP_shutdown();
-    }
-
-    TEST(RCP_init, OpenFalseBeforeInit) { EXPECT_FALSE(RCP_isOpen()); }
-
-    TEST(RCP_init, OpenTrueAfterInit) {
-        RCP_init(CALLBACK_STUBS);
+    TEST(RCP_init, RCP_isOpen) {
+        RCP_Context ctx = RCP_createContext(CALLBACK_STUBS);
+        EXPECT_FALSE(RCP_isOpen());
+        RCP_setContext(ctx);
         EXPECT_TRUE(RCP_isOpen());
-        RCP_shutdown();
+        EXPECT_EQ(RCP_setContext(nullptr), ctx);
+        EXPECT_FALSE(RCP_isOpen());
+        RCP_destroyContext(ctx);
     }
 
 #undef TEST_NONINIT_RUN
@@ -349,15 +353,22 @@ namespace TEST_RCP_errstr {
 
 namespace TEST_RCP_setChannel {
     TEST(Channel, Channel) {
-        EXPECT_EQ(channel, RCP_CH_ZERO);
+        RCP_Context ctx = RCP_createContext(CALLBACK_STUBS);
+        RCP_setContext(ctx);
+
+        RCP_ContextData* rctx = static_cast<RCP_ContextData*>(ctx);
+
+        EXPECT_EQ(rctx->channel, RCP_CH_ZERO);
 
         RCP_setChannel(RCP_CH_ONE);
-        EXPECT_EQ(channel, RCP_CH_ONE);
+        EXPECT_EQ(rctx->channel, RCP_CH_ONE);
         EXPECT_EQ(RCP_getChannel(), RCP_CH_ONE);
 
         RCP_setChannel(RCP_CH_ZERO);
-        EXPECT_EQ(channel, RCP_CH_ZERO);
+        EXPECT_EQ(rctx->channel, RCP_CH_ZERO);
         EXPECT_EQ(RCP_getChannel(), RCP_CH_ZERO);
+
+        RCP_destroyContext(ctx);
     }
 } // namespace TEST_RCP_setChannel
 
@@ -435,16 +446,19 @@ namespace TEST_processIU {
 
         static RCP_LibInitData ProcessIUCallbacks;
 
+        RCP_Context rctx;
+
     public:
         HostData hostData{};
 
         ProcessIU() {
             ctx = this;
-            RCP_init(ProcessIUCallbacks);
+            rctx = RCP_createContext(ProcessIUCallbacks);
+            RCP_setContext(rctx);
         }
 
         ~ProcessIU() override {
-            RCP_shutdown();
+            RCP_destroyContext(rctx);
             ctx = nullptr;
         }
     };
@@ -1068,17 +1082,20 @@ namespace TEST_RCP_poll {
 
         static RCP_LibInitData RCPPollCallbacks;
 
+        RCP_Context rctx;
+
     public:
         LRI::RCI::RingBuffer<uint8_t> pkt{256};
         HostData hostData;
 
         RCPPoll() {
             ctx = this;
-            RCP_init(RCPPollCallbacks);
+            rctx = RCP_createContext(RCPPollCallbacks);
+            RCP_setContext(rctx);
         }
 
         ~RCPPoll() override {
-            RCP_shutdown();
+            RCP_destroyContext(rctx);
             ctx = nullptr;
         }
     };
@@ -1440,17 +1457,24 @@ namespace TEST_RCP_Senders {
 
         static RCP_LibInitData RCPSendersCallbacks;
 
+        RCP_Context rctx;
+
     public:
         std::vector<uint8_t> pkt;
 
         RCPSenders() {
             ctx = this;
-            RCP_init(RCPSendersCallbacks);
+            rctx = RCP_createContext(RCPSendersCallbacks);
+            RCP_setContext(rctx);
         }
 
         ~RCPSenders() override {
-            RCP_shutdown();
+            RCP_destroyContext(rctx);
             ctx = nullptr;
+        }
+
+        void setActivePromptType(RCP_PromptDataType type) {
+            static_cast<RCP_ContextData*>(rctx)->activePromptType = type;
         }
     };
 
@@ -1514,7 +1538,7 @@ namespace TEST_RCP_Senders {
     TEST_F(RCPSenders, PromptResponseFloat) {
         const std::vector<uint8_t> endState = {0x04, RCP_DEVCLASS_PROMPT, HFLOATARR(HPI)};
 
-        activePromptType = RCP_PromptDataType_Float;
+        setActivePromptType(RCP_PromptDataType_Float);
         RCP_Error retval = RCP_promptRespondFloat(PI);
 
         EXPECT_EQ(retval, RCP_ERR_SUCCESS);
@@ -1528,7 +1552,7 @@ namespace TEST_RCP_Senders {
     TEST_F(RCPSenders, PromptResponseGNG) {
         const std::vector<uint8_t> endState = {0x01, RCP_DEVCLASS_PROMPT, RCP_GONOGO_GO};
 
-        activePromptType = RCP_PromptDataType_GONOGO;
+        setActivePromptType(RCP_PromptDataType_GONOGO);
         RCP_Error retval = RCP_promptRespondGONOGO(RCP_GONOGO_GO);
 
         EXPECT_EQ(retval, RCP_ERR_SUCCESS);

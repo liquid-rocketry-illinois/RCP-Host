@@ -186,14 +186,20 @@ typedef struct {
     RCP_Error (*processFourFloat)(RCP_4F data);
 } RCP_LibInitData;
 
+typedef void* RCP_Context;
+
+RCP_Context RCP_createContext(RCP_LibInitData callbacks);
+void RCP_destroyContext(RCP_Context cctx);
+RCP_Context RCP_setContext(RCP_Context cctx);
+
 // Provide library with callbacks to needed functions
-RCP_Error RCP_init(RCP_LibInitData callbacks);
+// RCP_Error RCP_init(RCP_LibInitData callbacks);
 int RCP_isOpen(void);
-RCP_Error RCP_shutdown(void);
+// RCP_Error RCP_shutdown(void);
 const char* RCP_errstr(RCP_Error rerrno);
 
 // Library will default to channel zero, but it can be changed here.
-void RCP_setChannel(RCP_Channel ch);
+RCP_Error RCP_setChannel(RCP_Channel ch);
 RCP_Channel RCP_getChannel(void);
 
 // Function to call periodically to poll for data
