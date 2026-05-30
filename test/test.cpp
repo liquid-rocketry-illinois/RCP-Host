@@ -17,9 +17,7 @@ RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_t param
 static size_t SEND_STUB(const void*, size_t len) { return len; }
 static size_t RCV_STUB(void*, size_t len) { return len; }
 static RCP_Error TEST_STUB(RCP_TestData) { return RCP_ERR_SUCCESS; }
-static RCP_Error BOOL_STUB(RCP_BoolData) { return RCP_ERR_SUCCESS; }
-static RCP_Error SACT_STUB(RCP_SimpleActuatorData) { return RCP_ERR_SUCCESS; }
-static RCP_Error DACT_STUB(RCP_DiscreteActuatorData) { return RCP_ERR_SUCCESS; }
+static RCP_Error BYTE_STUB(RCP_ByteData) { return RCP_ERR_SUCCESS; }
 static RCP_Error PROMPT_STUB(RCP_PromptInputRequest) { return RCP_ERR_SUCCESS; }
 static RCP_Error LOG_STUB(RCP_TargetLogData) { return RCP_ERR_SUCCESS; }
 static RCP_Error F1_STUB(RCP_1F) { return RCP_ERR_SUCCESS; }
@@ -30,9 +28,7 @@ static RCP_Error F4_STUB(RCP_4F) { return RCP_ERR_SUCCESS; }
 RCP_LibInitData CALLBACK_STUBS = {.sendData = SEND_STUB,
                                   .readData = RCV_STUB,
                                   .processTestUpdate = TEST_STUB,
-                                  .processBoolData = BOOL_STUB,
-                                  .processSimpleActuatorData = SACT_STUB,
-                                  .processDiscreteActuatorData = DACT_STUB,
+                                  .processByteData = BYTE_STUB,
                                   .processPromptInput = PROMPT_STUB,
                                   .processTargetLog = LOG_STUB,
                                   .processOneFloat = F1_STUB,
@@ -48,16 +44,9 @@ bool operator==(const RCP_TestData& left, const RCP_TestData& right) {
                  right.runningTest, right.testProgress);
 }
 
-bool operator==(const RCP_SimpleActuatorData& left, const RCP_SimpleActuatorData& right) {
-    return std::tie(left.timestamp, left.ID, left.state) == std::tie(right.timestamp, right.ID, right.state);
-}
-
-bool operator==(const RCP_DiscreteActuatorData& left, const RCP_DiscreteActuatorData& right) {
-    return std::tie(left.timestamp, left.ID, left.state) == std::tie(right.timestamp, right.ID, right.state);
-}
-
-bool operator==(const RCP_BoolData& left, const RCP_BoolData& right) {
-    return std::tie(left.timestamp, left.ID, left.data) == std::tie(right.timestamp, right.ID, right.data);
+bool operator==(const RCP_ByteData& left, const RCP_ByteData& right) {
+    return std::tie(left.devclass, left.ID, left.timestamp, left.data) ==
+        std::tie(right.devclass, right.ID, right.timestamp, right.data);
 }
 
 bool operator==(const RCP_1F& left, const RCP_1F& right) {
@@ -83,9 +72,9 @@ bool operator==(const RCP_4F& left, const RCP_4F& right) {
 // Bundle all the structures a host would need for conveniance
 struct HostData {
     RCP_TestData testData{};
-    RCP_SimpleActuatorData sactData{};
-    RCP_DiscreteActuatorData dactData{};
-    RCP_BoolData boolData{};
+    RCP_ByteData sactData{};
+    RCP_ByteData dactData{};
+    RCP_ByteData boolData{};
 
     RCP_PromptDataType ptype = RCP_PromptDataType_RESET;
     std::string pstring;
@@ -100,15 +89,30 @@ struct HostData {
 
     // These are intentionally non-explicit to save typing later
     HostData() = default;
-    HostData(RCP_TestData testData, RCP_SimpleActuatorData sactData, RCP_DiscreteActuatorData dactData,
-             RCP_BoolData boolData, RCP_PromptDataType ptype, std::string pstring, uint32_t logtimestamp,
-             std::string log, RCP_1F f1, RCP_2F f2, RCP_3F f3, RCP_4F f4) :
+    HostData(RCP_TestData testData, RCP_ByteData sactData, RCP_ByteData dactData, RCP_ByteData boolData,
+             RCP_PromptDataType ptype, std::string pstring, uint32_t logtimestamp, std::string log, RCP_1F f1,
+             RCP_2F f2, RCP_3F f3, RCP_4F f4) :
         testData(testData), sactData(sactData), dactData(dactData), boolData(boolData), ptype(ptype),
         pstring(std::move(pstring)), logtimestamp(logtimestamp), log(std::move(log)), f1(f1), f2(f2), f3(f3), f4(f4) {}
     HostData(RCP_TestData testData) : HostData() { this->testData = testData; }
-    HostData(RCP_SimpleActuatorData sactData) : HostData() { this->sactData = sactData; }
-    HostData(RCP_DiscreteActuatorData dactData) : HostData() { this->dactData = dactData; }
-    HostData(RCP_BoolData boolData) : HostData() { this->boolData = boolData; }
+    HostData(RCP_ByteData data) : HostData() {
+        switch(data.devclass) {
+        case RCP_DEVCLASS_SIMPLE_ACTUATOR:
+            sactData = data;
+            break;
+
+        case RCP_DEVCLASS_DISCRETE_ACTUATOR:
+            dactData = data;
+            break;
+
+        case RCP_DEVCLASS_BOOL_SENSOR:
+            boolData = data;
+            break;
+
+        default:
+            break;
+        }
+    }
     HostData(RCP_PromptDataType ptype, std::string pstring) : HostData() {
         this->ptype = ptype;
         this->pstring = std::move(pstring);
@@ -376,16 +380,6 @@ namespace TEST_processIU {
             return RCP_ERR_SUCCESS;
         }
 
-        static RCP_Error sactUpdate(RCP_SimpleActuatorData sactData) {
-            ctx->hostData.sactData = sactData;
-            return RCP_ERR_SUCCESS;
-        }
-
-        static RCP_Error dactUpdate(RCP_DiscreteActuatorData dactData) {
-            ctx->hostData.dactData = dactData;
-            return RCP_ERR_SUCCESS;
-        }
-
         static RCP_Error promptRequest(RCP_PromptInputRequest pir) {
             ctx->hostData.ptype = pir.type;
             ctx->hostData.pstring = std::string(pir.prompt, pir.length);
@@ -418,8 +412,24 @@ namespace TEST_processIU {
             return RCP_ERR_SUCCESS;
         }
 
-        static RCP_Error boolUpdate(RCP_BoolData boolData) {
-            ctx->hostData.boolData = boolData;
+        static RCP_Error byteUpdate(RCP_ByteData data) {
+            switch(data.devclass) {
+            case RCP_DEVCLASS_BOOL_SENSOR:
+                ctx->hostData.boolData = data;
+                break;
+
+            case RCP_DEVCLASS_SIMPLE_ACTUATOR:
+                ctx->hostData.sactData = data;
+                break;
+
+            case RCP_DEVCLASS_DISCRETE_ACTUATOR:
+                ctx->hostData.dactData = data;
+                break;
+
+            default:
+                break;
+            }
+
             return RCP_ERR_SUCCESS;
         }
 
@@ -443,9 +453,7 @@ namespace TEST_processIU {
     RCP_LibInitData ProcessIU::ProcessIUCallbacks = {.sendData = SEND_STUB,
                                                      .readData = RCV_STUB,
                                                      .processTestUpdate = testUpdate,
-                                                     .processBoolData = boolUpdate,
-                                                     .processSimpleActuatorData = sactUpdate,
-                                                     .processDiscreteActuatorData = dactUpdate,
+                                                     .processByteData = byteUpdate,
                                                      .processPromptInput = promptRequest,
                                                      .processTargetLog = logUpdate,
                                                      .processOneFloat = F1,
@@ -543,13 +551,21 @@ namespace TEST_processIU {
         CHECKVALS(testData.testProgress);
 
         // Simple Actuator state equality
-        CHECKVALS(sactData.timestamp);
+        CHECKVALS(sactData.devclass);
         CHECKVALS(sactData.ID);
-        CHECKVALS(sactData.state);
+        CHECKVALS(sactData.timestamp);
+        CHECKVALS(sactData.data);
+
+        // Discrete Actuator state equality
+        CHECKVALS(dactData.devclass);
+        CHECKVALS(dactData.ID);
+        CHECKVALS(dactData.timestamp);
+        CHECKVALS(dactData.data);
 
         // Bool Data equality
-        CHECKVALS(boolData.timestamp);
+        CHECKVALS(boolData.devclass);
         CHECKVALS(boolData.ID);
+        CHECKVALS(boolData.timestamp);
         CHECKBOOL(boolData.data);
 
         // Prompt Request data
@@ -601,7 +617,7 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_TEST_STATE,
             .timestamp = TS1,
             .pkt = {0x20, 0x03},
-            .endState = RCP_TestData{
+            .endState = RCP_TestData {
                 .timestamp = TS1,
                 .dataStreaming = false,
                 .state = RCP_TEST_STOPPED,
@@ -615,7 +631,7 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_TEST_STATE,
             .timestamp = TS2,
             .pkt = {0xD0, 0x06},
-            .endState = RCP_TestData{
+            .endState = RCP_TestData {
                 .timestamp = TS2,
                 .dataStreaming = true,
                 .state = RCP_TEST_PAUSED,
@@ -630,7 +646,7 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_TEST_STATE,
             .timestamp = TS2,
             .pkt = {0x90, 0xF0, 0x01, 0x05},
-            .endState = RCP_TestData{
+            .endState = RCP_TestData {
                 .timestamp = TS2,
                 .dataStreaming = true,
                 .state = RCP_TEST_RUNNING,
@@ -648,10 +664,11 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_SIMPLE_ACTUATOR,
             .timestamp = TS1,
             .pkt = {0xF0, RCP_SIMPLE_ACTUATOR_ON},
-            .endState = RCP_SimpleActuatorData{
-                .timestamp = TS1,
+            .endState = RCP_ByteData {
+                .devclass = RCP_DEVCLASS_SIMPLE_ACTUATOR,
                 .ID = 0xF0,
-                .state = RCP_SIMPLE_ACTUATOR_ON
+                .timestamp = TS1,
+                .data = RCP_SIMPLE_ACTUATOR_ON
             }
         },
         EnvInfo{
@@ -659,10 +676,11 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_SIMPLE_ACTUATOR,
             .timestamp = TS2,
             .pkt = {0x0F, RCP_SIMPLE_ACTUATOR_OFF},
-            .endState = RCP_SimpleActuatorData{
-                .timestamp = TS2,
+            .endState = RCP_ByteData {
+                .devclass = RCP_DEVCLASS_SIMPLE_ACTUATOR,
                 .ID = 0x0F,
-                .state = RCP_SIMPLE_ACTUATOR_OFF
+                .timestamp = TS2,
+                .data = RCP_SIMPLE_ACTUATOR_OFF
             }
         }
     };
@@ -673,10 +691,11 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_DISCRETE_ACTUATOR,
             .timestamp = TS1,
             .pkt = {0x04, 0x20},
-            .endState = RCP_DiscreteActuatorData{
-                .timestamp = TS1,
+            .endState = RCP_ByteData {
+                .devclass = RCP_DEVCLASS_DISCRETE_ACTUATOR,
                 .ID = 0x04,
-                .state = 0x20
+                .timestamp = TS1,
+                .data = 0x20
             }
         },
         EnvInfo{
@@ -684,10 +703,11 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_DISCRETE_ACTUATOR,
             .timestamp = TS2,
             .pkt = {0x77, 0x00},
-            .endState = RCP_DiscreteActuatorData{
-                .timestamp = TS2,
+            .endState = RCP_ByteData {
+                .devclass = RCP_DEVCLASS_DISCRETE_ACTUATOR,
                 .ID = 0x77,
-                .state = 0x00
+                .timestamp = TS2,
+                .data = 0x00
             }
         }
     };
@@ -698,9 +718,10 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_BOOL_SENSOR,
             .timestamp = TS1,
             .pkt = {0x0F, 0x80},
-            .endState = RCP_BoolData{
-                .timestamp = TS1,
+            .endState = RCP_ByteData {
+                .devclass = RCP_DEVCLASS_BOOL_SENSOR,
                 .ID = 0x0F,
+                .timestamp = TS1,
                 .data = true
             }
         },
@@ -709,9 +730,10 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_BOOL_SENSOR,
             .timestamp = TS2,
             .pkt = {0xF0, 0x00},
-            .endState = RCP_BoolData{
-                .timestamp = TS2,
+            .endState = RCP_ByteData {
+                .devclass = RCP_DEVCLASS_BOOL_SENSOR,
                 .ID = 0xF0,
+                .timestamp = TS2,
                 .data = false
             }
         }
@@ -742,7 +764,7 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_ANGLED_ACTUATOR,
             .timestamp = TS1,
             .pkt = {0x00, HFLOATARR(HPI)},
-            .endState = RCP_1F{
+            .endState = RCP_1F {
                 .devclass = RCP_DEVCLASS_ANGLED_ACTUATOR,
                 .timestamp = TS1,
                 .ID = 0,
@@ -754,7 +776,7 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_MOTOR,
             .timestamp = TS2,
             .pkt = {0x01, HFLOATARR(HPI)},
-            .endState = RCP_1F{
+            .endState = RCP_1F {
                 .devclass = RCP_DEVCLASS_MOTOR,
                 .timestamp = TS2,
                 .ID = 1,
@@ -766,7 +788,7 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_AM_PRESSURE,
             .timestamp = TS1,
             .pkt = {0x01, HFLOATARR(HPI)},
-            .endState = RCP_1F{
+            .endState = RCP_1F {
                 .devclass = RCP_DEVCLASS_AM_PRESSURE,
                 .timestamp = TS1,
                 .ID = 1,
@@ -778,7 +800,7 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_TEMPERATURE,
             .timestamp = TS1,
             .pkt = {0x02, HFLOATARR(HPI)},
-            .endState = RCP_1F{
+            .endState = RCP_1F {
                 .devclass = RCP_DEVCLASS_TEMPERATURE,
                 .timestamp = TS1,
                 .ID = 2,
@@ -790,7 +812,7 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_PRESSURE_TRANSDUCER,
             .timestamp = TS1,
             .pkt = {0x03, HFLOATARR(HPI)},
-            .endState = RCP_1F{
+            .endState = RCP_1F {
                 .devclass = RCP_DEVCLASS_PRESSURE_TRANSDUCER,
                 .timestamp = TS1,
                 .ID = 3,
@@ -802,7 +824,7 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_RELATIVE_HYGROMETER,
             .timestamp = TS2,
             .pkt = {0x04, HFLOATARR(HPI)},
-            .endState = RCP_1F{
+            .endState = RCP_1F {
                 .devclass = RCP_DEVCLASS_RELATIVE_HYGROMETER,
                 .timestamp = TS2,
                 .ID = 4,
@@ -814,7 +836,7 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_LOAD_CELL,
             .timestamp = TS2,
             .pkt = {0x05, HFLOATARR(HPI)},
-            .endState = RCP_1F{
+            .endState = RCP_1F {
                 .devclass = RCP_DEVCLASS_LOAD_CELL,
                 .timestamp = TS2,
                 .ID = 5,
@@ -826,7 +848,7 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_FLOW_METER,
             .timestamp = TS1,
             .pkt = {0xF0, HFLOATARR(HPI2)},
-            .endState = RCP_1F{
+            .endState = RCP_1F {
                 .devclass = RCP_DEVCLASS_FLOW_METER,
                 .timestamp = TS1,
                 .ID = 0xF0,
@@ -838,7 +860,7 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_ALTITUDE,
             .timestamp = TS1,
             .pkt = {0x02, HFLOATARR(HPI3)},
-            .endState = RCP_1F{
+            .endState = RCP_1F {
                 .devclass = RCP_DEVCLASS_ALTITUDE,
                 .timestamp = TS1,
                 .ID = 0x02,
@@ -850,7 +872,7 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_RADIO_STRENGTH,
             .timestamp = TS1,
             .pkt = {0x33, HFLOATARR(HPI4)},
-            .endState = RCP_1F{
+            .endState = RCP_1F {
                 .devclass = RCP_DEVCLASS_RADIO_STRENGTH,
                 .timestamp = TS1,
                 .ID = 0x33,
@@ -863,7 +885,7 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_STEPPER,
             .timestamp = TS1,
             .pkt = {0x01, HFLOATARR(HPI), HFLOATARR(HPI2)},
-            .endState = RCP_2F{
+            .endState = RCP_2F {
                 .devclass = RCP_DEVCLASS_STEPPER,
                 .timestamp = TS1,
                 .ID = 1,
@@ -875,7 +897,7 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_POWERMON,
             .timestamp = TS2,
             .pkt = {0x05, HFLOATARR(HPI), HFLOATARR(HPI2)},
-            .endState = RCP_2F{
+            .endState = RCP_2F {
                 .devclass = RCP_DEVCLASS_POWERMON,
                 .timestamp = TS2,
                 .ID = 5,
@@ -888,7 +910,7 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_ACCELEROMETER,
             .timestamp = TS1,
             .pkt = {0x01, HFLOATARR(HPI), HFLOATARR(HPI2), HFLOATARR(HPI3)},
-            .endState = RCP_3F{
+            .endState = RCP_3F {
                 .devclass = RCP_DEVCLASS_ACCELEROMETER,
                 .timestamp = TS1,
                 .ID = 1,
@@ -900,7 +922,7 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_GYROSCOPE,
             .timestamp = TS2,
             .pkt = {0x03, HFLOATARR(HPI), HFLOATARR(HPI2), HFLOATARR(HPI3)},
-            .endState = RCP_3F{
+            .endState = RCP_3F {
                 .devclass = RCP_DEVCLASS_GYROSCOPE,
                 .timestamp = TS2,
                 .ID = 3,
@@ -912,7 +934,7 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_MAGNETOMETER,
             .timestamp = TS2,
             .pkt = {0x04, HFLOATARR(HPI), HFLOATARR(HPI2), HFLOATARR(HPI3)},
-            .endState = RCP_3F{
+            .endState = RCP_3F {
                 .devclass = RCP_DEVCLASS_MAGNETOMETER,
                 .timestamp = TS2,
                 .ID = 4,
@@ -924,7 +946,7 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_RPY,
             .timestamp = TS1,
             .pkt = {0x0F, HFLOATARR(HPI), HFLOATARR(HPI2), HFLOATARR(HPI3)},
-            .endState = RCP_3F{
+            .endState = RCP_3F {
                 .devclass = RCP_DEVCLASS_RPY,
                 .timestamp = TS1,
                 .ID = 0x0F,
@@ -937,7 +959,7 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_GPS,
             .timestamp = TS1,
             .pkt = {0x01, HFLOATARR(HPI), HFLOATARR(HPI2), HFLOATARR(HPI3), HFLOATARR(HPI4)},
-            .endState = RCP_4F{
+            .endState = RCP_4F {
                 .devclass = RCP_DEVCLASS_GPS,
                 .timestamp = TS1,
                 .ID = 1,
@@ -949,7 +971,7 @@ namespace TEST_processIU {
             .devclass = RCP_DEVCLASS_QUATERNION,
             .timestamp = TS2,
             .pkt = {0x10, HFLOATARR(HPI), HFLOATARR(HPI2), HFLOATARR(HPI3), HFLOATARR(HPI4)},
-            .endState = RCP_4F{
+            .endState = RCP_4F {
                 .devclass = RCP_DEVCLASS_QUATERNION,
                 .timestamp = TS2,
                 .ID = 0x10,
@@ -991,16 +1013,6 @@ namespace TEST_RCP_poll {
             return RCP_ERR_SUCCESS;
         }
 
-        static RCP_Error sactUpdate(RCP_SimpleActuatorData sactData) {
-            ctx->hostData.sactData = sactData;
-            return RCP_ERR_SUCCESS;
-        }
-
-        static RCP_Error dactUpdate(RCP_DiscreteActuatorData dactData) {
-            ctx->hostData.dactData = dactData;
-            return RCP_ERR_SUCCESS;
-        }
-
         static RCP_Error promptRequest(RCP_PromptInputRequest pir) {
             ctx->hostData.ptype = pir.type;
             ctx->hostData.pstring = std::string(pir.prompt, pir.length);
@@ -1033,8 +1045,24 @@ namespace TEST_RCP_poll {
             return RCP_ERR_SUCCESS;
         }
 
-        static RCP_Error boolUpdate(RCP_BoolData boolData) {
-            ctx->hostData.boolData = boolData;
+        static RCP_Error byteUpdate(RCP_ByteData data) {
+            switch(data.devclass) {
+            case RCP_DEVCLASS_BOOL_SENSOR:
+                ctx->hostData.boolData = data;
+                break;
+
+            case RCP_DEVCLASS_SIMPLE_ACTUATOR:
+                ctx->hostData.sactData = data;
+                break;
+
+            case RCP_DEVCLASS_DISCRETE_ACTUATOR:
+                ctx->hostData.dactData = data;
+                break;
+
+            default:
+                break;
+            }
+
             return RCP_ERR_SUCCESS;
         }
 
@@ -1059,9 +1087,7 @@ namespace TEST_RCP_poll {
     RCP_LibInitData RCPPoll::RCPPollCallbacks = {.sendData = SEND_STUB,
                                                  .readData = readData,
                                                  .processTestUpdate = testUpdate,
-                                                 .processBoolData = boolUpdate,
-                                                 .processSimpleActuatorData = sactUpdate,
-                                                 .processDiscreteActuatorData = dactUpdate,
+                                                 .processByteData = byteUpdate,
                                                  .processPromptInput = promptRequest,
                                                  .processTargetLog = logUpdate,
                                                  .processOneFloat = F1,
@@ -1141,13 +1167,21 @@ namespace TEST_RCP_poll {
         CHECKVALS(testData.testProgress);
 
         // Simple Actuator state equality
-        CHECKVALS(sactData.timestamp);
+        CHECKVALS(sactData.devclass);
         CHECKVALS(sactData.ID);
-        CHECKVALS(sactData.state);
+        CHECKVALS(sactData.timestamp);
+        CHECKVALS(sactData.data);
+
+        // Discrete Actuator state equality
+        CHECKVALS(dactData.devclass);
+        CHECKVALS(dactData.ID);
+        CHECKVALS(dactData.timestamp);
+        CHECKVALS(dactData.data);
 
         // Bool Data equality
-        CHECKVALS(boolData.timestamp);
+        CHECKVALS(boolData.devclass);
         CHECKVALS(boolData.ID);
+        CHECKVALS(boolData.timestamp);
         CHECKBOOL(boolData.data);
 
         // Prompt Request data
@@ -1202,7 +1236,7 @@ namespace TEST_RCP_poll {
         EnvInfo{
             .envName = "Compact_Basic_TestState",
             .pkt = {0x06, RCP_DEVCLASS_TEST_STATE, HFLOATARR(TS1), 0xD0, 0xFF},
-            .endState = RCP_TestData{
+            .endState = RCP_TestData {
                 .timestamp = TS1,// 1101
                 .dataStreaming = true,
                 .state = RCP_TEST_PAUSED,
@@ -1215,7 +1249,7 @@ namespace TEST_RCP_poll {
         EnvInfo{
             .envName = "Compact_Basic_1F",
             .pkt = {0x09, RCP_DEVCLASS_AM_PRESSURE, HFLOATARR(TS1), 0x05, HFLOATARR(HPI)},
-            .endState = RCP_1F{
+            .endState = RCP_1F {
                 .devclass = RCP_DEVCLASS_AM_PRESSURE,
                 .timestamp = TS1,
                 .ID = 5,
@@ -1238,7 +1272,7 @@ namespace TEST_RCP_poll {
         EnvInfo{
             .envName = "Extended_Basic_TestState",
             .pkt = {0x40, 0x00, 0x05, RCP_DEVCLASS_TEST_STATE, HFLOATARR(TS1), 0xD0, 0xFF},
-            .endState = RCP_TestData{
+            .endState = RCP_TestData {
                 .timestamp = TS1,// 1101
                 .dataStreaming = true,
                 .state = RCP_TEST_PAUSED,
@@ -1251,7 +1285,7 @@ namespace TEST_RCP_poll {
         EnvInfo{
             .envName = "Extended_Basic_1F",
             .pkt = {0x40, 0x00, 0x08, RCP_DEVCLASS_AM_PRESSURE, HFLOATARR(TS1), 0x05, HFLOATARR(HPI)},
-            .endState = RCP_1F{
+            .endState = RCP_1F {
                 .devclass = RCP_DEVCLASS_AM_PRESSURE,
                 .timestamp = TS1,
                 .ID = 5,
@@ -1278,27 +1312,26 @@ namespace TEST_RCP_poll {
                 RCP_DEVCLASS_POWERMON, 0x01, HFLOATARR(HPI), HFLOATARR(HPI2),
                 RCP_DEVCLASS_ACCELEROMETER, 0x05, HFLOATARR(HPI), HFLOATARR(HPI2), HFLOATARR(HPI3),
                 RCP_DEVCLASS_GPS, 0x00, HFLOATARR(HPI), HFLOATARR(HPI2), HFLOATARR(HPI3), HFLOATARR(HPI4)},
-            .endState = HostData{
-                RCP_TestData{}, RCP_SimpleActuatorData{}, RCP_DiscreteActuatorData{}, RCP_BoolData{}, RCP_PromptDataType_RESET, "", 0, "",
-                RCP_1F{
+            .endState = HostData{RCP_TestData{}, RCP_ByteData{}, RCP_ByteData{}, RCP_ByteData{}, RCP_PromptDataType_RESET, "", 0, "",
+                RCP_1F {
                     .devclass = RCP_DEVCLASS_AM_PRESSURE,
                     .timestamp = TS1,
                     .ID = 0x0F,
                     .data = PI
                 },
-                RCP_2F{
+                RCP_2F {
                     .devclass = RCP_DEVCLASS_POWERMON,
                     .timestamp = TS1,
                     .ID = 1,
                     .data = {PI, PI2}
                 },
-                RCP_3F{
+                RCP_3F {
                     .devclass = RCP_DEVCLASS_ACCELEROMETER,
                     .timestamp = TS1,
                     .ID = 5,
                     .data = {PI, PI2, PI3}
                 },
-                RCP_4F{
+                RCP_4F {
                     .devclass = RCP_DEVCLASS_GPS,
                     .timestamp = TS1,
                     .ID = 0,
@@ -1331,19 +1364,22 @@ namespace TEST_RCP_poll {
                     .runningTest = 0xF0,
                     .testProgress = 0x0F
                 },
-                RCP_SimpleActuatorData{
-                    .timestamp = TS2,
+                RCP_ByteData{
+                    .devclass = RCP_DEVCLASS_SIMPLE_ACTUATOR,
                     .ID = 5,
-                    .state = RCP_SIMPLE_ACTUATOR_ON
-                },
-                RCP_DiscreteActuatorData{
                     .timestamp = TS2,
+                    .data = RCP_SIMPLE_ACTUATOR_ON
+                },
+                RCP_ByteData{
+                    .devclass = RCP_DEVCLASS_DISCRETE_ACTUATOR,
                     .ID = 4,
-                    .state = 0xF7
-                },
-                RCP_BoolData{
                     .timestamp = TS2,
+                    .data = 0xF7
+                },
+                RCP_ByteData{
+                    .devclass = RCP_DEVCLASS_BOOL_SENSOR,
                     .ID = 3,
+                    .timestamp = TS2,
                     .data = true
                 },
                 RCP_PromptDataType_RESET, "",
@@ -1422,9 +1458,7 @@ namespace TEST_RCP_Senders {
     RCP_LibInitData RCPSenders::RCPSendersCallbacks = {.sendData = sendData,
                                                        .readData = RCV_STUB,
                                                        .processTestUpdate = TEST_STUB,
-                                                       .processBoolData = BOOL_STUB,
-                                                       .processSimpleActuatorData = SACT_STUB,
-                                                       .processDiscreteActuatorData = DACT_STUB,
+                                                       .processByteData = BYTE_STUB,
                                                        .processPromptInput = PROMPT_STUB,
                                                        .processTargetLog = LOG_STUB,
                                                        .processOneFloat = F1_STUB,

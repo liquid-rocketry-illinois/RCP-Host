@@ -126,28 +126,17 @@ struct RCP_TestData {
     uint8_t testProgress;
 };
 
-struct RCP_SimpleActuatorData {
-    uint32_t timestamp;
-    uint8_t ID;
-    RCP_SimpleActuatorState state;
-};
-
 struct RCP_PromptInputRequest {
     RCP_PromptDataType type;
     const char* prompt;
     uint16_t length;
 };
 
-struct RCP_BoolData {
-    uint32_t timestamp;
+struct RCP_ByteData {
+    RCP_DeviceClass devclass;
     uint8_t ID;
-    int data;
-};
-
-struct RCP_DiscreteActuatorData {
     uint32_t timestamp;
-    uint8_t ID;
-    uint8_t state;
+    uint8_t data;
 };
 
 struct RCP_1F {
@@ -188,9 +177,7 @@ struct RCP_LibInitData {
     size_t (*sendData)(const void* data, size_t length);
     size_t (*readData)(void* data, size_t length);
     RCP_Error (*processTestUpdate)(struct RCP_TestData data);
-    RCP_Error (*processBoolData)(struct RCP_BoolData data);
-    RCP_Error (*processSimpleActuatorData)(struct RCP_SimpleActuatorData data);
-    RCP_Error (*processDiscreteActuatorData)(struct RCP_DiscreteActuatorData data);
+    RCP_Error (*processByteData)(struct RCP_ByteData data);
     RCP_Error (*processPromptInput)(struct RCP_PromptInputRequest request);
     RCP_Error (*processTargetLog)(struct RCP_TargetLogData data);
     RCP_Error (*processOneFloat)(struct RCP_1F data);

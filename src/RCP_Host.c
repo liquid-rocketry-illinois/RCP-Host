@@ -56,8 +56,7 @@ int RCP_isOpen(void) { return callbacks != NULL && buffer != NULL; }
 
 // Deallocate the buffer and callbacks
 RCP_Error RCP_shutdown(void) {
-    if(callbacks == NULL || buffer == NULL)
-        return RCP_ERR_INIT;
+    if(callbacks == NULL || buffer == NULL) return RCP_ERR_INIT;
 
     free(callbacks);
     callbacks = NULL;
@@ -122,20 +121,14 @@ STATIC RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_
         break;
     }
 
-    case RCP_DEVCLASS_SIMPLE_ACTUATOR: {
-        struct RCP_SimpleActuatorData d = {.timestamp = timestamp,
-                                           .state = postTS[1] ? RCP_SIMPLE_ACTUATOR_ON : RCP_SIMPLE_ACTUATOR_OFF,
-                                           .ID = postTS[0]};
+    case RCP_DEVCLASS_SIMPLE_ACTUATOR:
+    case RCP_DEVCLASS_DISCRETE_ACTUATOR:
+    case RCP_DEVCLASS_BOOL_SENSOR: {
+        struct RCP_ByteData d = {.devclass = devclass, .ID = postTS[0], .timestamp = timestamp, .data = postTS[1]};
+        if(devclass == RCP_DEVCLASS_SIMPLE_ACTUATOR) d.data = d.data ? RCP_SIMPLE_ACTUATOR_ON : RCP_SIMPLE_ACTUATOR_OFF;
 
         incval = 2;
-        rerrno = callbacks->processSimpleActuatorData(d);
-        break;
-    }
-
-    case RCP_DEVCLASS_DISCRETE_ACTUATOR: {
-        struct RCP_DiscreteActuatorData d = {.timestamp = timestamp, .ID = postTS[0], .state = postTS[1]};
-        incval = 2;
-        rerrno = callbacks->processDiscreteActuatorData(d);
+        rerrno = callbacks->processByteData(d);
         break;
     }
 
@@ -186,14 +179,6 @@ STATIC RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_
 
         incval = 5;
         rerrno = callbacks->processOneFloat(d);
-        break;
-    }
-
-    case RCP_DEVCLASS_BOOL_SENSOR: {
-        struct RCP_BoolData d = {.timestamp = timestamp, .ID = postTS[0], .data = postTS[1]};
-
-        incval = 2;
-        rerrno = callbacks->processBoolData(d);
         break;
     }
 
@@ -312,7 +297,8 @@ RCP_Error RCP_poll(void) {
     RCP_DeviceClass devclass = *head;
     head++;
 
-    // Extract the timestamp. If the packet doesn't have a timestamp (at the time, only the prompt class), do not assign timestamp and don't increment head
+    // Extract the timestamp. If the packet doesn't have a timestamp (at the time, only the prompt class), do not assign
+    // timestamp and don't increment head
     uint32_t timestamp = 0;
     if(devclass != RCP_DEVCLASS_PROMPT) {
         timestamp = (head[0] << 24) | (head[1] << 16) | head[2] << 8 | head[3];
