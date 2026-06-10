@@ -49,42 +49,8 @@ RCP_Context RCP_setContext(RCP_Context cctx) {
     return oldctx;
 }
 
-// Initialize the library by allocated and setting the callbacks struct, allocating the packet buffer, and resetting
-// state
-// RCP_Error RCP_init(const RCP_LibInitData _callbacks) {
-//     if(callbacks != NULL || buffer != NULL) return RCP_ERR_INIT;
-//
-//     callbacks = malloc(sizeof(RCP_LibInitData));
-//     if(callbacks == NULL) return RCP_ERR_MEMALLOC;
-//     *callbacks = _callbacks;
-//
-//     buffer = malloc(RCP_MAX_EXTENDED_BYTES + RCP_MAX_NON_PARAM);
-//     if(buffer == NULL) {
-//         free(callbacks);
-//         callbacks = NULL;
-//         return RCP_ERR_MEMALLOC;
-//     }
-//
-//     channel = RCP_CH_ZERO;
-//     activePromptType = RCP_PromptDataType_RESET;
-//
-//     return RCP_ERR_SUCCESS;
-// }
-
 // RCP readiness is determined only on whether the callbacks and buffer are initialized
 int RCP_isOpen(void) { return ctx != NULL; }
-
-// Deallocate the buffer and callbacks
-// RCP_Error RCP_shutdown(void) {
-//     if(ctx == NULL) return RCP_ERR_INIT;
-//
-//     free(callbacks);
-//     callbacks = NULL;
-//     free(buffer);
-//     buffer = NULL;
-//
-//     return RCP_ERR_SUCCESS;
-// }
 
 // Return the string representation of an errno
 const char* RCP_errstr(RCP_Error rerrno) {
