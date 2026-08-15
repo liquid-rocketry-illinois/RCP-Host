@@ -75,7 +75,6 @@ bool operator==(const RCP_4F& left, const RCP_4F& right) {
 // Bundle all the structures a host would need for conveniance
 struct HostData {
     RCP_TestData testData{};
-    RCP_ByteData sactData{};
     RCP_ByteData dactData{};
     RCP_ByteData boolData{};
 
@@ -92,18 +91,14 @@ struct HostData {
 
     // These are intentionally non-explicit to save typing later
     HostData() = default;
-    HostData(RCP_TestData testData, RCP_ByteData sactData, RCP_ByteData dactData, RCP_ByteData boolData,
+    HostData(RCP_TestData testData, RCP_ByteData dactData, RCP_ByteData boolData,
              RCP_PromptDataType ptype, std::string pstring, uint32_t logtimestamp, std::string log, RCP_1F f1,
              RCP_2F f2, RCP_3F f3, RCP_4F f4) :
-        testData(testData), sactData(sactData), dactData(dactData), boolData(boolData), ptype(ptype),
+        testData(testData), dactData(dactData), boolData(boolData), ptype(ptype),
         pstring(std::move(pstring)), logtimestamp(logtimestamp), log(std::move(log)), f1(f1), f2(f2), f3(f3), f4(f4) {}
     HostData(RCP_TestData testData) : HostData() { this->testData = testData; }
     HostData(RCP_ByteData data) : HostData() {
         switch(data.devclass) {
-        case RCP_DEVCLASS_SIMPLE_ACTUATOR:
-            sactData = data;
-            break;
-
         case RCP_DEVCLASS_DISCRETE_ACTUATOR:
             dactData = data;
             break;
@@ -165,12 +160,11 @@ namespace TEST_Constants {
 
         // Device classes
         EXPECT_EQ(RCP_DEVCLASS_TEST_STATE, 0x00);
-        EXPECT_EQ(RCP_DEVCLASS_SIMPLE_ACTUATOR, 0x01);
+        EXPECT_EQ(RCP_DEVCLASS_DISCRETE_ACTUATOR, 0x01);
         EXPECT_EQ(RCP_DEVCLASS_STEPPER, 0x02);
         EXPECT_EQ(RCP_DEVCLASS_PROMPT, 0x03);
         EXPECT_EQ(RCP_DEVCLASS_ANGLED_ACTUATOR, 0x04);
         EXPECT_EQ(RCP_DEVCLASS_MOTOR, 0x05);
-        EXPECT_EQ(RCP_DEVCLASS_DISCRETE_ACTUATOR, 0x06);
         EXPECT_EQ(RCP_DEVCLASS_TARGET_LOG, 0x80);
         EXPECT_EQ(RCP_DEVCLASS_AM_PRESSURE, 0x90);
         EXPECT_EQ(RCP_DEVCLASS_TEMPERATURE, 0x91);
@@ -210,11 +204,6 @@ namespace TEST_Constants {
         EXPECT_EQ(RCP_TEST_PAUSED, 0x40);
         EXPECT_EQ(RCP_TEST_ESTOP, 0x60);
 
-        // Simple actuator values
-        EXPECT_EQ(RCP_SIMPLE_ACTUATOR_OFF, 0x00);
-        EXPECT_EQ(RCP_SIMPLE_ACTUATOR_ON, 0x80);
-        EXPECT_EQ(RCP_SIMPLE_ACTUATOR_TOGGLE, 0xC0);
-
         // Stepper control mode values
         EXPECT_EQ(RCP_STEPPER_ABSOLUTE_POS_CONTROL, 0x40);
         EXPECT_EQ(RCP_STEPPER_RELATIVE_POS_CONTROL, 0x80);
@@ -251,11 +240,10 @@ namespace TEST_Preinit {
         TEST_NONINIT_RUN(RCP_setDataStreaming, false);
         TEST_NONINIT_RUN(RCP_setHeartbeatTime, 0);
         TEST_NONINIT_RUN(RCP_requestTestState);
-        TEST_NONINIT_RUN(RCP_sendSimpleActuatorWrite, 0, RCP_SIMPLE_ACTUATOR_TOGGLE);
+        TEST_NONINIT_RUN(RCP_sendDiscreteActuatorWrite, 0, 0);
         TEST_NONINIT_RUN(RCP_sendStepperWrite, 0, RCP_STEPPER_SPEED_CONTROL, 0);
         TEST_NONINIT_RUN(RCP_sendAngledActuatorWrite, 0, 0);
         TEST_NONINIT_RUN(RCP_sendMotorWrite, 0, 0);
-        TEST_NONINIT_RUN(RCP_sendDiscreteActuatorWrite, 0, 0);
         TEST_NONINIT_RUN(RCP_requestGeneralRead, RCP_DEVCLASS_TEST_STATE, 0);
         TEST_NONINIT_RUN(RCP_requestTareConfiguration, RCP_DEVCLASS_GYROSCOPE, 0, 0, 0);
         TEST_NONINIT_RUN(RCP_promptRespondGONOGO, RCP_GONOGO_GO);
@@ -307,11 +295,10 @@ namespace TEST_BadIO {
         TEST_BADIOSEND(RCP_setDataStreaming, false);
         TEST_BADIOSEND(RCP_setHeartbeatTime, 0);
         TEST_BADIOSEND(RCP_requestTestState);
-        TEST_BADIOSEND(RCP_sendSimpleActuatorWrite, 0, RCP_SIMPLE_ACTUATOR_TOGGLE);
+        TEST_BADIOSEND(RCP_sendDiscreteActuatorWrite, 0, 0);
         TEST_BADIOSEND(RCP_sendStepperWrite, 0, RCP_STEPPER_SPEED_CONTROL, 0);
         TEST_BADIOSEND(RCP_sendAngledActuatorWrite, 0, 0);
         TEST_BADIOSEND(RCP_sendMotorWrite, 0, 0);
-        TEST_BADIOSEND(RCP_sendDiscreteActuatorWrite, 0, 0);
         TEST_BADIOSEND(RCP_requestGeneralRead, RCP_DEVCLASS_TEST_STATE, 0);
         TEST_BADIOSEND(RCP_requestTareConfiguration, RCP_DEVCLASS_GYROSCOPE, 0, 0, 0);
 
@@ -427,10 +414,6 @@ namespace TEST_processIU {
             switch(data.devclass) {
             case RCP_DEVCLASS_BOOL_SENSOR:
                 ctx->hostData.boolData = data;
-                break;
-
-            case RCP_DEVCLASS_SIMPLE_ACTUATOR:
-                ctx->hostData.sactData = data;
                 break;
 
             case RCP_DEVCLASS_DISCRETE_ACTUATOR:
@@ -564,12 +547,6 @@ namespace TEST_processIU {
         CHECKVALS(testData.runningTest);
         CHECKVALS(testData.testProgress);
 
-        // Simple Actuator state equality
-        CHECKVALS(sactData.devclass);
-        CHECKVALS(sactData.ID);
-        CHECKVALS(sactData.timestamp);
-        CHECKVALS(sactData.data);
-
         // Discrete Actuator state equality
         CHECKVALS(dactData.devclass);
         CHECKVALS(dactData.ID);
@@ -668,33 +645,6 @@ namespace TEST_processIU {
                 .heartbeatTime = 0xF0,
                 .runningTest = 1,
                 .testProgress = 5
-            }
-        }
-    };
-
-    static EnvInfo PTESTS_SACT[] = {
-        EnvInfo{
-            .envName = "ActOn",
-            .devclass = RCP_DEVCLASS_SIMPLE_ACTUATOR,
-            .timestamp = TS1,
-            .pkt = {0xF0, RCP_SIMPLE_ACTUATOR_ON},
-            .endState = RCP_ByteData {
-                .devclass = RCP_DEVCLASS_SIMPLE_ACTUATOR,
-                .ID = 0xF0,
-                .timestamp = TS1,
-                .data = RCP_SIMPLE_ACTUATOR_ON
-            }
-        },
-        EnvInfo{
-            .envName = "ActOff",
-            .devclass = RCP_DEVCLASS_SIMPLE_ACTUATOR,
-            .timestamp = TS2,
-            .pkt = {0x0F, RCP_SIMPLE_ACTUATOR_OFF},
-            .endState = RCP_ByteData {
-                .devclass = RCP_DEVCLASS_SIMPLE_ACTUATOR,
-                .ID = 0x0F,
-                .timestamp = TS2,
-                .data = RCP_SIMPLE_ACTUATOR_OFF
             }
         }
     };
@@ -996,7 +946,6 @@ namespace TEST_processIU {
     // clang-format on
 
     INSTANTIATE_TEST_SUITE_P(TestState, ProcessIU, testing::ValuesIn(PTESTS_TESTSTATE), envToName);
-    INSTANTIATE_TEST_SUITE_P(SimpleActuator, ProcessIU, testing::ValuesIn(PTESTS_SACT), envToName);
     INSTANTIATE_TEST_SUITE_P(DiscreteActuator, ProcessIU, testing::ValuesIn(PTESTS_DACT), envToName);
     INSTANTIATE_TEST_SUITE_P(BoolSensor, ProcessIU, testing::ValuesIn(PTESTS_BOOL), envToName);
     INSTANTIATE_TEST_SUITE_P(TargetLog, ProcessIU, testing::ValuesIn(PTESTS_LOG), envToName);
@@ -1063,10 +1012,6 @@ namespace TEST_RCP_poll {
             switch(data.devclass) {
             case RCP_DEVCLASS_BOOL_SENSOR:
                 ctx->hostData.boolData = data;
-                break;
-
-            case RCP_DEVCLASS_SIMPLE_ACTUATOR:
-                ctx->hostData.sactData = data;
                 break;
 
             case RCP_DEVCLASS_DISCRETE_ACTUATOR:
@@ -1182,12 +1127,6 @@ namespace TEST_RCP_poll {
         CHECKVALS(testData.heartbeatTime);
         CHECKVALS(testData.runningTest);
         CHECKVALS(testData.testProgress);
-
-        // Simple Actuator state equality
-        CHECKVALS(sactData.devclass);
-        CHECKVALS(sactData.ID);
-        CHECKVALS(sactData.timestamp);
-        CHECKVALS(sactData.data);
 
         // Discrete Actuator state equality
         CHECKVALS(dactData.devclass);
@@ -1329,7 +1268,7 @@ namespace TEST_RCP_poll {
                 RCP_DEVCLASS_POWERMON, 0x01, HFLOATARR(HPI), HFLOATARR(HPI2),
                 RCP_DEVCLASS_ACCELEROMETER, 0x05, HFLOATARR(HPI), HFLOATARR(HPI2), HFLOATARR(HPI3),
                 RCP_DEVCLASS_GPS, 0x00, HFLOATARR(HPI), HFLOATARR(HPI2), HFLOATARR(HPI3), HFLOATARR(HPI4)},
-            .endState = HostData{RCP_TestData{}, RCP_ByteData{}, RCP_ByteData{}, RCP_ByteData{}, RCP_PromptDataType_RESET, "", 0, "",
+            .endState = HostData{RCP_TestData{}, RCP_ByteData{}, RCP_ByteData{}, RCP_PromptDataType_RESET, "", 0, "",
                 RCP_1F {
                     .devclass = RCP_DEVCLASS_AM_PRESSURE,
                     .timestamp = TS1,
@@ -1360,10 +1299,9 @@ namespace TEST_RCP_poll {
         // format because it can send multiple IDs of one devclass
         EnvInfo{
             .envName = "Amalged_Longer",
-            .pkt = {0x40, 0x00, 0x41, RCP_DEVCLASS_AMALGAMATE, HFLOATARR(TS2), // 4
+            .pkt = {0x40, 0x00, 0x3E, RCP_DEVCLASS_AMALGAMATE, HFLOATARR(TS2), // 4
                 RCP_DEVCLASS_TEST_STATE, 0x90, 0x05, 0xF0, 0x0F, // 5
-                RCP_DEVCLASS_SIMPLE_ACTUATOR, 0x05, RCP_SIMPLE_ACTUATOR_ON, // 3
-                RCP_DEVCLASS_BOOL_SENSOR, 0x03, RCP_SIMPLE_ACTUATOR_ON, // 3
+                RCP_DEVCLASS_BOOL_SENSOR, 0x03, 0x01, // 3
                 RCP_DEVCLASS_DISCRETE_ACTUATOR, 0x04, 0xF7, // 3
                 // Float packets are in a different order here to test the offsetting for GPS
                 RCP_DEVCLASS_GPS, 0x00, HFLOATARR(HPI), HFLOATARR(HPI2), HFLOATARR(HPI3), HFLOATARR(HPI4), // 18
@@ -1380,12 +1318,6 @@ namespace TEST_RCP_poll {
                     .heartbeatTime = 5,
                     .runningTest = 0xF0,
                     .testProgress = 0x0F
-                },
-                RCP_ByteData{
-                    .devclass = RCP_DEVCLASS_SIMPLE_ACTUATOR,
-                    .ID = 5,
-                    .timestamp = TS2,
-                    .data = RCP_SIMPLE_ACTUATOR_ON
                 },
                 RCP_ByteData{
                     .devclass = RCP_DEVCLASS_DISCRETE_ACTUATOR,
@@ -1505,9 +1437,6 @@ namespace TEST_RCP_Senders {
 
     TEST_F(RCPSenders, RejectTaresForInvalidDevclasses) {
         RCP_Error retval = RCP_requestTareConfiguration(RCP_DEVCLASS_TEST_STATE, 0, 0, 0);
-        EXPECT_EQ(retval, RCP_ERR_INVALID_DEVCLASS);
-
-        retval = RCP_requestTareConfiguration(RCP_DEVCLASS_SIMPLE_ACTUATOR, 0, 0, 0);
         EXPECT_EQ(retval, RCP_ERR_INVALID_DEVCLASS);
 
         retval = RCP_requestTareConfiguration(RCP_DEVCLASS_STEPPER, 0, 0, 0);
@@ -1632,11 +1561,6 @@ namespace TEST_RCP_Senders {
             .envName = "RequestTestState",
             .endState = {0x01, RCP_DEVCLASS_TEST_STATE, RCP_TEST_QUERY},
             .function = [] { return RCP_requestTestState(); }
-        },
-        EnvInfo{
-            .envName = "SimpleActuatorWrite",
-            .endState = {0x02, RCP_DEVCLASS_SIMPLE_ACTUATOR, 0x05, RCP_SIMPLE_ACTUATOR_ON},
-            .function = [] { return RCP_sendSimpleActuatorWrite(5, RCP_SIMPLE_ACTUATOR_ON); }
         },
         EnvInfo{
             .envName = "DiscreteActuatorWrite",

@@ -114,11 +114,9 @@ STATIC RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_
         break;
     }
 
-    case RCP_DEVCLASS_SIMPLE_ACTUATOR:
     case RCP_DEVCLASS_DISCRETE_ACTUATOR:
     case RCP_DEVCLASS_BOOL_SENSOR: {
         RCP_ByteData d = {.devclass = devclass, .ID = postTS[0], .timestamp = timestamp, .data = postTS[1]};
-        if(devclass == RCP_DEVCLASS_SIMPLE_ACTUATOR) d.data = d.data ? RCP_SIMPLE_ACTUATOR_ON : RCP_SIMPLE_ACTUATOR_OFF;
 
         incval = 2;
         rerrno = ctx->callbacks.processByteData(d);
@@ -365,10 +363,10 @@ RCP_Error RCP_setHeartbeatTime(uint8_t heartbeatTime) {
 
 RCP_Error RCP_requestTestState(void) { return RCP__sendTestUpdate(RCP_TEST_QUERY, 0); }
 
-RCP_Error RCP_sendSimpleActuatorWrite(uint8_t ID, RCP_SimpleActuatorState state) {
+RCP_Error RCP_sendDiscreteActuatorWrite(uint8_t ID, uint8_t state) {
     if(ctx == NULL) return RCP_ERR_INIT;
     ctx->buffer[0] = ctx->channel | 0x02;
-    ctx->buffer[1] = RCP_DEVCLASS_SIMPLE_ACTUATOR;
+    ctx->buffer[1] = RCP_DEVCLASS_DISCRETE_ACTUATOR;
     ctx->buffer[2] = ID;
     ctx->buffer[3] = state;
     return ctx->callbacks.sendData(ctx->buffer, 4) == 4 ? RCP_ERR_SUCCESS : RCP_ERR_IO_SEND;
@@ -400,15 +398,6 @@ RCP_Error RCP_sendMotorWrite(uint8_t ID, float value) {
     ctx->buffer[2] = ID;
     memcpy(ctx->buffer + 3, &value, 4);
     return ctx->callbacks.sendData(ctx->buffer, 7) == 7 ? RCP_ERR_SUCCESS : RCP_ERR_IO_SEND;
-}
-
-RCP_Error RCP_sendDiscreteActuatorWrite(uint8_t ID, uint8_t state) {
-    if(ctx == NULL) return RCP_ERR_INIT;
-    ctx->buffer[0] = ctx->channel | 0x02;
-    ctx->buffer[1] = RCP_DEVCLASS_DISCRETE_ACTUATOR;
-    ctx->buffer[2] = ID;
-    ctx->buffer[3] = state;
-    return ctx->callbacks.sendData(ctx->buffer, 4) == 4 ? RCP_ERR_SUCCESS : RCP_ERR_IO_SEND;
 }
 
 // One shot read request to a device with an ID
