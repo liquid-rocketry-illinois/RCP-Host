@@ -33,12 +33,11 @@ A device class is an 8 bit identifier which encodes the type of device, and the 
 
 The defined device classes are as follows:
 - `0x00`: [Test State](#test-state) +*%
-- `0x01`: [Simple Actuator](#simple-actuator) *%
+- `0x01`: [Discrete Actuator](#discrete-actuator) *%
 - `0x02`: [Stepper Motor](#stepper-motor) *%
 - `0x03`: [Prompt Input](#prompt-input) +&^%
 - `0x04`: [Angled Actuator](#angled-actuator) *%
 - `0x05`: [Motor](#motor) *%
-- `0x06`: [Discrete Actuator](#discrete-actuator) *%
 - `0x80`: [Target Log](#target-log) ^%
 - `0x90`: [Ambient Pressure](#xf-units) *
 - `0x91`: [Temperature](#xf-units) *
@@ -167,33 +166,27 @@ On a query of the test state, the target will send back an information unit with
 - `0x01 00 21`: enable data streaming
 - `0x01 00 90 0A 05 0A`: a response packet indicating data streaming is enabled, the device has initialized, the heartbeats are expected once per second, and the device is running test 5 and is at stage 10
 
-## Simple Actuator
+## Discrete Actuator
 
-A simple actuator is a device on the target which has an on and off state. This is generalized to all actuators of this type, such as solenoids, or simple on/off lights, etc. This device follows the standard read request format.
+This class is designed for an actuator that has a discrete number of states more than 2. This class supports up to 256 states per device.
 
 ### Writes
 
-A simple actuator can be written to with the following 2 parameter bytes:
-- The device ID
-- Set point:
-  - `0x00`: Off
-  - `0x80`: On
-  - `0xC0`: Toggle
+To write to a discrete actuator, use the following format:
+- The first byte contains the ID of the device to write to
+- The next byte contains the state to move to
 
 ### Response
 
 Besides the timestamp (if required), the parameter bytes for this class contains 2 bytes:
-- The ID of the device
-- The state:
-  - `0x00`: Off
-  - `0x80`: On
-  - Any other bit sequence is not allowed and is undefined behavior
+- The ID
+- The current state
 
 ### Examples
 
-- `0x01 01 00`: Requests state of simple actuator with ID `0`
-- `0x02 01 01 C0`: Requests simple actuator with ID `1` toggle its current state
-- `0x06 01 00 00 00 FF 02 80`: A response packet indicating that at time `255`ms, simple actuator with ID `2` was in the On state
+- `0x02 06 03 44`: Sets actuator 3 to state 0x44
+- `0x06 06 01 02 03 04 20 30`: Target response indicating at time 0x01020304, actuator 0x20 was in state 0x30
+
 
 ## Stepper Motor
 
@@ -275,27 +268,6 @@ This device responds with a [1F](#xf-units) packet.
 
 ### Examples
 - `0x05 05 07 41 8e 80 00`: Sets motor `7` to speed `17.8125` RPM 
-
-## Discrete Actuator
-
-This class is designed for an actuator that has a discrete number of states more than 2. This class supports up to 256 states per device.
-
-### Writes
-
-To write to a discrete actuator, use the following format:
- - The first byte contains the ID of the device to write to
- - The next byte contains the state to move to
-
-### Response
-
-Besides the timestamp (if required), the parameter bytes for this class contains 2 bytes:
- - The ID
- - The current state
-
-### Examples
-
- - `0x02 06 03 44`: Sets actuator 3 to state 0x44
- - `0x06 06 01 02 03 04 20 30`: Target response indicating at time 0x01020304, actuator 0x20 was in state 0x30
 
 ## Target Log
 
