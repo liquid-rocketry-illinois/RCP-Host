@@ -130,6 +130,7 @@ STATIC RCP_Error processIU(RCP_DeviceClass devclass, uint32_t timestamp, uint16_
 
         if(postTS[0] == RCP_PromptDataType_RESET) {
             RCP_PromptInputRequest req = {.type = RCP_PromptDataType_RESET, .prompt = NULL, .length = 0};
+            ctx->activePromptType = RCP_PromptDataType_RESET;
             return ctx->callbacks.processPromptInput(req);
         }
 
